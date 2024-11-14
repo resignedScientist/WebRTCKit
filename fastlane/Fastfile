@@ -1,0 +1,43 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+
+  desc "Build WebRTCKit"
+  lane :build do
+    xcodebuild(
+      project: "WebRTCKit.xcodeproj",
+      scheme: "WebRTCKit",
+      sdk: "iphoneos",
+      destination: "generic/platform=iOS",
+      clean: true,
+      build: true
+    )
+  end
+
+  desc "Run tests for WebRTCKit"
+  lane :test do
+    scan(
+      project: "WebRTCKit.xcodeproj",
+      scheme: "WebRTCKit",
+      device: "iPhone 15",
+      derived_data_path: "fastlane/derived_data",
+      parallel_testing: false
+    )
+  end
+
+end

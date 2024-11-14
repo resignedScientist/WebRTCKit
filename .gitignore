@@ -1,0 +1,12 @@
+.DS_Store
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
+fastlane/derived_data/
+fastlane/report.xml
+
+fastlane/test_output/

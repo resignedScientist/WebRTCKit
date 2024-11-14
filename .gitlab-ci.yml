@@ -1,0 +1,23 @@
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  tags:
+    - ios
+  script:
+    - bundler exec fastlane build
+
+test:
+  stage: test
+  tags:
+    - ios
+  script:
+    - bundler exec fastlane test
+  artifacts:
+    paths:
+      - fastlane/test_output
+    when: always
+    reports:
+      junit: fastlane/test_output/report.junit
