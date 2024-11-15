@@ -18,6 +18,44 @@ You can use Swift Package Manager to integrate WebRTCKit into your app using thi
 https://github.com/resignedScientist/WebRTCKit.git
 ```
 
+# Usage
+
+First, you need to set the delegate and setup the connection.
+```swift
+// Set the delegate.
+await webRTCController.setCallManagerDelegate(self)
+
+// Setup the connection, connecting and registering to the signaling server.
+localPeerID = try await webRTCController.setupConnection()
+```
+
+Start the recording of audio & video like this:
+
+```swift
+try await webRTCController.startRecording
+```
+
+To start a call, you can call the controller providing the ID of your peer:
+
+```swift
+try await webRTCController.sendCallRequest(to: peerID)
+```
+
+The other peer can answer the call:
+```swift
+try await webRTCController.answerCallRequest(accept: true)
+```
+
+…or reject it:
+```swift
+try await webRTCController.answerCallRequest(accept: false)
+```
+
+Finally, this is how you end the call:
+```swift
+try await webRTCController.endCall()
+```
+
 # Setup
 
 You can setup WebRTCKit like this. Run this when your application starts and keep a reference to the `WebRTCController`.
