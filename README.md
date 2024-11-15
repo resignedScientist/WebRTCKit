@@ -6,6 +6,11 @@ WebRTCKit is a repository that simplifies WebRTC for the use in an iOS app. It i
 - Use your own signaling server using our delegate.
 - Automatic Bitrate adjustment based on network conditions.
 
+## TODO:
+- Add support for muting audio (including feedback when muted while speaking)
+- Add support for turning the camera on/off
+- Add better support for Swift Concurrency enforced by Swift 6 as we use a lot of `@unchecked Sendable` extensions currently.
+
 # WARNING
 
 This repository is still in alpha state. That means, that is it not 100% stable or tested and everything you see is subject to change.
