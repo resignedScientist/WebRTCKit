@@ -68,7 +68,7 @@ try await webRTCController.disconnect()
 
 ## Data Channels
 
-There is also support for data channels. You can easily add them like this:
+There is also support for data channels. This is only possible after the `callDidStart` function of the `CallManagerDelegate` was called. You can easily add them like this:
 
 ```swift
 func openDataChannels() async throws {
