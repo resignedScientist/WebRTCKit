@@ -37,7 +37,7 @@ let localPeerID = try await webRTCController.setupConnection()
 Start the recording of audio & video like this:
 
 ```swift
-try await webRTCController.startRecording
+try await webRTCController.startRecording()
 ```
 
 To start a call, you can call the controller providing the ID of your peer:
@@ -295,17 +295,70 @@ public protocol SignalingServerConnection: Sendable {
     func onConnectionUnsatisfied()
 }
 ```
+
+### CallManagerDelegate
+
+The `CallManagerDelegate` looks like this. Most of the times the delegate will be something like your view model.
+
+You will receive data channels only when the other peer is opening the channel. If your own peer opens a channel, you should keep your own reference.
+
+```swift
+public protocol CallManagerDelegate: AnyObject, Sendable {
+    
+    /// We received an incoming call.
+    ///
+    /// - Parameter peerID: The ID of the peer which is calling.
+    func didReceiveIncomingCall(from peerID: PeerID)
+    
+    /// Tells the delegate to show the local video stream.
+    ///
+    /// - Parameters:
+    ///   - videoTrack: The local video track.
+    func showLocalVideo(_ videoTrack: WRKRTCVideoTrack)
+    
+    /// Tells the delegate to show the remote video stream.
+    ///
+    /// - Parameters:
+    ///   - videoTrack: The remote video track.
+    func showRemoteVideo(_ videoTrack: WRKRTCVideoTrack)
+    
+    /// The call did start.
+    func callDidStart()
+    
+    /// The call did end.
+    func callDidEnd(withError error: CallManagerError?)
+    
+    /// Called when the peer created a new data channel.
+    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+}
+```
+
+### WebRTCVideoView
+
+Video tracks contain the local or remote video stream. 
+
+When receiving the video tracks, you can show them using the `WebRTCVideoView`. You pass an optional video track here. If nil is passed, just a black view will be visible.
+
+```swift
+WebRTCVideoView(videoTrack: viewModel.localVideoTrack)
+    .background(Color.black)
+    .cornerRadius(15)
+    .frame(maxHeight: 230)
+```
+
 # Custom Video and Audio Sources
 
 ## Custom Video Capturer
 
-When starting recording, you can provide a custom video capturer. This conforms to `RTCVideoCapturer`. That way, you can provide your own video if the default video capturer is not enough.
+Custom video capturers allow you to feed frames from external sources (e.g., screen capture or augmented reality content) into WebRTC streams. Another use case is when you directly need access to the pixel buffers.
+
+When starting recording, you can provide a custom video capturer. This conforms to `RTCVideoCapturer`.
 
 ```swift
 try await webRTCController.startRecording(videoCapturer: videoCapturer)
 ```
 
-This may look like this for example:
+Here is an example implementation:
 
 ```swift
 final class PixelBufferVideoCapturer: RTCVideoCapturer {
@@ -341,10 +394,11 @@ final class PixelBufferVideoCapturer: RTCVideoCapturer {
 
 ## Custom Audio Device
 
-You can also customize your audio source.
-This works with a custom audio device conforming to `RTCAudioDevice`.
+You can also customize your audio source. Custom audio devices allow you to provide audio from different sources. Maybe you want to edit the audio before sending it or you want direct access to the audio buffers to use it e.g. for speech recognition while calling.
 
-You pass it when initializing the Framework:
+You can create your custom audio device by conforming to `RTCAudioDevice`.
+
+You pass it when initializing the framework:
 
 ```swift
 WebRTCKit.initialize(
