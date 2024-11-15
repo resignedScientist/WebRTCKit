@@ -123,14 +123,32 @@ extension RTCTlsCertPolicy: Codable {
 public extension Config {
     
     struct BitrateConfig: Codable, Sendable {
+        
+        /// The bitrate does not go below this value.
         let minBitrate: Int
+        
+        /// The bitrate does not go above this value.
         let maxBitrate: Int
+        
+        /// The initial bitrate to try when the call starts.
         let startBitrate: Int
+        
+        /// If network conditions are good, step up this percentage (value between 0-1).
         let bitrateStepUp: Double
+        
+        /// If network conditions are bad, step down this percentage (value between 0-1).
         let bitrateStepDown: Double
+        
+        /// If network conditions are critical, step down this percentage (value between 0-1).
         let bitrateStepCriticalDown: Double
+        
+        /// The percentage threshold when packet loss counts as critical (value between 0-1).
         let criticalPacketLossThreshold: Double
+        
+        /// The percentage threshold when packet loss counts as high (value between 0-1).
         let highPacketLossThreshold: Double
+        
+        /// The percentage threshold under which packet loss counts as low (value between 0-1).
         let lowPacketLossThreshold: Double
         
         public static var defaultForVideo: BitrateConfig {
