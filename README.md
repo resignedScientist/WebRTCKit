@@ -262,6 +262,12 @@ public static var defaultForAudio: BitrateConfig {
 }
 ```
 
+## STUN / TURN Servers
+
+To work around NATs, WebRTC uses `STUN` and `TURN` servers to establish a peer-to-peer connection. It is highly recommended to provide both of them in the config.
+
+There are some servers you can rent for that, or you can use something like [`Coturn`](https://github.com/coturn/coturn) to host it on your own.
+
 ## Signaling Server
 
 Just like in WebRTC itself, you have to provide your own signaling server that helps to establish a peer-to-peer connection between two devices.
