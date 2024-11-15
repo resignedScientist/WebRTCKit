@@ -26,7 +26,7 @@ First, you need to set the delegate and setup the connection.
 await webRTCController.setCallManagerDelegate(self)
 
 // Setup the connection, connecting and registering to the signaling server.
-localPeerID = try await webRTCController.setupConnection()
+let localPeerID = try await webRTCController.setupConnection()
 ```
 
 Start the recording of audio & video like this:
