@@ -100,7 +100,7 @@ extension MyClass: RTCDataChannelDelegate {
         
     }
     
-    bfunc dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
+    func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
         
     }
 }
