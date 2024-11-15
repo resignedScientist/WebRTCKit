@@ -189,7 +189,7 @@ public let video: BitrateConfig
 public let audio: BitrateConfig
 ```
 
-#### BitrateConfig
+### BitrateConfig
 
 There is an automatic Bitrate adjustment integrated that you can configure here.
 
