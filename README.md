@@ -95,7 +95,7 @@ extension MyClass: RTCDataChannelDelegate {
         
     }
     
-    func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
+    bfunc dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
         
     }
 }
@@ -289,4 +289,64 @@ public protocol SignalingServerConnection: Sendable {
     /// The network connection was lost.
     func onConnectionUnsatisfied()
 }
+```
+# Custom Video and Audio Sources
+
+## Custom Video Capturer
+
+When starting recording, you can provide a custom video capturer. This conforms to `RTCVideoCapturer`. That way, you can provide your own video if the default video capturer is not enough.
+
+```swift
+try await webRTCController.startRecording(videoCapturer: videoCapturer)
+```
+
+This may look like this for example:
+
+```swift
+final class PixelBufferVideoCapturer: RTCVideoCapturer {
+    
+    private let context = CIContext()
+    
+    func captureFrame(_ pixelBuffer: CVPixelBuffer, imageOrientation: CGImagePropertyOrientation) {
+        pixelBuffer.queue.async {
+            let currentMediaTime = CACurrentMediaTime()
+            let time = CMTime(seconds: currentMediaTime, preferredTimescale: 1_000_000)
+            let seconds = CMTimeGetSeconds(time)
+            let timeStampNs = Int64(seconds * Double(NSEC_PER_SEC))
+            let buffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
+            let videoFrame = RTCVideoFrame(
+                buffer: buffer,
+                rotation: {
+                    switch imageOrientation {
+                    case .up, .upMirrored:
+                        return ._0
+                    case .right, .rightMirrored:
+                        return ._90
+                    case .down, .downMirrored:
+                        return ._180
+                    case .left, .leftMirrored:
+                        return ._270
+                    }
+                }(),
+                timeStampNs: timeStampNs
+            )
+            self.delegate?.capturer(self, didCapture: videoFrame)
+        }
+    }
+}
+```
+
+## Custom Audio Device
+
+You can also customize your audio source.
+This works with a custom audio device conforming to `RTCAudioDevice`.
+
+You pass it when initializing the Framework:
+
+```swift
+WebRTCKit.initialize(
+    signalingServer: signalingServer,
+    config: config,
+    audioDevice: audioDevice // pass your custom audio device here
+)
 ```
