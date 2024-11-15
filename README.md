@@ -6,14 +6,14 @@ WebRTCKit is a repository that simplifies WebRTC for the use in an iOS app. It i
 - Use your own signaling server using our delegate.
 - Automatic Bitrate adjustment based on network conditions.
 
-## TODO:
+## Upcoming Features / TODOs:
 - Add support for muting audio (including feedback when muted while speaking)
 - Add support for turning the camera on/off
 - Add better support for Swift Concurrency enforced by Swift 6 as we use a lot of `@unchecked Sendable` extensions currently.
 
-# WARNING
+## WARNING
 
-This repository is still in alpha state. That means, that is it not 100% stable or tested and everything you see is subject to change.
+This repository is still in alpha state. That means, that it is not 100% stable or tested and everything you see is subject to change.
 
 # Installation
 
@@ -46,7 +46,7 @@ To start a call, you can call the controller providing the ID of your peer:
 try await webRTCController.sendCallRequest(to: peerID)
 ```
 
-The other peer can answer the call:
+The other peer receives the call in the `CallManagerDelegate` and can answer the call:
 ```swift
 try await webRTCController.answerCallRequest(accept: true)
 ```
@@ -59,6 +59,11 @@ try await webRTCController.answerCallRequest(accept: false)
 Finally, this is how you end the call:
 ```swift
 try await webRTCController.endCall()
+```
+
+…or close the connection with the signaling server as well:
+```swift
+try await webRTCController.disconnect()
 ```
 
 ## Data Channels
