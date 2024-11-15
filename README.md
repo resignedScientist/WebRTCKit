@@ -308,30 +308,28 @@ final class PixelBufferVideoCapturer: RTCVideoCapturer {
     private let context = CIContext()
     
     func captureFrame(_ pixelBuffer: CVPixelBuffer, imageOrientation: CGImagePropertyOrientation) {
-        pixelBuffer.queue.async {
-            let currentMediaTime = CACurrentMediaTime()
-            let time = CMTime(seconds: currentMediaTime, preferredTimescale: 1_000_000)
-            let seconds = CMTimeGetSeconds(time)
-            let timeStampNs = Int64(seconds * Double(NSEC_PER_SEC))
-            let buffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
-            let videoFrame = RTCVideoFrame(
-                buffer: buffer,
-                rotation: {
-                    switch imageOrientation {
-                    case .up, .upMirrored:
-                        return ._0
-                    case .right, .rightMirrored:
-                        return ._90
-                    case .down, .downMirrored:
-                        return ._180
-                    case .left, .leftMirrored:
-                        return ._270
-                    }
-                }(),
-                timeStampNs: timeStampNs
-            )
-            self.delegate?.capturer(self, didCapture: videoFrame)
-        }
+        let currentMediaTime = CACurrentMediaTime()
+        let time = CMTime(seconds: currentMediaTime, preferredTimescale: 1_000_000)
+        let seconds = CMTimeGetSeconds(time)
+        let timeStampNs = Int64(seconds * Double(NSEC_PER_SEC))
+        let buffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
+        let videoFrame = RTCVideoFrame(
+            buffer: buffer,
+            rotation: {
+                switch imageOrientation {
+                case .up, .upMirrored:
+                    return ._0
+                case .right, .rightMirrored:
+                    return ._90
+                case .down, .downMirrored:
+                    return ._180
+                case .left, .leftMirrored:
+                    return ._270
+                }
+            }(),
+            timeStampNs: timeStampNs
+        )
+        self.delegate?.capturer(self, didCapture: videoFrame)
     }
 }
 ```
