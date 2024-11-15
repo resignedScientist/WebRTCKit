@@ -348,3 +348,5 @@ WebRTCKit.initialize(
     audioDevice: audioDevice // pass your custom audio device here
 )
 ```
+
+I recommend using `AVAudioSinkNode` for audio input and `AVAudioSourceNode` for playback.
