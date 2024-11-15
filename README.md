@@ -167,6 +167,8 @@ Just like in WebRTC itself, you have to provide your own signaling server that h
 
 For this reason the `SignalingServerConnection` protocol exists. You need to implement this and send messages through your server to the other peer.
 
+I recommend using [`Starscream`](https://github.com/daltoniam/Starscream) to connect to your WebSocket server.
+
 ```swift
 public protocol SignalingServerConnection: Sendable {
     
