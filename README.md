@@ -56,6 +56,51 @@ Finally, this is how you end the call:
 try await webRTCController.endCall()
 ```
 
+## Data Channels
+
+There is also support for data channels. You can easily add them like this:
+
+```swift
+func openDataChannels() async throws {
+        
+    try await webRTCController.startConfiguration()
+    
+    // config with disabled retransmission of failed values
+    let noRetransmitsConfig = RTCDataChannelConfiguration()
+    noRetransmitsConfig.maxRetransmits = 0
+    
+    // first channel
+    self.firstChannel = try await webRTCController.createDataChannel(
+        label: "firstChannel"
+    )
+    await firstChannel?.setDelegate(self)
+    
+    // second channel
+    self.secondChannel = try await webRTCController.createDataChannel(
+        label: "secondChannel",
+        config: noRetransmitsConfig
+    )
+    await secondChannel?.setDelegate(self)
+    
+    try await webRTCController.commitConfiguration()
+}
+```
+
+As delegate we use the `RTCDataChannelDelegate` protocol provided by WebRTC.
+
+```swift
+extension MyClass: RTCDataChannelDelegate {
+    
+    func dataChannelDidChangeState(_ dataChannel: RTCDataChannel) {
+        
+    }
+    
+    func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
+        
+    }
+}
+```
+
 # Setup
 
 You can setup WebRTCKit like this. Run this when your application starts and keep a reference to the `WebRTCController`.
