@@ -6,14 +6,14 @@ WebRTCKit is a repository that simplifies WebRTC for the use in an iOS app. It i
 - Use your own signaling server using our delegate.
 - Automatic Bitrate adjustment based on network conditions.
 
-## TODO:
+## Upcoming Features / TODOs:
 - Add support for muting audio (including feedback when muted while speaking)
 - Add support for turning the camera on/off
 - Add better support for Swift Concurrency enforced by Swift 6 as we use a lot of `@unchecked Sendable` extensions currently.
 
-# WARNING
+## WARNING
 
-This repository is still in alpha state. That means, that is it not 100% stable or tested and everything you see is subject to change.
+This repository is still in alpha state. That means, that it is not 100% stable or tested and everything you see is subject to change.
 
 # Installation
 
@@ -37,7 +37,7 @@ let localPeerID = try await webRTCController.setupConnection()
 Start the recording of audio & video like this:
 
 ```swift
-try await webRTCController.startRecording
+try await webRTCController.startRecording()
 ```
 
 To start a call, you can call the controller providing the ID of your peer:
@@ -46,7 +46,7 @@ To start a call, you can call the controller providing the ID of your peer:
 try await webRTCController.sendCallRequest(to: peerID)
 ```
 
-The other peer can answer the call:
+The other peer receives the call in the `CallManagerDelegate` and can answer the call:
 ```swift
 try await webRTCController.answerCallRequest(accept: true)
 ```
@@ -61,9 +61,14 @@ Finally, this is how you end the call:
 try await webRTCController.endCall()
 ```
 
+…or close the connection with the signaling server as well:
+```swift
+try await webRTCController.disconnect()
+```
+
 ## Data Channels
 
-There is also support for data channels. You can easily add them like this:
+There is also support for data channels. This is only possible after the `callDidStart` function of the `CallManagerDelegate` was called. You can easily add them like this:
 
 ```swift
 func openDataChannels() async throws {
@@ -184,9 +189,17 @@ public let video: BitrateConfig
 public let audio: BitrateConfig
 ```
 
-#### BitrateConfig
+### BitrateConfig
 
 There is an automatic Bitrate adjustment integrated that you can configure here.
+
+The Bitrate adjustment works as following:
+- If the packet loss of the last second is >= `criticalPacketLossThreshold`, the bitrate is dropped by `bitrateStepCriticalDown`.
+- Every 5 seconds we check the packet loss of the last 10 seconds.
+    - If it is >= `highPacketLossThreshold`, we decrease the bitrate by `bitrateStepDown`.
+    - If it is < `lowPacketLossThreshold`, we increase the bitrate by `bitrateStepUp`.
+
+This automatically adjusts bitrates to changing network conditions and keeps the connection stable.
 
 ```swift
 /// The bitrate does not go below this value.
@@ -249,6 +262,12 @@ public static var defaultForAudio: BitrateConfig {
 }
 ```
 
+## STUN / TURN Servers
+
+To work around NATs, WebRTC uses `STUN` and `TURN` servers to establish a peer-to-peer connection. It is highly recommended to provide both of them in the config.
+
+There are some servers you can rent for that, or you can use something like [`Coturn`](https://github.com/coturn/coturn) to host it on your own.
+
 ## Signaling Server
 
 Just like in WebRTC itself, you have to provide your own signaling server that helps to establish a peer-to-peer connection between two devices.
@@ -295,17 +314,70 @@ public protocol SignalingServerConnection: Sendable {
     func onConnectionUnsatisfied()
 }
 ```
+
+### CallManagerDelegate
+
+The `CallManagerDelegate` looks like this. Most of the times the delegate will be something like your view model.
+
+You will receive data channels only when the other peer is opening the channel. If your own peer opens a channel, you should keep your own reference.
+
+```swift
+public protocol CallManagerDelegate: AnyObject, Sendable {
+    
+    /// We received an incoming call.
+    ///
+    /// - Parameter peerID: The ID of the peer which is calling.
+    func didReceiveIncomingCall(from peerID: PeerID)
+    
+    /// Tells the delegate to show the local video stream.
+    ///
+    /// - Parameters:
+    ///   - videoTrack: The local video track.
+    func showLocalVideo(_ videoTrack: WRKRTCVideoTrack)
+    
+    /// Tells the delegate to show the remote video stream.
+    ///
+    /// - Parameters:
+    ///   - videoTrack: The remote video track.
+    func showRemoteVideo(_ videoTrack: WRKRTCVideoTrack)
+    
+    /// The call did start.
+    func callDidStart()
+    
+    /// The call did end.
+    func callDidEnd(withError error: CallManagerError?)
+    
+    /// Called when the peer created a new data channel.
+    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+}
+```
+
+### WebRTCVideoView
+
+Video tracks contain the local or remote video stream. 
+
+When receiving the video tracks, you can show them using the `WebRTCVideoView`. You pass an optional video track here. If nil is passed, just a black view will be visible.
+
+```swift
+WebRTCVideoView(videoTrack: viewModel.localVideoTrack)
+    .background(Color.black)
+    .cornerRadius(15)
+    .frame(maxHeight: 230)
+```
+
 # Custom Video and Audio Sources
 
 ## Custom Video Capturer
 
-When starting recording, you can provide a custom video capturer. This conforms to `RTCVideoCapturer`. That way, you can provide your own video if the default video capturer is not enough.
+Custom video capturers allow you to feed frames from external sources (e.g., screen capture or augmented reality content) into WebRTC streams. Another use case is when you directly need access to the pixel buffers.
+
+When starting recording, you can provide a custom video capturer. This conforms to `RTCVideoCapturer`.
 
 ```swift
 try await webRTCController.startRecording(videoCapturer: videoCapturer)
 ```
 
-This may look like this for example:
+Here is an example implementation:
 
 ```swift
 final class PixelBufferVideoCapturer: RTCVideoCapturer {
@@ -341,10 +413,11 @@ final class PixelBufferVideoCapturer: RTCVideoCapturer {
 
 ## Custom Audio Device
 
-You can also customize your audio source.
-This works with a custom audio device conforming to `RTCAudioDevice`.
+You can also customize your audio source. Custom audio devices allow you to provide audio from different sources. Maybe you want to edit the audio before sending it or you want direct access to the audio buffers to use it e.g. for speech recognition while calling.
 
-You pass it when initializing the Framework:
+You can create your custom audio device by conforming to `RTCAudioDevice`.
+
+You pass it when initializing the framework:
 
 ```swift
 WebRTCKit.initialize(
