@@ -193,6 +193,14 @@ public let audio: BitrateConfig
 
 There is an automatic Bitrate adjustment integrated that you can configure here.
 
+The Bitrate adjustment works as following:
+- If the packet loss of the last second is >= `criticalPacketLossThreshold`, the bitrate is dropped by `bitrateStepCriticalDown`.
+- Every 5 seconds we check the packet loss of the last 10 seconds.
+    - If it is >= `highPacketLossThreshold`, we decrease the bitrate by `bitrateStepDown`.
+    - If it is < `lowPacketLossThreshold`, we increase the bitrate by `bitrateStepUp`.
+
+This automatically adjusts bitrates to changing network conditions and keeps the connection stable.
+
 ```swift
 /// The bitrate does not go below this value.
 let minBitrate: Int
