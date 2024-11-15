@@ -6,6 +6,11 @@ WebRTCKit is a repository that simplifies WebRTC for the use in an iOS app. It i
 - Use your own signaling server using our delegate.
 - Automatic Bitrate adjustment based on network conditions.
 
+## TODO:
+- Add support for muting audio (including feedback when muted while speaking)
+- Add support for turning the camera on/off
+- Add better support for Swift Concurrency enforced by Swift 6 as we use a lot of `@unchecked Sendable` extensions currently.
+
 # WARNING
 
 This repository is still in alpha state. That means, that is it not 100% stable or tested and everything you see is subject to change.
@@ -95,7 +100,7 @@ extension MyClass: RTCDataChannelDelegate {
         
     }
     
-    func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
+    bfunc dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
         
     }
 }
@@ -290,3 +295,63 @@ public protocol SignalingServerConnection: Sendable {
     func onConnectionUnsatisfied()
 }
 ```
+# Custom Video and Audio Sources
+
+## Custom Video Capturer
+
+When starting recording, you can provide a custom video capturer. This conforms to `RTCVideoCapturer`. That way, you can provide your own video if the default video capturer is not enough.
+
+```swift
+try await webRTCController.startRecording(videoCapturer: videoCapturer)
+```
+
+This may look like this for example:
+
+```swift
+final class PixelBufferVideoCapturer: RTCVideoCapturer {
+    
+    private let context = CIContext()
+    
+    func captureFrame(_ pixelBuffer: CVPixelBuffer, imageOrientation: CGImagePropertyOrientation) {
+        let currentMediaTime = CACurrentMediaTime()
+        let time = CMTime(seconds: currentMediaTime, preferredTimescale: 1_000_000)
+        let seconds = CMTimeGetSeconds(time)
+        let timeStampNs = Int64(seconds * Double(NSEC_PER_SEC))
+        let buffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
+        let videoFrame = RTCVideoFrame(
+            buffer: buffer,
+            rotation: {
+                switch imageOrientation {
+                case .up, .upMirrored:
+                    return ._0
+                case .right, .rightMirrored:
+                    return ._90
+                case .down, .downMirrored:
+                    return ._180
+                case .left, .leftMirrored:
+                    return ._270
+                }
+            }(),
+            timeStampNs: timeStampNs
+        )
+        self.delegate?.capturer(self, didCapture: videoFrame)
+    }
+}
+```
+
+## Custom Audio Device
+
+You can also customize your audio source.
+This works with a custom audio device conforming to `RTCAudioDevice`.
+
+You pass it when initializing the Framework:
+
+```swift
+WebRTCKit.initialize(
+    signalingServer: signalingServer,
+    config: config,
+    audioDevice: audioDevice // pass your custom audio device here
+)
+```
+
+I recommend using `AVAudioSinkNode` for audio input and `AVAudioSourceNode` for playback.
