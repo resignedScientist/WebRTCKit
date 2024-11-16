@@ -4,7 +4,7 @@ import AVKit
 
 #warning("TODO: remove all unchecked sendables")
 
-//extension RTCVideoCapturer: @unchecked @retroactive Sendable {}
+extension RTCVideoCapturer: @unchecked @retroactive Sendable {}
 
 extension RTCSessionDescription: @unchecked @retroactive Sendable {}
 
