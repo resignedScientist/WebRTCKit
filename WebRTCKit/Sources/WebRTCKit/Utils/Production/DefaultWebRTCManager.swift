@@ -500,7 +500,17 @@ private extension DefaultWebRTCManager {
         rtcConfig.continualGatheringPolicy = .gatherContinually
         rtcConfig.iceCandidatePoolSize = 1
         rtcConfig.audioJitterBufferFastAccelerate = true
-        rtcConfig.iceServers = config.iceServers
+        rtcConfig.iceServers = config.iceServers.map {
+            RTCIceServer(
+                urlStrings: $0.urlStrings,
+                username: $0.username,
+                credential: $0.credential,
+                tlsCertPolicy: $0.tlsCertPolicy,
+                hostname: $0.hostname,
+                tlsAlpnProtocols: $0.tlsAlpnProtocols,
+                tlsEllipticCurves: $0.tlsEllipticCurves
+            )
+        }
         
         guard let peerConnection = factory.peerConnection(
             with: rtcConfig,

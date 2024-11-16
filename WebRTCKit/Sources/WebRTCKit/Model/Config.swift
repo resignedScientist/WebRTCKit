@@ -2,14 +2,12 @@ import WebRTC
 
 typealias Config = WebRTCKit.Config
 
-
-
 public extension WebRTCKit {
     
-    struct Config: Sendable {
+    struct Config: Sendable, Codable {
         
         /// The ICE-Servers to use for connection establishment.
-        public let iceServers: [RTCIceServer]
+        public let iceServers: [ICEServer]
         
         /// The number of seconds we can be in the connecting state before aborting the call.
         public let connectionTimeout: UInt64
@@ -30,7 +28,7 @@ public extension WebRTCKit {
         }
         
         public init(
-            iceServers: [RTCIceServer],
+            iceServers: [ICEServer],
             connectionTimeout: UInt64,
             video: BitrateConfig,
             audio: BitrateConfig
@@ -43,56 +41,7 @@ public extension WebRTCKit {
     }
 }
 
-extension Config: Codable {
-    
-    enum CodingKeys: CodingKey {
-        case iceServers
-        case connectionTimeout
-        case video
-        case audio
-    }
-    
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let iceServers = try container.decodeIfPresent([ICEServer].self, forKey: .iceServers) ?? []
-        
-        self.iceServers = iceServers.map {
-            RTCIceServer(
-                urlStrings: $0.urlStrings,
-                username: $0.username,
-                credential: $0.credential,
-                tlsCertPolicy: $0.tlsCertPolicy,
-                hostname: $0.hostname,
-                tlsAlpnProtocols: $0.tlsAlpnProtocols,
-                tlsEllipticCurves: $0.tlsEllipticCurves
-            )
-        }
-        self.connectionTimeout = try container.decode(UInt64.self, forKey: .connectionTimeout)
-        self.video = try container.decode(BitrateConfig.self, forKey: .video)
-        self.audio = try container.decode(BitrateConfig.self, forKey: .audio)
-    }
-    
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        let iceServers = iceServers.map {
-            ICEServer(
-                urlStrings: $0.urlStrings,
-                username: $0.username,
-                credential: $0.credential,
-                tlsCertPolicy: $0.tlsCertPolicy,
-                hostname: $0.hostname,
-                tlsAlpnProtocols: $0.tlsAlpnProtocols,
-                tlsEllipticCurves: $0.tlsEllipticCurves
-            )
-        }
-        
-        try container.encode(iceServers, forKey: .iceServers)
-        try container.encode(video, forKey: .video)
-    }
-}
-
-private struct ICEServer: Codable {
+public struct ICEServer: Codable, Sendable {
     let urlStrings: [String]
     let username: String?
     let credential: String?
@@ -100,11 +49,29 @@ private struct ICEServer: Codable {
     let hostname: String?
     let tlsAlpnProtocols: [String]?
     let tlsEllipticCurves: [String]?
+    
+    public init(
+        urlStrings: [String],
+        username: String? = nil,
+        credential: String? = nil,
+        tlsCertPolicy: RTCTlsCertPolicy = .secure,
+        hostname: String? = nil,
+        tlsAlpnProtocols: [String]? = nil,
+        tlsEllipticCurves: [String]? = nil
+    ) {
+        self.urlStrings = urlStrings
+        self.username = username
+        self.credential = credential
+        self.tlsCertPolicy = tlsCertPolicy
+        self.hostname = hostname
+        self.tlsAlpnProtocols = tlsAlpnProtocols
+        self.tlsEllipticCurves = tlsEllipticCurves
+    }
 }
 
 extension ICEServer {
     
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.urlStrings = try container.decode([String].self, forKey: .urlStrings)
         self.username = try container.decodeIfPresent(String.self, forKey: .username)

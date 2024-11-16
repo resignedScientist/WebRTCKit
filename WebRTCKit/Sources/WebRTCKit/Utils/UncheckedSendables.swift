@@ -8,8 +8,6 @@ extension RTCVideoCapturer: @unchecked @retroactive Sendable {}
 
 extension RTCSessionDescription: @unchecked @retroactive Sendable {}
 
-extension RTCIceServer: @unchecked @retroactive Sendable {}
-
 extension CXCallAction: @unchecked @retroactive Sendable {}
 
 extension RTCRtpSender: @unchecked @retroactive Sendable {}
