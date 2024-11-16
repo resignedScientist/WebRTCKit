@@ -56,7 +56,7 @@ protocol WRKRTCPeerConnection: Sendable {
     func restartIce()
     
     /// Gather statistic through the v2 statistics API.
-    func statistics() async -> RTCStatisticsReport
+    func statistics() async -> StatisticsReport
 }
 
 final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
@@ -150,8 +150,9 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
         peerConnection.restartIce()
     }
     
-    func statistics() async -> RTCStatisticsReport {
-        await peerConnection.statistics()
+    nonisolated func statistics() async -> StatisticsReport {
+        let statistics = await peerConnection.statistics()
+        return StatisticsReport(statistics: statistics.statistics)
     }
 }
 
