@@ -26,8 +26,6 @@ extension RTCAudioSession: @unchecked @retroactive Sendable {}
 
 extension RTCAudioTrack: @unchecked @retroactive Sendable {}
 
-extension RTCPeerConnectionState: @unchecked @retroactive Sendable {}
-
 extension RTCMediaConstraints: @unchecked @retroactive Sendable {}
 
 extension RTCPeerConnection: @unchecked @retroactive Sendable {}
