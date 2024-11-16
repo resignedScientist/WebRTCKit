@@ -564,7 +564,7 @@ private extension DefaultWebRTCManager {
     func sendOffer(to peerID: PeerID, peerConnection: WRKRTCPeerConnection, iceRestart: Bool = false) async throws {
         
         // create an offer
-        let offerConstraints = RTCMediaConstraints(
+        let offerConstraints = MediaConstraints(
             mandatoryConstraints: [
                 kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueTrue,
                 kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueTrue
@@ -588,7 +588,7 @@ private extension DefaultWebRTCManager {
     
     func sendAnswer(to peerID: PeerID, peerConnection: WRKRTCPeerConnection) async throws {
         
-        let answerConstraints = RTCMediaConstraints(
+        let answerConstraints = MediaConstraints(
             mandatoryConstraints: [
                 kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueTrue,
                 kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueTrue
