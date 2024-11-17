@@ -14,6 +14,4 @@ extension CXProvider: @unchecked @retroactive Sendable {}
 
 extension AVCaptureDevice.Format: @unchecked @retroactive Sendable {}
 
-extension RTCRtpSender: @unchecked @retroactive Sendable {}
-
 extension RTCAudioSessionConfiguration: @unchecked @retroactive Sendable {}

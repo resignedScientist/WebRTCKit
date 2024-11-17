@@ -19,10 +19,10 @@ protocol WRKRTCPeerConnection: Sendable {
     /// Gets all RTCRtpSenders associated with this peer connection.
     /// Note: reading this property returns different instances of RTCRtpSender.
     /// Use isEqual: instead of == to compare RTCRtpSender instances.
-    var senders: [RTCRtpSender] { get }
+    var senders: [RtpSender] { get }
     
     @discardableResult
-    func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RTCRtpSender?
+    func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender?
     
     /// Provide a remote candidate to the ICE Agent.
     func add(_ candidate: ICECandidate) async throws
@@ -103,8 +103,10 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
         _peerConnection.signalingState
     }
     
-    var senders: [RTCRtpSender] {
-        _peerConnection.senders
+    var senders: [RtpSender] {
+        _peerConnection.senders.map {
+            RtpSender(sender: $0)
+        }
     }
     
     init(_ peerConnection: RTCPeerConnection, delegate: WRKRTCPeerConnectionDelegate? = nil) {
@@ -114,15 +116,23 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
         _peerConnection.delegate = self
     }
     
-    func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RTCRtpSender? {
+    func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender? {
         return await withCheckedContinuation { continuation in
             queue.async {
                 if let audioTrack = (track as? WRKRTCAudioTrackImpl)?.audioTrack {
-                    let sender = self._peerConnection.add(audioTrack, streamIds: streamIds)
-                    continuation.resume(returning: sender)
+                    if let sender = self._peerConnection.add(audioTrack, streamIds: streamIds) {
+                        let rtpSender = RtpSender(sender: sender)
+                        continuation.resume(returning: rtpSender)
+                    } else {
+                        continuation.resume(returning: nil)
+                    }
                 } else if let videoTrack = (track as? WRKRTCVideoTrackImpl)?.videoTrack {
-                    let sender = self._peerConnection.add(videoTrack, streamIds: streamIds)
-                    continuation.resume(returning: sender)
+                    if let sender = self._peerConnection.add(videoTrack, streamIds: streamIds) {
+                        let rtpSender = RtpSender(sender: sender)
+                        continuation.resume(returning: rtpSender)
+                    } else {
+                        continuation.resume(returning: nil)
+                    }
                 } else {
                     continuation.resume(returning: nil)
                 }
