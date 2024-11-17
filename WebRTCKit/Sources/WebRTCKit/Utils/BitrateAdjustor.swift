@@ -101,6 +101,9 @@ private extension BitrateAdjustorImpl {
     
     func fetchStats(peerConnection: WRKRTCPeerConnection, for type: BitrateType) async -> NetworkDataPoint? {
         let report = await peerConnection.statistics()
+        
+        guard !report.statistics.isEmpty else { return nil }
+        
         var packetsLost: Int?
         var packetsSent: Int?
         
