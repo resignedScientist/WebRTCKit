@@ -266,12 +266,16 @@ extension DefaultVoIPCallProvider: CXProviderDelegate {
     
     nonisolated func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
         print("ℹ️ VoIPCallProvider - Audio Session Activated")
-        activateAudioSession()
+        Task {
+            await activateAudioSession()
+        }
     }
     
     nonisolated func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
         print("ℹ️ VoIPCallProvider - Audio Session Deactivated")
-        deactivateAudioSession()
+        Task {
+            await deactivateAudioSession()
+        }
     }
 }
 
@@ -295,18 +299,18 @@ private extension DefaultVoIPCallProvider {
         self.localPeerID = localPeerID
     }
     
-    nonisolated func activateAudioSession() {
-        setupAudioConfiguration()
-        setAudioSessionActive(true)
+    nonisolated func activateAudioSession() async {
+        await setupAudioConfiguration()
+        await setAudioSessionActive(true)
     }
     
-    nonisolated func deactivateAudioSession() {
+    nonisolated func deactivateAudioSession() async {
         resetAudioConfiguration()
-        setAudioSessionActive(false)
+        await setAudioSessionActive(false)
     }
     
-    nonisolated func setupAudioConfiguration() {
-        rtcAudioSession.lockForConfiguration()
+    nonisolated func setupAudioConfiguration() async {
+        await rtcAudioSession.lockForConfiguration()
         
         let configuration = RTCAudioSessionConfiguration.webRTC()
         configuration.categoryOptions = [
@@ -318,12 +322,12 @@ private extension DefaultVoIPCallProvider {
         ]
         
         do {
-            try rtcAudioSession.setConfiguration(configuration)
+            try await rtcAudioSession.setConfiguration(configuration)
         } catch {
             print("⚠️ VoIPCallProvider - Failed to configure audio session: \(error)")
         }
         
-        rtcAudioSession.unlockForConfiguration()
+        await rtcAudioSession.unlockForConfiguration()
     }
     
     nonisolated func resetAudioConfiguration() {
@@ -339,14 +343,14 @@ private extension DefaultVoIPCallProvider {
         }
     }
     
-    nonisolated func setAudioSessionActive(_ active: Bool) {
-        rtcAudioSession.lockForConfiguration()
+    nonisolated func setAudioSessionActive(_ active: Bool) async {
+        await rtcAudioSession.lockForConfiguration()
         do {
-            try rtcAudioSession.setActive(active)
+            try await rtcAudioSession.setActive(active)
             rtcAudioSession.isAudioEnabled = active
         } catch {
             print("⚠️ VoIPCallProvider - Failed to set audio session active (\(active)): \(error)")
         }
-        rtcAudioSession.unlockForConfiguration()
+        await rtcAudioSession.unlockForConfiguration()
     }
 }
