@@ -51,57 +51,84 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     func setConfiguration(_ configuration: RTCAudioSessionConfiguration) throws
 }
 
-final class WRKRTCAudioSessionImpl: WRKRTCAudioSession {
+final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
-    let audioSession: RTCAudioSession
+    private let _audioSession: RTCAudioSession
+    private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCAudioSession")
+    
+    var audioSession: RTCAudioSession {
+        queue.sync {
+            _audioSession
+        }
+    }
     
     var isAudioEnabled: Bool {
         get {
-            audioSession.isAudioEnabled
+            queue.sync {
+                _audioSession.isAudioEnabled
+            }
         }
         set {
-            audioSession.isAudioEnabled = newValue
+            queue.sync {
+                _audioSession.isAudioEnabled = newValue
+            }
         }
     }
     
     var useManualAudio: Bool {
         get {
-            audioSession.useManualAudio
+            queue.sync {
+                _audioSession.useManualAudio
+            }
         }
         set {
-            audioSession.useManualAudio = newValue
+            queue.sync {
+                _audioSession.useManualAudio = newValue
+            }
         }
     }
     
     init(_ audioSession: RTCAudioSession) {
-        self.audioSession = audioSession
+        self._audioSession = audioSession
     }
     
     func audioSessionDidActivate(_ session: any WRKAVAudioSession) {
-        if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
-            audioSession.audioSessionDidActivate(session)
+        queue.sync {
+            if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
+                _audioSession.audioSessionDidActivate(session)
+            }
         }
     }
     
     func audioSessionDidDeactivate(_ session: any WRKAVAudioSession) {
-        if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
-            audioSession.audioSessionDidDeactivate(session)
+        queue.sync {
+            if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
+                _audioSession.audioSessionDidDeactivate(session)
+            }
         }
     }
     
     func lockForConfiguration() {
-        audioSession.lockForConfiguration()
+        queue.sync {
+            _audioSession.lockForConfiguration()
+        }
     }
     
     func unlockForConfiguration() {
-        audioSession.unlockForConfiguration()
+        queue.sync {
+            _audioSession.unlockForConfiguration()
+        }
     }
     
     func setActive(_ active: Bool) throws {
-        try audioSession.setActive(active)
+        try queue.sync {
+            try _audioSession.setActive(active)
+        }
     }
     
     func setConfiguration(_ configuration: RTCAudioSessionConfiguration) throws {
-        try audioSession.setConfiguration(configuration)
+        try queue.sync {
+            try _audioSession.setConfiguration(configuration)
+        }
     }
 }
