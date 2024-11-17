@@ -230,6 +230,7 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     }
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
+        let dataChannel = WRKDataChannelImpl(dataChannel)
         Task { [weak self] in
             guard let self else { return }
             await delegate?.peerConnection(self, didOpen: dataChannel)

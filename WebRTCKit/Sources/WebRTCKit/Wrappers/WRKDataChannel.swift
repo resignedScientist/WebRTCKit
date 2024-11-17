@@ -1,8 +1,8 @@
 import WebRTC
 
-public protocol WRKDataChannel: Actor {
+public protocol WRKDataChannel: AnyObject, Sendable {
     
-    var label: String { get }
+    nonisolated var label: String { get }
     
     var readyState: RTCDataChannelState { get }
     
@@ -12,25 +12,33 @@ public protocol WRKDataChannel: Actor {
     func sendData(_ data: RTCDataBuffer) -> Bool
 }
 
-actor WRKDataChannelImpl: WRKDataChannel {
+final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     
     let dataChannel: RTCDataChannel
+    let queue = DispatchQueue(label: "com.webrtckit.WRKDataChannel")
     
-    var label: String { dataChannel.label }
+    nonisolated let label: String
     
     var readyState: RTCDataChannelState {
-        dataChannel.readyState
+        queue.sync {
+            dataChannel.readyState
+        }
     }
     
     init(_ dataChannel: RTCDataChannel) {
         self.dataChannel = dataChannel
+        self.label = dataChannel.label
     }
     
     func setDelegate(_ delegate: RTCDataChannelDelegate?) {
-        dataChannel.delegate = delegate
+        queue.sync {
+            dataChannel.delegate = delegate
+        }
     }
     
     func sendData(_ data: RTCDataBuffer) -> Bool {
-        dataChannel.sendData(data)
+        queue.sync {
+            dataChannel.sendData(data)
+        }
     }
 }

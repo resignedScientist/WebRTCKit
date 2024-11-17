@@ -31,5 +31,5 @@ protocol WRKRTCPeerConnectionDelegate: AnyObject, Sendable {
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [ICECandidate])
     
     /// New data channel has been opened.
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: RTCDataChannel)
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: WRKDataChannel)
 }

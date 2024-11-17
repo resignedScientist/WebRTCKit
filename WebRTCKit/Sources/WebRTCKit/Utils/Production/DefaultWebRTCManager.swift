@@ -458,12 +458,10 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         print("ℹ️ ICE candidates removed.")
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
+    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: WRKDataChannel) {
         Task { [weak self] in
             print("ℹ️ New data channel opened - label: \(dataChannel.label)")
-            await self?.delegate?.didReceiveDataChannel(
-                WRKDataChannelImpl(dataChannel)
-            )
+            await self?.delegate?.didReceiveDataChannel(dataChannel)
         }
     }
 }
