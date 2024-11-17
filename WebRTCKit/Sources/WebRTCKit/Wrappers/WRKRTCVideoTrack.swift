@@ -22,7 +22,7 @@ final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
     
     func add(_ renderer: RTCVideoRenderer) {
         queue.sync {
-            videoTrack.add(renderer)
+            _videoTrack.add(renderer)
         }
     }
 }

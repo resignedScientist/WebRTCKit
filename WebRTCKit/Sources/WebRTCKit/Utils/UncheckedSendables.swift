@@ -13,3 +13,5 @@ extension CXCallController: @unchecked @retroactive Sendable {}
 extension CXProvider: @unchecked @retroactive Sendable {}
 
 extension AVCaptureDevice.Format: @unchecked @retroactive Sendable {}
+
+extension RTCRtpSender: @unchecked @retroactive Sendable {}

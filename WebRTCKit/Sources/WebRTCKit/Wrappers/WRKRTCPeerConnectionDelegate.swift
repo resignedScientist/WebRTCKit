@@ -22,7 +22,7 @@ protocol WRKRTCPeerConnectionDelegate: AnyObject, Sendable {
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceGatheringState)
     
     /// Called any time the PeerConnectionState changes.
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState)
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCPeerConnectionState)
     
     /// New ice candidate has been found.
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: ICECandidate)

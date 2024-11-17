@@ -84,8 +84,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         // add the media stream to the peer connection
         if let localAudioTrack, let localVideoTrack {
-            peerConnection.add(localAudioTrack, streamIds: ["localStream"])
-            peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+            await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
+            await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
         } else {
             await addMediaStream(to: peerConnection)
         }
@@ -424,7 +424,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
+    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCPeerConnectionState) {
         Task { @WebRTCActor in
             print("ℹ️ Peer connection state: \(newState)")
             switch newState {
@@ -544,8 +544,8 @@ private extension DefaultWebRTCManager {
         let localAudioTrack = factory.audioTrack(with: audioSource, trackId: "localAudioTrack")
         
         // add tracks to the peer connection
-        peerConnection.add(localVideoTrack, streamIds: ["localStream"])
-        peerConnection.add(localAudioTrack, streamIds: ["localStream"])
+        await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
         
         // set audio & video encoding parameters
         bitrateAdjustor.setStartEncodingParameters(peerConnection: peerConnection)
