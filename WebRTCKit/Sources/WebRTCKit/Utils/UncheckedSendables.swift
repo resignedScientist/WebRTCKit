@@ -12,8 +12,6 @@ extension CXCallController: @unchecked @retroactive Sendable {}
 
 extension CXProvider: @unchecked @retroactive Sendable {}
 
-extension RTCMediaStream: @unchecked @retroactive Sendable {}
-
 extension RTCAudioSession: @unchecked @retroactive Sendable {}
 
 extension RTCAudioTrack: @unchecked @retroactive Sendable {}

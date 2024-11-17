@@ -170,16 +170,18 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
+        let stream = WRKMediaStreamImpl(stream)
         Task { [weak self] in
             guard let self else { return }
-            await delegate?.peerConnection(self, didAdd: WRKMediaStreamImpl(stream))
+            await delegate?.peerConnection(self, didAdd: stream)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
+        let stream = WRKMediaStreamImpl(stream)
         Task { [weak self] in
             guard let self else { return }
-            await delegate?.peerConnection(self, didRemove: WRKMediaStreamImpl(stream))
+            await delegate?.peerConnection(self, didRemove: stream)
         }
     }
     
