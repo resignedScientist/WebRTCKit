@@ -6,8 +6,6 @@ import AVKit
 
 extension RTCVideoCapturer: @unchecked @retroactive Sendable {}
 
-extension RTCSessionDescription: @unchecked @retroactive Sendable {}
-
 extension CXCallAction: @unchecked @retroactive Sendable {}
 
 extension RTCIceCandidate: @unchecked @retroactive Sendable {}

@@ -26,7 +26,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var cachedICECandidates = ICECandidateCache()
     
     /// The offer SDP coming from the other peer that is cached until the user answers the call.
-    private var receivedOfferSDP: RTCSessionDescription?
+    private var receivedOfferSDP: SessionDescription?
     
     /// Does this peer should act 'polite' as defined in the 'perfect negotiation' pattern?
     private var isPolite = false
@@ -580,7 +580,7 @@ private extension DefaultWebRTCManager {
         
         // encode the offer
         let encoder = JSONEncoder()
-        let offerData = try encoder.encode(SessionDescription(from: sdp))
+        let offerData = try encoder.encode(sdp)
         
         // send the offer
         try await signalingServer.sendSignal(offerData, to: peerID)
@@ -601,7 +601,7 @@ private extension DefaultWebRTCManager {
         try await peerConnection.setLocalDescription(answer)
         
         let encoder = JSONEncoder()
-        let answerData = try encoder.encode(SessionDescription(from: answer))
+        let answerData = try encoder.encode(answer)
         
         try await signalingServer.sendSignal(answerData, to: peerID)
         
@@ -683,6 +683,8 @@ private extension DefaultWebRTCManager {
             isPreparingOffer = false
         }
         
+        let sdp = SessionDescription(from: sdp)
+        
         // We did already generate a local offer while receiving an offer from our peer.
         if peerConnection.signalingState != .stable {
             print("ℹ️ Received a remote offer while we have already generated a local offer.")
@@ -714,6 +716,8 @@ private extension DefaultWebRTCManager {
     }
     
     func didReceiveAnswer(_ sdp: RTCSessionDescription, peerConnection: WRKRTCPeerConnection) async throws {
+        
+        let sdp = SessionDescription(from: sdp)
         
         // Is it the first answer? Otherwise it is an ICE-restart answer.
         let remoteDescription = peerConnection.remoteDescription

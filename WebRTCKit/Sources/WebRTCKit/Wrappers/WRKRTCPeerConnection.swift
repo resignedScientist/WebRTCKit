@@ -29,20 +29,20 @@ protocol WRKRTCPeerConnection: Sendable {
     func add(_ candidate: RTCIceCandidate) async throws
     
     /// Generate an SDP offer.
-    func offer(for constraints: MediaConstraints) async throws -> RTCSessionDescription
+    nonisolated func offer(for constraints: MediaConstraints) async throws -> SessionDescription
     
     /// Creates an offer or answer (depending on current signaling state) and sets
     /// it as the local session description.
     func setLocalDescription() async throws
     
     /// Apply the supplied RTCSessionDescription as the local description.
-    func setLocalDescription(_ sdp: RTCSessionDescription) async throws
+    func setLocalDescription(_ sdp: SessionDescription) async throws
     
     /// Apply the supplied RTCSessionDescription as the remote description.
-    func setRemoteDescription(_ sdp: RTCSessionDescription) async throws
+    func setRemoteDescription(_ sdp: SessionDescription) async throws
     
     /// Generate an SDP answer.
-    func answer(for constraints: MediaConstraints) async throws -> RTCSessionDescription
+    nonisolated func answer(for constraints: MediaConstraints) async throws -> SessionDescription
     
     /// Create a new data channel with the given label and configuration.
     func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> WRKDataChannel?
@@ -109,30 +109,32 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
         try await peerConnection.add(candidate)
     }
     
-    func offer(for constraints: MediaConstraints) async throws -> RTCSessionDescription {
-        try await peerConnection.offer(for: RTCMediaConstraints(
+    nonisolated func offer(for constraints: MediaConstraints) async throws -> SessionDescription {
+        let sdp = try await peerConnection.offer(for: RTCMediaConstraints(
             mandatoryConstraints: constraints.mandatoryConstraints,
             optionalConstraints: constraints.optionalConstraints
         ))
+        return SessionDescription(from: sdp)
     }
     
     func setLocalDescription() async throws {
         try await peerConnection.setLocalDescription()
     }
     
-    func setLocalDescription(_ sdp: RTCSessionDescription) async throws {
-        try await peerConnection.setLocalDescription(sdp)
+    func setLocalDescription(_ sdp: SessionDescription) async throws {
+        try await peerConnection.setLocalDescription(sdp.toRTCSessionDescription())
     }
     
-    func setRemoteDescription(_ sdp: RTCSessionDescription) async throws {
-        try await peerConnection.setRemoteDescription(sdp)
+    func setRemoteDescription(_ sdp: SessionDescription) async throws {
+        try await peerConnection.setRemoteDescription(sdp.toRTCSessionDescription())
     }
     
-    func answer(for constraints: MediaConstraints) async throws -> RTCSessionDescription {
-        try await peerConnection.answer(for: RTCMediaConstraints(
+    func answer(for constraints: MediaConstraints) async throws -> SessionDescription {
+        let sdp = try await peerConnection.answer(for: RTCMediaConstraints(
             mandatoryConstraints: constraints.mandatoryConstraints,
             optionalConstraints: constraints.optionalConstraints
         ))
+        return SessionDescription(from: sdp)
     }
     
     func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> WRKDataChannel? {
