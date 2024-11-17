@@ -166,7 +166,9 @@ final class WebRTCControllerImpl: WebRTCController {
     }
     
     func startRecording(videoCapturer: RTCVideoCapturer) async throws {
-        try await container.webRTCManager.startRecording(videoCapturer: videoCapturer)
+        try await container.webRTCManager.startRecording(
+            videoCapturer: VideoCapturer(videoCapturer)
+        )
     }
     
     func startRecording() async throws {

@@ -13,7 +13,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private let bitrateAdjustor: BitrateAdjustor = BitrateAdjustorImpl()
     
     private var peerConnection: WRKRTCPeerConnection?
-    private var videoCapturer: RTCVideoCapturer?
+    private var videoCapturer: VideoCapturer?
     private var videoSource: WRKRTCVideoSource?
     private var remoteAudioTrack: WRKRTCAudioTrack?
     private var remoteVideoTrack: WRKRTCVideoTrack?
@@ -93,15 +93,17 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         return peerID
     }
     
-    func startRecording(videoCapturer: RTCVideoCapturer? = nil) async throws {
+    func startRecording(videoCapturer: VideoCapturer? = nil) async throws {
         guard peerConnection != nil else {
             throw WebRTCManagerError.critical("⚠️ startRecording failed; Missing peer connection. Did you call setup()?")
         }
         
-        let videoDevice = AVCaptureDevice.default(
-            .builtInWideAngleCamera,
-            for: .video,
-            position: .front
+        let videoDevice = CaptureDevice(
+            AVCaptureDevice.default(
+                .builtInWideAngleCamera,
+                for: .video,
+                position: .front
+            )
         )
         
         if videoDevice == nil {
@@ -114,7 +116,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             
             guard let videoSource else { return }
             
-            let videoCapturer = PreviewVideoCapturer(delegate: videoSource)
+            let videoCapturer = VideoCapturer(
+                PreviewVideoCapturer(delegate: videoSource)
+            )
             
             // start playing video
             try await videoCapturer.start()
@@ -137,12 +141,14 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             else { return }
             
             // set resolution
-            try videoDevice.lockForConfiguration()
+            try await videoDevice.lockForConfiguration()
             videoDevice.activeFormat = format
-            videoDevice.unlockForConfiguration()
+            await videoDevice.unlockForConfiguration()
             
             // setup video capturer
-            let videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+            let videoCapturer = VideoCapturer(
+                RTCCameraVideoCapturer(delegate: videoSource)
+            )
             self.videoCapturer = videoCapturer
             
             // start capturing video

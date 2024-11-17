@@ -28,10 +28,10 @@ final class PreviewVideoCapturer: RTCVideoCapturer, @unchecked Sendable {
         try await startReadingAsset()
     }
     
-    func stop() async {
+    func stop() {
         guard isRunning else { return }
         isRunning = false
-        await player?.pause()
+        player?.pause()
         player = nil
         videoOutput = nil
     }
