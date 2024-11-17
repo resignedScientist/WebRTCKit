@@ -18,6 +18,4 @@ extension RTCAudioTrack: @unchecked @retroactive Sendable {}
 
 extension RTCPeerConnection: @unchecked @retroactive Sendable {}
 
-extension RTCVideoTrack: @unchecked @retroactive Sendable {}
-
 extension AVCaptureDevice.Format: @unchecked @retroactive Sendable {}
