@@ -146,10 +146,11 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     }
     
     func setConfiguration(_ configuration: RTCAudioSessionConfiguration) async throws {
+        let config = AudioSessionConfiguration(from: configuration)
         return try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 do {
-                    try self._audioSession.setConfiguration(configuration)
+                    try self._audioSession.setConfiguration(config.toRTCAudioSessionConfiguration())
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
