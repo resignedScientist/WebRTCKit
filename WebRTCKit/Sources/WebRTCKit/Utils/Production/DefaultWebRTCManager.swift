@@ -438,14 +438,14 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: ICECandidate) {
         Task { [weak self] in
             
             guard let remotePeerID = await self?.remotePeerID else { return }
             
             do {
                 let encoder = JSONEncoder()
-                let candidateData = try encoder.encode(ICECandidate(from: candidate))
+                let candidateData = try encoder.encode(candidate)
                 
                 try await self?.signalingServer.sendICECandidate(candidateData, to: remotePeerID)
             } catch {
@@ -454,7 +454,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
+    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [ICECandidate]) {
         print("ℹ️ ICE candidates removed.")
     }
     
@@ -625,7 +625,7 @@ private extension DefaultWebRTCManager {
             let decoder = JSONDecoder()
             let candidate = try decoder.decode(ICECandidate.self, from: candidateData)
             
-            try await peerConnection.add(candidate.toRTCIceCandidate())
+            try await peerConnection.add(candidate)
             
             print("ℹ️ Successfully evaluated ICE candidate.")
         } catch {

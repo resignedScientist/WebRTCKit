@@ -26,7 +26,7 @@ protocol WRKRTCPeerConnection: Sendable {
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) -> RTCRtpSender?
     
     /// Provide a remote candidate to the ICE Agent.
-    func add(_ candidate: RTCIceCandidate) async throws
+    func add(_ candidate: ICECandidate) async throws
     
     /// Generate an SDP offer.
     nonisolated func offer(for constraints: MediaConstraints) async throws -> SessionDescription
@@ -105,8 +105,8 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
         return nil
     }
     
-    func add(_ candidate: RTCIceCandidate) async throws {
-        try await peerConnection.add(candidate)
+    func add(_ candidate: ICECandidate) async throws {
+        try await peerConnection.add(candidate.toRTCIceCandidate())
     }
     
     nonisolated func offer(for constraints: MediaConstraints) async throws -> SessionDescription {
@@ -212,6 +212,7 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        let candidate = ICECandidate(from: candidate)
         Task { [weak self] in
             guard let self else { return }
             await delegate?.peerConnection(self, didGenerate: candidate)
@@ -219,6 +220,9 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     }
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
+        let candidates = candidates.map {
+            ICECandidate(from: $0)
+        }
         Task { [weak self] in
             guard let self else { return }
             await delegate?.peerConnection(self, didRemove: candidates)

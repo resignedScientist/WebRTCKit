@@ -25,10 +25,10 @@ protocol WRKRTCPeerConnectionDelegate: AnyObject, Sendable {
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState)
     
     /// New ice candidate has been found.
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: RTCIceCandidate)
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: ICECandidate)
     
     /// Called when a group of local Ice candidates have been removed.
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [RTCIceCandidate])
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [ICECandidate])
     
     /// New data channel has been opened.
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: RTCDataChannel)
