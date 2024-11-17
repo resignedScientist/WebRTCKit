@@ -9,7 +9,7 @@ public protocol WRKDataChannel: AnyObject, Sendable {
     func setDelegate(_ delegate: RTCDataChannelDelegate?)
     
     @discardableResult
-    func sendData(_ data: RTCDataBuffer) -> Bool
+    func sendData(_ data: Data) async -> Bool
 }
 
 final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
@@ -36,9 +36,13 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
         }
     }
     
-    func sendData(_ data: RTCDataBuffer) -> Bool {
-        queue.sync {
-            dataChannel.sendData(data)
+    func sendData(_ data: Data) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                let buffer = RTCDataBuffer(data: data, isBinary: true)
+                let success = self.dataChannel.sendData(buffer)
+                continuation.resume(returning: success)
+            }
         }
     }
 }
