@@ -90,11 +90,17 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         }
         
         #if targetEnvironment(simulator)
-        await provider(provider, perform: startCallAction)
+        await provider(
+            provider,
+            perform: StartCallAction(from: startCallAction)
+        )
         #endif
         
         if doNotDisturbIsEnabled {
-            await provider(provider, perform: startCallAction)
+            await provider(
+                provider,
+                perform: StartCallAction(from: startCallAction)
+            )
         } else {
             let transaction = CXTransaction(action: startCallAction)
             try await callController.request(transaction)
@@ -135,11 +141,17 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         let answerCallAction = CXAnswerCallAction(call: uuid)
         
         #if targetEnvironment(simulator)
-        await provider(provider, perform: answerCallAction)
+        await provider(
+            provider,
+            perform: AnswerCallAction(from: answerCallAction)
+        )
         #endif
         
         if doNotDisturbIsEnabled {
-            await provider(provider, perform: answerCallAction)
+            await provider(
+                provider,
+                perform: AnswerCallAction(from: answerCallAction)
+            )
         } else {
             let transaction = CXTransaction(action: answerCallAction)
             try await callController.request(transaction)
@@ -178,11 +190,17 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         let endCallAction = CXEndCallAction(call: uuid)
         
         #if targetEnvironment(simulator)
-        await provider(provider, perform: endCallAction)
+        await provider(
+            provider,
+            perform: EndCallAction(from: endCallAction)
+        )
         #endif
         
         if doNotDisturbIsEnabled {
-            await provider(provider, perform: endCallAction)
+            await provider(
+                provider,
+                perform: EndCallAction(from: endCallAction)
+            )
         } else {
             let transaction = CXTransaction(action: endCallAction)
             try await callController.request(transaction)
@@ -201,7 +219,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         print("ℹ️ CXProvider did reset.")
     }
     
-    func provider(_ provider: WRKCXProvider, perform action: CXStartCallAction) async {
+    func provider(_ provider: WRKCXProvider, perform action: StartCallAction) async {
         let peerID = action.handle.value
         do {
             let localPeerID = try await webRTCManager.setup()
@@ -216,7 +234,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         }
     }
     
-    func provider(_ provider: WRKCXProvider, perform action: CXAnswerCallAction) async {
+    func provider(_ provider: WRKCXProvider, perform action: AnswerCallAction) async {
         do {
             try await webRTCManager.answerCall()
             action.fulfill()
@@ -228,7 +246,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         }
     }
     
-    func provider(_ provider: WRKCXProvider, perform action: CXEndCallAction) async {
+    func provider(_ provider: WRKCXProvider, perform action: EndCallAction) async {
         #if targetEnvironment(simulator)
         guard let endCallHandler else {
             action.fulfill()

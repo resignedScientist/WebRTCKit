@@ -24,11 +24,10 @@ final class WRKCXProvider: NSObject, Sendable {
     ///
     /// Completion block will be called on delegate queue, if specified, otherwise on a private serial queue.
     func reportNewIncomingCall(with UUID: UUID, update: CXCallUpdate) async throws {
-//        let update = CallUpdate(from: update)
         return try await withCheckedThrowingContinuation { continuation in
             provider.reportNewIncomingCall(
                 with: UUID,
-                update: update//.toCXCallUpdate()
+                update: update
             ) { error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -53,18 +52,21 @@ extension WRKCXProvider: @preconcurrency CXProviderDelegate {
     }
     
     func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
+        let action = StartCallAction(from: action)
         Task { @WebRTCActor in
             await delegate?.provider(self, perform: action)
         }
     }
     
     func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
+        let action = AnswerCallAction(from: action)
         Task { @WebRTCActor in
             await delegate?.provider(self, perform: action)
         }
     }
     
     func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
+        let action = EndCallAction(from: action)
         Task { @WebRTCActor in
             await delegate?.provider(self, perform: action)
         }
@@ -84,39 +86,6 @@ extension WRKCXProvider: @preconcurrency CXProviderDelegate {
 }
 
 // MARK: -
-
-struct CallUpdate: Sendable {
-    
-    let remoteHandle: CallHandle?
-    let localizedCallerName: String?
-    let supportsHolding: Bool
-    let supportsGrouping: Bool
-    let supportsUngrouping: Bool
-    let supportsDTMF: Bool
-    let hasVideo: Bool
-    
-    init(from update: CXCallUpdate) {
-        self.remoteHandle = CallHandle(from: update.remoteHandle)
-        self.localizedCallerName = update.localizedCallerName
-        self.supportsHolding = update.supportsHolding
-        self.supportsGrouping = update.supportsGrouping
-        self.supportsUngrouping = update.supportsUngrouping
-        self.supportsDTMF = update.supportsDTMF
-        self.hasVideo = update.hasVideo
-    }
-    
-    func toCXCallUpdate() -> CXCallUpdate {
-        let update = CXCallUpdate()
-        update.remoteHandle = remoteHandle?.toCXHandle()
-        update.localizedCallerName = localizedCallerName
-        update.supportsHolding = supportsHolding
-        update.supportsGrouping = supportsGrouping
-        update.supportsUngrouping = supportsUngrouping
-        update.supportsDTMF = supportsDTMF
-        update.hasVideo = hasVideo
-        return update
-    }
-}
 
 struct CallHandle: Sendable {
     let type: CXHandle.HandleType
@@ -147,11 +116,11 @@ protocol CallProviderDelegate: AnyObject, Sendable {
     
     func providerDidReset(_ provider: WRKCXProvider) async
     
-    func provider(_ provider: WRKCXProvider, perform action: CXStartCallAction) async
+    func provider(_ provider: WRKCXProvider, perform action: StartCallAction) async
     
-    func provider(_ provider: WRKCXProvider, perform action: CXAnswerCallAction) async
+    func provider(_ provider: WRKCXProvider, perform action: AnswerCallAction) async
     
-    func provider(_ provider: WRKCXProvider, perform action: CXEndCallAction) async
+    func provider(_ provider: WRKCXProvider, perform action: EndCallAction) async
     
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async
     
