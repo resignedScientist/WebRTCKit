@@ -7,5 +7,3 @@ import AVKit
 extension CXCallAction: @unchecked @retroactive Sendable {}
 
 extension CXCallController: @unchecked @retroactive Sendable {}
-
-extension CXProvider: @unchecked @retroactive Sendable {}

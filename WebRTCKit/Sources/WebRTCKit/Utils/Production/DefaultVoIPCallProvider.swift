@@ -6,7 +6,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     @Inject(\.webRTCManager) private var webRTCManager
     
-    private let provider: CXProvider
+    private let provider: WRKCXProvider
     private let callController: WRKCallController
     private let rtcAudioSession: WRKRTCAudioSession
     private var localPeerID: PeerID?
@@ -17,10 +17,10 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private var doNotDisturbIsEnabled = false
     
     init(
-        provider: CXProvider = {
+        provider: WRKCXProvider = {
             let configuration = CXProviderConfiguration()
             configuration.supportsVideo = true
-            return CXProvider(configuration: configuration)
+            return WRKCXProvider(configuration: configuration)
         }(),
         callController: WRKCallController = WRKCallControllerImpl(CXCallController()),
         rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl(.sharedInstance())
@@ -31,7 +31,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         
         super.init()
         
-        provider.setDelegate(self, queue: nil)
+        provider.setDelegate(self)
     }
     
     func reportIncomingCall(
@@ -90,11 +90,11 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         }
         
         #if targetEnvironment(simulator)
-        provider(provider, perform: startCallAction)
+        await provider(provider, perform: startCallAction)
         #endif
         
         if doNotDisturbIsEnabled {
-            provider(provider, perform: startCallAction)
+            await provider(provider, perform: startCallAction)
         } else {
             let transaction = CXTransaction(action: startCallAction)
             try await callController.request(transaction)
@@ -135,11 +135,11 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         let answerCallAction = CXAnswerCallAction(call: uuid)
         
         #if targetEnvironment(simulator)
-        provider(provider, perform: answerCallAction)
+        await provider(provider, perform: answerCallAction)
         #endif
         
         if doNotDisturbIsEnabled {
-            provider(provider, perform: answerCallAction)
+            await provider(provider, perform: answerCallAction)
         } else {
             let transaction = CXTransaction(action: answerCallAction)
             try await callController.request(transaction)
@@ -178,11 +178,11 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         let endCallAction = CXEndCallAction(call: uuid)
         
         #if targetEnvironment(simulator)
-        provider(provider, perform: endCallAction)
+        await provider(provider, perform: endCallAction)
         #endif
         
         if doNotDisturbIsEnabled {
-            provider(provider, perform: endCallAction)
+            await provider(provider, perform: endCallAction)
         } else {
             let transaction = CXTransaction(action: endCallAction)
             try await callController.request(transaction)
@@ -195,87 +195,75 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
 
 // MARK: - CXProviderDelegate
 
-extension DefaultVoIPCallProvider: CXProviderDelegate {
+extension DefaultVoIPCallProvider: CallProviderDelegate {
     
-    nonisolated func providerDidReset(_ provider: CXProvider) {
+    func providerDidReset(_ provider: WRKCXProvider) async {
         print("ℹ️ CXProvider did reset.")
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
-        
+    func provider(_ provider: WRKCXProvider, perform action: CXStartCallAction) async {
         let peerID = action.handle.value
-        
-        Task {
-            do {
-                let localPeerID = try await webRTCManager.setup()
-                await setLocalPeerID(localPeerID)
-                try await webRTCManager.startVideoCall(to: peerID)
-                action.fulfill()
-                await startCallHandler?(nil)
-            } catch {
-                print("⚠️ Start Call Action failed - \(error)")
-                action.fail()
-                await startCallHandler?(error)
-            }
+        do {
+            let localPeerID = try await webRTCManager.setup()
+            setLocalPeerID(localPeerID)
+            try await webRTCManager.startVideoCall(to: peerID)
+            action.fulfill()
+            startCallHandler?(nil)
+        } catch {
+            print("⚠️ Start Call Action failed - \(error)")
+            action.fail()
+            startCallHandler?(error)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
-        Task {
-            do {
-                try await webRTCManager.answerCall()
-                action.fulfill()
-                await answerCallHandler?(nil)
-            } catch {
-                print("⚠️ Answer Call Action failed - \(error)")
-                action.fail()
-                await answerCallHandler?(error)
-            }
+    func provider(_ provider: WRKCXProvider, perform action: CXAnswerCallAction) async {
+        do {
+            try await webRTCManager.answerCall()
+            action.fulfill()
+            answerCallHandler?(nil)
+        } catch {
+            print("⚠️ Answer Call Action failed - \(error)")
+            action.fail()
+            answerCallHandler?(error)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
-        Task {
-#if targetEnvironment(simulator)
-            guard let endCallHandler = await endCallHandler else {
-                action.fulfill()
-                return
-            }
-            do {
-                try await webRTCManager.stopVideoCall()
-                action.fulfill()
-                endCallHandler(nil)
-            } catch {
-                print("⚠️ End Call Action failed - \(error)")
-                action.fail()
-                endCallHandler(error)
-            }
-#else
-            do {
-                try await webRTCManager.stopVideoCall()
-                action.fulfill()
-                await endCallHandler?(nil)
-            } catch {
-                print("⚠️ End Call Action failed - \(error)")
-                action.fail()
-                await endCallHandler?(error)
-            }
-#endif
+    func provider(_ provider: WRKCXProvider, perform action: CXEndCallAction) async {
+        #if targetEnvironment(simulator)
+        guard let endCallHandler else {
+            action.fulfill()
+            return
         }
+        do {
+            try await webRTCManager.stopVideoCall()
+            action.fulfill()
+            endCallHandler(nil)
+        } catch {
+            print("⚠️ End Call Action failed - \(error)")
+            action.fail()
+            endCallHandler(error)
+        }
+        #else
+        do {
+            try await webRTCManager.stopVideoCall()
+            action.fulfill()
+            await endCallHandler?(nil)
+        } catch {
+            print("⚠️ End Call Action failed - \(error)")
+            action.fail()
+            await endCallHandler?(error)
+        }
+        #endif
     }
     
-    nonisolated func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
+    func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
         print("ℹ️ VoIPCallProvider - Audio Session Activated")
-        Task {
-            await activateAudioSession()
-        }
+        await activateAudioSession()
     }
     
-    nonisolated func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
+    func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
         print("ℹ️ VoIPCallProvider - Audio Session Deactivated")
-        Task {
-            await deactivateAudioSession()
-        }
+        await deactivateAudioSession()
     }
 }
 
