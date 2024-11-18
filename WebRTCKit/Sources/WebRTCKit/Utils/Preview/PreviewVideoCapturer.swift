@@ -109,8 +109,6 @@ private extension PreviewVideoCapturer {
             timeStampNs: Int64(timeStampNs)
         )
         
-        let imageSize = CIImage(cvImageBuffer: pixelBuffer).extent.size
-        
         // Send the frame to WebRTC
         delegate?.capturer(self, didCapture: videoFrame)
     }
