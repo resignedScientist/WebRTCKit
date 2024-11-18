@@ -6,7 +6,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     @Inject(\.webRTCManager) private var webRTCManager
     
-    private let provider: CXProvider
+    private let provider: WRKCXProvider
     private let callController: WRKCallController
     private let rtcAudioSession: WRKRTCAudioSession
     private var localPeerID: PeerID?
@@ -17,10 +17,10 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private var doNotDisturbIsEnabled = false
     
     init(
-        provider: CXProvider = {
+        provider: WRKCXProvider = {
             let configuration = CXProviderConfiguration()
             configuration.supportsVideo = true
-            return CXProvider(configuration: configuration)
+            return WRKCXProvider(configuration: configuration)
         }(),
         callController: WRKCallController = WRKCallControllerImpl(CXCallController()),
         rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl(.sharedInstance())
@@ -31,7 +31,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         
         super.init()
         
-        provider.setDelegate(self, queue: nil)
+        provider.setDelegate(self)
     }
     
     func reportIncomingCall(
@@ -90,11 +90,17 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         }
         
         #if targetEnvironment(simulator)
-        provider(provider, perform: startCallAction)
+        await provider(
+            provider,
+            perform: StartCallAction(from: startCallAction)
+        )
         #endif
         
         if doNotDisturbIsEnabled {
-            provider(provider, perform: startCallAction)
+            await provider(
+                provider,
+                perform: StartCallAction(from: startCallAction)
+            )
         } else {
             let transaction = CXTransaction(action: startCallAction)
             try await callController.request(transaction)
@@ -135,11 +141,17 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         let answerCallAction = CXAnswerCallAction(call: uuid)
         
         #if targetEnvironment(simulator)
-        provider(provider, perform: answerCallAction)
+        await provider(
+            provider,
+            perform: AnswerCallAction(from: answerCallAction)
+        )
         #endif
         
         if doNotDisturbIsEnabled {
-            provider(provider, perform: answerCallAction)
+            await provider(
+                provider,
+                perform: AnswerCallAction(from: answerCallAction)
+            )
         } else {
             let transaction = CXTransaction(action: answerCallAction)
             try await callController.request(transaction)
@@ -178,11 +190,17 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         let endCallAction = CXEndCallAction(call: uuid)
         
         #if targetEnvironment(simulator)
-        provider(provider, perform: endCallAction)
+        await provider(
+            provider,
+            perform: EndCallAction(from: endCallAction)
+        )
         #endif
         
         if doNotDisturbIsEnabled {
-            provider(provider, perform: endCallAction)
+            await provider(
+                provider,
+                perform: EndCallAction(from: endCallAction)
+            )
         } else {
             let transaction = CXTransaction(action: endCallAction)
             try await callController.request(transaction)
@@ -195,83 +213,75 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
 
 // MARK: - CXProviderDelegate
 
-extension DefaultVoIPCallProvider: CXProviderDelegate {
+extension DefaultVoIPCallProvider: CallProviderDelegate {
     
-    nonisolated func providerDidReset(_ provider: CXProvider) {
+    func providerDidReset(_ provider: WRKCXProvider) async {
         print("ℹ️ CXProvider did reset.")
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
-        
+    func provider(_ provider: WRKCXProvider, perform action: StartCallAction) async {
         let peerID = action.handle.value
-        
-        Task {
-            do {
-                let localPeerID = try await webRTCManager.setup()
-                await setLocalPeerID(localPeerID)
-                try await webRTCManager.startVideoCall(to: peerID)
-                action.fulfill()
-                await startCallHandler?(nil)
-            } catch {
-                print("⚠️ Start Call Action failed - \(error)")
-                action.fail()
-                await startCallHandler?(error)
-            }
+        do {
+            let localPeerID = try await webRTCManager.setup()
+            setLocalPeerID(localPeerID)
+            try await webRTCManager.startVideoCall(to: peerID)
+            action.fulfill()
+            startCallHandler?(nil)
+        } catch {
+            print("⚠️ Start Call Action failed - \(error)")
+            action.fail()
+            startCallHandler?(error)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
-        Task {
-            do {
-                try await webRTCManager.answerCall()
-                action.fulfill()
-                await answerCallHandler?(nil)
-            } catch {
-                print("⚠️ Answer Call Action failed - \(error)")
-                action.fail()
-                await answerCallHandler?(error)
-            }
+    func provider(_ provider: WRKCXProvider, perform action: AnswerCallAction) async {
+        do {
+            try await webRTCManager.answerCall()
+            action.fulfill()
+            answerCallHandler?(nil)
+        } catch {
+            print("⚠️ Answer Call Action failed - \(error)")
+            action.fail()
+            answerCallHandler?(error)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
-        Task {
-#if targetEnvironment(simulator)
-            guard let endCallHandler = await endCallHandler else {
-                action.fulfill()
-                return
-            }
-            do {
-                try await webRTCManager.stopVideoCall()
-                action.fulfill()
-                endCallHandler(nil)
-            } catch {
-                print("⚠️ End Call Action failed - \(error)")
-                action.fail()
-                endCallHandler(error)
-            }
-#else
-            do {
-                try await webRTCManager.stopVideoCall()
-                action.fulfill()
-                await endCallHandler?(nil)
-            } catch {
-                print("⚠️ End Call Action failed - \(error)")
-                action.fail()
-                await endCallHandler?(error)
-            }
-#endif
+    func provider(_ provider: WRKCXProvider, perform action: EndCallAction) async {
+        #if targetEnvironment(simulator)
+        guard let endCallHandler else {
+            action.fulfill()
+            return
         }
+        do {
+            try await webRTCManager.stopVideoCall()
+            action.fulfill()
+            endCallHandler(nil)
+        } catch {
+            print("⚠️ End Call Action failed - \(error)")
+            action.fail()
+            endCallHandler(error)
+        }
+        #else
+        do {
+            try await webRTCManager.stopVideoCall()
+            action.fulfill()
+            endCallHandler?(nil)
+        } catch {
+            print("⚠️ End Call Action failed - \(error)")
+            action.fail()
+            endCallHandler?(error)
+        }
+        #endif
     }
     
-    nonisolated func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
+    func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
         print("ℹ️ VoIPCallProvider - Audio Session Activated")
-        activateAudioSession()
+        await activateAudioSession()
     }
     
-    nonisolated func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
+    func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
         print("ℹ️ VoIPCallProvider - Audio Session Deactivated")
-        deactivateAudioSession()
+        await deactivateAudioSession()
     }
 }
 
@@ -295,18 +305,18 @@ private extension DefaultVoIPCallProvider {
         self.localPeerID = localPeerID
     }
     
-    nonisolated func activateAudioSession() {
-        setupAudioConfiguration()
-        setAudioSessionActive(true)
+    nonisolated func activateAudioSession() async {
+        await setupAudioConfiguration()
+        await setAudioSessionActive(true)
     }
     
-    nonisolated func deactivateAudioSession() {
+    nonisolated func deactivateAudioSession() async {
         resetAudioConfiguration()
-        setAudioSessionActive(false)
+        await setAudioSessionActive(false)
     }
     
-    nonisolated func setupAudioConfiguration() {
-        rtcAudioSession.lockForConfiguration()
+    nonisolated func setupAudioConfiguration() async {
+        await rtcAudioSession.lockForConfiguration()
         
         let configuration = RTCAudioSessionConfiguration.webRTC()
         configuration.categoryOptions = [
@@ -318,12 +328,12 @@ private extension DefaultVoIPCallProvider {
         ]
         
         do {
-            try rtcAudioSession.setConfiguration(configuration)
+            try await rtcAudioSession.setConfiguration(configuration)
         } catch {
             print("⚠️ VoIPCallProvider - Failed to configure audio session: \(error)")
         }
         
-        rtcAudioSession.unlockForConfiguration()
+        await rtcAudioSession.unlockForConfiguration()
     }
     
     nonisolated func resetAudioConfiguration() {
@@ -339,14 +349,14 @@ private extension DefaultVoIPCallProvider {
         }
     }
     
-    nonisolated func setAudioSessionActive(_ active: Bool) {
-        rtcAudioSession.lockForConfiguration()
+    nonisolated func setAudioSessionActive(_ active: Bool) async {
+        await rtcAudioSession.lockForConfiguration()
         do {
-            try rtcAudioSession.setActive(active)
+            try await rtcAudioSession.setActive(active)
             rtcAudioSession.isAudioEnabled = active
         } catch {
             print("⚠️ VoIPCallProvider - Failed to set audio session active (\(active)): \(error)")
         }
-        rtcAudioSession.unlockForConfiguration()
+        await rtcAudioSession.unlockForConfiguration()
     }
 }

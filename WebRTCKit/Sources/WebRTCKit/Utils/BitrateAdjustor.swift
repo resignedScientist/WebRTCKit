@@ -1,6 +1,6 @@
 import Foundation
 
-private enum BitrateType: String {
+enum BitrateType: String, Equatable {
     case audio
     case video
 }
@@ -101,18 +101,21 @@ private extension BitrateAdjustorImpl {
     
     func fetchStats(peerConnection: WRKRTCPeerConnection, for type: BitrateType) async -> NetworkDataPoint? {
         let report = await peerConnection.statistics()
+        
+        guard !report.statistics.isEmpty else { return nil }
+        
         var packetsLost: Int?
         var packetsSent: Int?
         
         for stats in report.statistics.values {
-            guard stats.values["kind"] as? NSString == type.rawValue as NSString else { continue }
+            guard stats.kind == type else { continue }
             
-            if stats.type == "remote-inbound-rtp" {
-                guard let lost = stats.values["packetsLost"] as? NSNumber else { continue }
-                packetsLost = lost.intValue
-            } else if stats.type == "outbound-rtp" {
-                guard let sent = stats.values["packetsSent"] as? NSNumber else { continue }
-                packetsSent = sent.intValue
+            if stats.type == .remoteInboundRtp {
+                guard let lost = stats.packetsLost else { continue }
+                packetsLost = lost
+            } else if stats.type == .outboundRtp {
+                guard let sent = stats.packetsSent else { continue }
+                packetsSent = sent
             }
             
             // break the loop if both values have been found

@@ -5,15 +5,24 @@ public protocol WRKRTCVideoTrack: WRKRTCMediaStreamTrack {
     func add(_ renderer: RTCVideoRenderer)
 }
 
-final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack {
+final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
     
-    public let videoTrack: RTCVideoTrack
+    private let _videoTrack: RTCVideoTrack
+    private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCVideoTrack")
+    
+    public var videoTrack: RTCVideoTrack {
+        queue.sync {
+            _videoTrack
+        }
+    }
     
     init(_ videoTrack: RTCVideoTrack) {
-        self.videoTrack = videoTrack
+        self._videoTrack = videoTrack
     }
     
     func add(_ renderer: RTCVideoRenderer) {
-        videoTrack.add(renderer)
+        queue.sync {
+            _videoTrack.add(renderer)
+        }
     }
 }

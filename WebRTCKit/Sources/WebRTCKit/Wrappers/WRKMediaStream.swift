@@ -6,24 +6,29 @@ public protocol WRKMediaStream: AnyObject, Sendable {
     
     var videoTracks: [WRKRTCVideoTrack] { get }
     
-    func addAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    func addAudioTrack(_ audioTrack: WRKRTCAudioTrack) async
     
     func addVideoTrack(_ videoTrack: WRKRTCVideoTrack) async
 }
 
-final class WRKMediaStreamImpl: WRKMediaStream {
+final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     
     let mediaStream: RTCMediaStream
+    private let queue = DispatchQueue(label: "com.webrtckit.WRKMediaStream")
     
     var audioTracks: [WRKRTCAudioTrack] {
-        mediaStream.audioTracks.map {
-            WRKRTCAudioTrackImpl($0)
+        queue.sync {
+            mediaStream.audioTracks.map {
+                WRKRTCAudioTrackImpl($0)
+            }
         }
     }
     
     var videoTracks: [WRKRTCVideoTrack] {
-        mediaStream.videoTracks.map {
-            WRKRTCVideoTrackImpl($0)
+        queue.sync {
+            mediaStream.videoTracks.map {
+                WRKRTCVideoTrackImpl($0)
+            }
         }
     }
     
@@ -31,15 +36,25 @@ final class WRKMediaStreamImpl: WRKMediaStream {
         self.mediaStream = mediaStream
     }
     
-    func addAudioTrack(_ audioTrack: WRKRTCAudioTrack) {
-        if let audioTrack = (audioTrack as? WRKRTCAudioTrackImpl)?.audioTrack {
-            mediaStream.addAudioTrack(audioTrack)
+    func addAudioTrack(_ audioTrack: WRKRTCAudioTrack) async {
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                if let audioTrack = (audioTrack as? WRKRTCAudioTrackImpl)?.audioTrack {
+                    self.mediaStream.addAudioTrack(audioTrack)
+                }
+                continuation.resume()
+            }
         }
     }
     
     func addVideoTrack(_ videoTrack: WRKRTCVideoTrack) async {
-        if let videoTrack = (videoTrack as? WRKRTCVideoTrackImpl)?.videoTrack {
-            mediaStream.addVideoTrack(videoTrack)
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                if let videoTrack = (videoTrack as? WRKRTCVideoTrackImpl)?.videoTrack {
+                    self.mediaStream.addVideoTrack(videoTrack)
+                }
+                continuation.resume()
+            }
         }
     }
 }

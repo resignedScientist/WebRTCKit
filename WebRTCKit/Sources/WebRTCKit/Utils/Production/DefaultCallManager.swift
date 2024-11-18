@@ -199,7 +199,7 @@ private extension DefaultCallManager {
                 
                 // If state is idle, the peers connection timeout was triggered first.
                 if await stateHolder.getState() != .idle {
-                    await delegate?.callDidEnd(withError: CallManagerError.connectionTimeout)
+                    delegate?.callDidEnd(withError: CallManagerError.connectionTimeout)
                     try await endCall()
                 }
             }

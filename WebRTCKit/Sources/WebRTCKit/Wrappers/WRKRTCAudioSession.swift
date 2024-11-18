@@ -24,17 +24,17 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     var useManualAudio: Bool { get set }
     
     /// Called when the audio session is activated outside of the app by iOS.
-    func audioSessionDidActivate(_ session: WRKAVAudioSession)
+    func audioSessionDidActivate(_ session: WRKAVAudioSession) async
     
     /// Called when the audio session is deactivated outside of the app by iOS.
-    func audioSessionDidDeactivate(_ session: WRKAVAudioSession)
+    func audioSessionDidDeactivate(_ session: WRKAVAudioSession) async
     
     /// Request exclusive access to the audio session for configuration. This call
     /// will block if the lock is held by another object.
-    func lockForConfiguration()
+    func lockForConfiguration() async
     
     /// Relinquishes exclusive access to the audio session.
-    func unlockForConfiguration()
+    func unlockForConfiguration() async
     
     /// If `active`, activates the audio session if it isn't already active.
     /// Successful calls must be balanced with a setActive:NO when activation is no
@@ -42,66 +42,120 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     /// active and this is the last balanced call. When deactivating, the
     /// AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation option is passed to
     /// AVAudioSession.
-    func setActive(_ active: Bool) throws
+    func setActive(_ active: Bool) async throws
     
     /// Applies the configuration to the current session. Attempts to set all
     /// properties even if previous ones fail. Only the last error will be
     /// returned.
     /// `lockForConfiguration` must be called first.
-    func setConfiguration(_ configuration: RTCAudioSessionConfiguration) throws
+    func setConfiguration(_ configuration: RTCAudioSessionConfiguration) async throws
 }
 
-final class WRKRTCAudioSessionImpl: WRKRTCAudioSession {
+final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
-    let audioSession: RTCAudioSession
+    private let _audioSession: RTCAudioSession
+    private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCAudioSession")
+    
+    var audioSession: RTCAudioSession {
+        queue.sync {
+            _audioSession
+        }
+    }
     
     var isAudioEnabled: Bool {
         get {
-            audioSession.isAudioEnabled
+            queue.sync {
+                _audioSession.isAudioEnabled
+            }
         }
         set {
-            audioSession.isAudioEnabled = newValue
+            queue.sync {
+                _audioSession.isAudioEnabled = newValue
+            }
         }
     }
     
     var useManualAudio: Bool {
         get {
-            audioSession.useManualAudio
+            queue.sync {
+                _audioSession.useManualAudio
+            }
         }
         set {
-            audioSession.useManualAudio = newValue
+            queue.sync {
+                _audioSession.useManualAudio = newValue
+            }
         }
     }
     
     init(_ audioSession: RTCAudioSession) {
-        self.audioSession = audioSession
+        self._audioSession = audioSession
     }
     
-    func audioSessionDidActivate(_ session: any WRKAVAudioSession) {
-        if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
-            audioSession.audioSessionDidActivate(session)
+    func audioSessionDidActivate(_ session: any WRKAVAudioSession) async {
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
+                    self._audioSession.audioSessionDidActivate(session)
+                }
+                continuation.resume()
+            }
         }
     }
     
-    func audioSessionDidDeactivate(_ session: any WRKAVAudioSession) {
-        if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
-            audioSession.audioSessionDidDeactivate(session)
+    func audioSessionDidDeactivate(_ session: any WRKAVAudioSession) async {
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
+                    self._audioSession.audioSessionDidDeactivate(session)
+                }
+                continuation.resume()
+            }
         }
     }
     
-    func lockForConfiguration() {
-        audioSession.lockForConfiguration()
+    func lockForConfiguration() async {
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                self._audioSession.lockForConfiguration()
+                continuation.resume()
+            }
+        }
     }
     
-    func unlockForConfiguration() {
-        audioSession.unlockForConfiguration()
+    func unlockForConfiguration() async {
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                self._audioSession.unlockForConfiguration()
+                continuation.resume()
+            }
+        }
     }
     
-    func setActive(_ active: Bool) throws {
-        try audioSession.setActive(active)
+    func setActive(_ active: Bool) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            queue.async {
+                do {
+                    try self._audioSession.setActive(active)
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
     
-    func setConfiguration(_ configuration: RTCAudioSessionConfiguration) throws {
-        try audioSession.setConfiguration(configuration)
+    func setConfiguration(_ configuration: RTCAudioSessionConfiguration) async throws {
+        let config = AudioSessionConfiguration(from: configuration)
+        return try await withCheckedThrowingContinuation { continuation in
+            queue.async {
+                do {
+                    try self._audioSession.setConfiguration(config.toRTCAudioSessionConfiguration())
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
 }
