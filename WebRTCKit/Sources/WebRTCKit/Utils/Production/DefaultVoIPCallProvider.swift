@@ -247,11 +247,11 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         do {
             try await webRTCManager.stopVideoCall()
             action.fulfill()
-            await endCallHandler?(nil)
+            endCallHandler?(nil)
         } catch {
             print("⚠️ End Call Action failed - \(error)")
             action.fail()
-            await endCallHandler?(error)
+            endCallHandler?(error)
         }
         #endif
     }

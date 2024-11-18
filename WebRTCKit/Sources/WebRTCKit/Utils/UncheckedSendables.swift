@@ -5,5 +5,3 @@ import AVKit
 #warning("TODO: remove all unchecked sendables")
 
 extension CXCallAction: @unchecked @retroactive Sendable {}
-
-extension CXCallController: @unchecked @retroactive Sendable {}
