@@ -5,9 +5,10 @@ enum PreviewVideoCapturerError: Error {
     case assetNotFound
 }
 
-#warning("TODO: Sendable is handled very unsafely here! Fix that!")
-
-final class PreviewVideoCapturer: RTCVideoCapturer, @unchecked Sendable {
+// AVAsset must run on the main actor and is not Sendable.
+// So we have to let everything here run on the main actor.
+@MainActor
+final class PreviewVideoCapturer: RTCVideoCapturer, Sendable {
     
     private lazy var asset: AVAsset? = {
         guard
@@ -41,7 +42,6 @@ final class PreviewVideoCapturer: RTCVideoCapturer, @unchecked Sendable {
 
 private extension PreviewVideoCapturer {
     
-    @MainActor
     func startReadingAsset() async throws(PreviewVideoCapturerError) {
         
         guard
@@ -74,7 +74,9 @@ private extension PreviewVideoCapturer {
         // add periodic timer to capture frames
         let interval = CMTime(seconds: 1.0 / 30.0, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         player.addPeriodicTimeObserver(forInterval: interval, queue: playerOutputQueue) { [weak self] currentTime in
-            self?.captureFrame(at: currentTime)
+            Task { @MainActor [weak self] in
+                self?.captureFrame(at: currentTime)
+            }
         }
         
         self.videoOutput = videoOutput
@@ -83,7 +85,6 @@ private extension PreviewVideoCapturer {
         player.play()
     }
     
-    @MainActor
     @objc func playerItemDidReachEnd() {
         player?.seek(to: .zero)
         player?.play()
