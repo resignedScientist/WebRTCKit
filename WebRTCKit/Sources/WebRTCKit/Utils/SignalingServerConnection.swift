@@ -77,5 +77,3 @@ public protocol SignalingServerConnection: Sendable {
     /// The network connection was lost.
     func onConnectionUnsatisfied()
 }
-
-#warning("TODO: can I combine sendSignal & sendICECandidate into a single function?")
