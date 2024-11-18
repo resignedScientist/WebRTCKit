@@ -2,15 +2,14 @@ import AVKit
 import CallKit
 
 @WebRTCActor
-final class WRKCXProvider: NSObject, @unchecked Sendable {
+final class WRKCXProvider: NSObject, Sendable {
     private let provider: CXProvider
-    private let queue = WebRTCActor.queue
     private weak var delegate: CallProviderDelegate?
     
     init(configuration: CXProviderConfiguration) {
         provider = CXProvider(configuration: configuration)
         super.init()
-        provider.setDelegate(self, queue: queue)
+        provider.setDelegate(self, queue: WebRTCActor.queue)
     }
     
     /// Set delegate and optional queue for delegate callbacks to be performed on.
