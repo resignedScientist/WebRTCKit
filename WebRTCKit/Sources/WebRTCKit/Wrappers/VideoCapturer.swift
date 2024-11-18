@@ -24,7 +24,6 @@ final class VideoCapturer: @unchecked Sendable {
     
     func startCapture(
         with device: CaptureDevice,
-        format: AVCaptureDevice.Format,
         fps: Int
     ) async throws {
         return try await withCheckedThrowingContinuation { continuation in
@@ -32,7 +31,7 @@ final class VideoCapturer: @unchecked Sendable {
                 guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
                 videoCapturer.startCapture(
                     with: device.device,
-                    format: format,
+                    format: device.activeFormat,
                     fps: fps
                 ) { error in
                     if let error {

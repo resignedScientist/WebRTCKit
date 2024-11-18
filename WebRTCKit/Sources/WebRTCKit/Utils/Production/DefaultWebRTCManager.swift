@@ -154,7 +154,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             // start capturing video
             try await videoCapturer.startCapture(
                 with: videoDevice,
-                format: videoDevice.activeFormat,
                 fps: 30
             )
         }
