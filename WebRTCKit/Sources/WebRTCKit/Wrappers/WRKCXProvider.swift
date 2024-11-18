@@ -42,39 +42,41 @@ final class WRKCXProvider: NSObject, Sendable {
 
 // MARK: - CXProviderDelegate
 
-extension WRKCXProvider: CXProviderDelegate {
+// @preconcurrency is safe here as we set the WebRTCActors queue to the provider,
+// so it uses this queue to call delegate methods.
+extension WRKCXProvider: @preconcurrency CXProviderDelegate {
     
-    nonisolated func providerDidReset(_ provider: CXProvider) {
+    func providerDidReset(_ provider: CXProvider) {
         Task { @WebRTCActor in
             await delegate?.providerDidReset(self)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
+    func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
         Task { @WebRTCActor in
             await delegate?.provider(self, perform: action)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
+    func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
         Task { @WebRTCActor in
             await delegate?.provider(self, perform: action)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
+    func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
         Task { @WebRTCActor in
             await delegate?.provider(self, perform: action)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
+    func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
         Task { @WebRTCActor in
             await delegate?.provider(self, didActivate: audioSession)
         }
     }
     
-    nonisolated func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
+    func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
         Task { @WebRTCActor in
             await delegate?.provider(self, didDeactivate: audioSession)
         }
