@@ -45,7 +45,8 @@ final class VideoCapturer: @unchecked Sendable {
     }
     
     func start() async throws(PreviewVideoCapturerError) {
-        #warning("TODO: this is unsafe!")
+        
+        // we do not need a queue here as preview video capturer is sendable
         if let videoCapturer = videoCapturer as? PreviewVideoCapturer {
             try await videoCapturer.start()
         }
