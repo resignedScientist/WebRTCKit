@@ -1,7 +1,0 @@
-import WebRTC
-import CallKit
-import AVKit
-
-#warning("TODO: remove all unchecked sendables")
-
-extension CXCallAction: @unchecked @retroactive Sendable {}

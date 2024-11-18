@@ -29,6 +29,7 @@ final class WRKCallControllerImpl: WRKCallController, Sendable {
     }
 }
 
+@WebRTCActor
 protocol CallAction: Sendable {
     
 }
@@ -36,8 +37,8 @@ protocol CallAction: Sendable {
 struct StartCallAction: CallAction {
     let callUUID: UUID
     let handle: CallHandle
-    let fulfill: @Sendable () -> Void
-    let fail: @Sendable () -> Void
+    let fulfill: () -> Void
+    let fail: () -> Void
     
     init(from action: CXStartCallAction) {
         self.callUUID = action.callUUID
@@ -49,8 +50,8 @@ struct StartCallAction: CallAction {
 
 struct AnswerCallAction: CallAction {
     let callUUID: UUID
-    let fulfill: @Sendable () -> Void
-    let fail: @Sendable () -> Void
+    let fulfill: () -> Void
+    let fail: () -> Void
     
     init(from action: CXAnswerCallAction) {
         self.callUUID = action.callUUID
@@ -61,8 +62,8 @@ struct AnswerCallAction: CallAction {
 
 struct EndCallAction: CallAction {
     let callUUID: UUID
-    let fulfill: @Sendable () -> Void
-    let fail: @Sendable () -> Void
+    let fulfill: () -> Void
+    let fail: () -> Void
     
     init(from action: CXEndCallAction) {
         self.callUUID = action.callUUID
