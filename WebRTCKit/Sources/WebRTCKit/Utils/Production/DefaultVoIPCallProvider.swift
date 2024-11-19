@@ -15,6 +15,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private var endCallHandler: (@Sendable (Error?) -> Void)?
     private var answerCallHandler: (@Sendable (Error?) -> Void)?
     private var doNotDisturbIsEnabled = false
+    private var isEndingCall = false
     
     init(
         provider: WRKCXProvider = {
@@ -166,25 +167,17 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
             return
         }
         
-        guard endCallHandler == nil else {
+        guard endCallHandler == nil, !isEndingCall else {
             print("⚠️ endCall called, but we are already waiting for the call to end.")
             return
         }
         
+        isEndingCall = true
+        
         defer {
             endCallHandler = nil
-        }
-        
-        async let asyncEndCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
-            Task { [weak self] in
-                await self?.setEndCallHandler { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
-                }
-            }
+            currentCallID = nil
+            isEndingCall = false
         }
         
         let endCallAction = CXEndCallAction(call: uuid)
@@ -194,20 +187,29 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
             provider,
             perform: EndCallAction(from: endCallAction)
         )
-        #endif
-        
+        #else
         if doNotDisturbIsEnabled {
             await provider(
                 provider,
                 perform: EndCallAction(from: endCallAction)
             )
         } else {
+            async let asyncEndCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
+                Task { [weak self] in
+                    await self?.setEndCallHandler { error in
+                        if let error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume()
+                        }
+                    }
+                }
+            }
             let transaction = CXTransaction(action: endCallAction)
             try await callController.request(transaction)
             try await asyncEndCall
         }
-        
-        currentCallID = nil
+        #endif
     }
 }
 
@@ -247,21 +249,13 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, perform action: EndCallAction) async {
+        
+        // For some reason on simulators, the end call action is called immediately
+        // after accepting a call. Maybe because of no CallKit support there?
         #if targetEnvironment(simulator)
-        guard let endCallHandler else {
-            action.fulfill()
-            return
-        }
-        do {
-            try await webRTCManager.stopVideoCall()
-            action.fulfill()
-            endCallHandler(nil)
-        } catch {
-            print("⚠️ End Call Action failed - \(error)")
-            action.fail()
-            endCallHandler(error)
-        }
-        #else
+        guard isEndingCall else { return }
+        #endif
+        
         do {
             try await webRTCManager.stopVideoCall()
             action.fulfill()
@@ -271,7 +265,6 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
             action.fail()
             endCallHandler?(error)
         }
-        #endif
     }
     
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
