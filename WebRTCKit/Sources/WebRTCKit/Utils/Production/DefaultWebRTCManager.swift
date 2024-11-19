@@ -305,12 +305,12 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
 
 extension DefaultWebRTCManager: SignalingServerDelegate {
     
-    nonisolated func didReceiveSignal(
+    func didReceiveSignal(
         _ signalData: Data,
         from remotePeerID: PeerID,
         isPolite: Bool
     ) async {
-        Task { [weak self] in
+        Task { @WebRTCActor [weak self] in
             await self?.handleReceivedSignal(
                 signalData,
                 from: remotePeerID,
@@ -319,37 +319,35 @@ extension DefaultWebRTCManager: SignalingServerDelegate {
         }
     }
     
-    nonisolated func didReceiveICECandidate(_ candidateData: Data, from remotePeerID: PeerID) async {
-        Task { [weak self] in
-            guard await self?.remotePeerID == remotePeerID else {
+    func didReceiveICECandidate(_ candidateData: Data, from remotePeerID: PeerID) async {
+        Task { @WebRTCActor in
+            guard self.remotePeerID == remotePeerID else {
                 return // signal is from another peer which we do not expect
             }
             
-            await self?.handleICECandidate(candidateData)
+            await handleICECandidate(candidateData)
         }
     }
     
-    nonisolated func didReceiveEndCall(from remotePeerID: PeerID) async {
-        Task { [weak self] in
-            guard await self?.remotePeerID == remotePeerID else {
-                return // signal is from another peer which we do not expect
-            }
-            
-            print("ℹ️ End Call message received.")
-            await self?.delegate?.didReceiveEndCall()
+    func didReceiveEndCall(from remotePeerID: PeerID) async {
+        guard self.remotePeerID == remotePeerID else {
+            return // signal is from another peer which we do not expect
         }
+        
+        print("ℹ️ End Call message received.")
+        delegate?.didReceiveEndCall()
     }
     
-    nonisolated func socketDidOpen() {
-        Task { [weak self] in
+    func socketDidOpen() {
+        Task { @WebRTCActor in
             guard
-                let remotePeerID = await self?.remotePeerID,
-                let peerConnection = await self?.peerConnection
+                let remotePeerID,
+                let peerConnection
             else { return }
             
             do {
                 print("ℹ️ Sending ICE restart offer…")
-                try await self?.sendOffer(
+                try await sendOffer(
                     to: remotePeerID,
                     peerConnection: peerConnection,
                     iceRestart: true
@@ -360,7 +358,7 @@ extension DefaultWebRTCManager: SignalingServerDelegate {
         }
     }
     
-    nonisolated func socketDidClose() {
+    func socketDidClose() {
         // TODO
     }
 }
@@ -374,7 +372,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd stream: WRKMediaStream) {
-        Task { [weak self] in
+        Task { @WebRTCActor in
             let audioTrack = stream.audioTracks.first
             let videoTrack = stream.videoTracks.first
             let hasAudio = audioTrack != nil
@@ -382,11 +380,11 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             
             print("ℹ️ Remote peer did add media stream; audio: \(hasAudio), video: \(hasVideo)")
             
-            await self?.setRemoteAudioTrack(audioTrack)
-            await self?.setRemoteVideoTrack(videoTrack)
+            setRemoteAudioTrack(audioTrack)
+            setRemoteVideoTrack(videoTrack)
             
             if let videoTrack {
-                await self?.delegate?.didAddRemoteVideoTrack(videoTrack)
+                delegate?.didAddRemoteVideoTrack(videoTrack)
             }
         }
     }
@@ -396,17 +394,17 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
-        Task { [weak self] in
-            await self?.handleNegotiation(peerConnection)
+        Task { @WebRTCActor in
+            await handleNegotiation(peerConnection)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        Task { [weak self] in
+        Task { @WebRTCActor in
             print("ℹ️ ICE connection state: \(newState)")
             switch newState {
             case .failed:
-                await self?.delegate?.onError(.connectionFailed)
+                delegate?.onError(.connectionFailed)
             case .connected, .completed, .new, .checking, .disconnected, .closed, .count:
                 break
             @unknown default:
@@ -416,11 +414,11 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceGatheringState) {
-        Task { [weak self] in
+        Task { @WebRTCActor in
             print("ℹ️ ICE gathering state: \(newState)")
             switch newState {
             case .gathering:
-                await self?.processCachedCandidates()
+                await processCachedCandidates()
             case .new, .complete:
                 break
             @unknown default:
@@ -444,15 +442,15 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: ICECandidate) {
-        Task { [weak self] in
+        Task { @WebRTCActor in
             
-            guard let remotePeerID = await self?.remotePeerID else { return }
+            guard let remotePeerID else { return }
             
             do {
                 let encoder = JSONEncoder()
                 let candidateData = try encoder.encode(candidate)
                 
-                try await self?.signalingServer.sendICECandidate(candidateData, to: remotePeerID)
+                try await signalingServer.sendICECandidate(candidateData, to: remotePeerID)
             } catch {
                 print("⚠️ Error sending ICE candidate - \(error)")
             }
