@@ -68,20 +68,16 @@ final class DefaultCallManager: CallManager {
 
 extension DefaultCallManager: WebRTCManagerDelegate {
     
-    nonisolated func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack) {
-        Task {
-            await delegate?.showLocalVideo(videoTrack)
-        }
+    func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack) {
+        delegate?.showLocalVideo(videoTrack)
     }
     
-    nonisolated func didAddRemoteVideoTrack(_ videoTrack: any WRKRTCVideoTrack) {
-        Task {
-            await delegate?.showRemoteVideo(videoTrack)
-        }
+    func didAddRemoteVideoTrack(_ videoTrack: any WRKRTCVideoTrack) {
+        delegate?.showRemoteVideo(videoTrack)
     }
     
-    nonisolated func didReceiveEndCall() {
-        Task {
+    func didReceiveEndCall() {
+        Task { @WebRTCActor in
             
             // this is the end call confirmation; we can ignore it
             guard await stateHolder.getState() != .idle else { return }
@@ -95,15 +91,15 @@ extension DefaultCallManager: WebRTCManagerDelegate {
         }
     }
     
-    nonisolated func callDidEnd() {
-        Task {
+    func callDidEnd() {
+        Task { @WebRTCActor in
             try await stateHolder.changeState(to: .idle)
-            await delegate?.callDidEnd(withError: nil)
+            delegate?.callDidEnd(withError: nil)
         }
     }
     
-    nonisolated func didReceiveOffer(from peerID: PeerID) {
-        Task {
+    func didReceiveOffer(from peerID: PeerID) {
+        Task { @WebRTCActor in
             do {
                 try await stateHolder.changeState(to: .receivingCallRequest)
                 try await callProvider.reportIncomingCall(
@@ -111,7 +107,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                     handle: peerID,
                     hasVideo: true
                 )
-                await delegate?.didReceiveIncomingCall(from: peerID)
+                delegate?.didReceiveIncomingCall(from: peerID)
             } catch let error as CXErrorCodeIncomingCallError {
                 print("⚠️ didReceiveOffer failed - \(error.code)")
             } catch {
@@ -120,54 +116,52 @@ extension DefaultCallManager: WebRTCManagerDelegate {
         }
     }
     
-    nonisolated func onError(_ error: WebRTCManagerError) {
-        Task {
+    func onError(_ error: WebRTCManagerError) {
+        Task { @WebRTCActor in
             do {
                 try await stateHolder.changeState(to: .handlingError)
                 try await callProvider.endCall()
                 try await stateHolder.changeState(to: .idle)
-                await delegate?.callDidEnd(withError: .webRTCManagerError(error))
+                delegate?.callDidEnd(withError: .webRTCManagerError(error))
             } catch {
                 print("⚠️ CallManager.onError failed - \(error)")
             }
         }
     }
     
-    nonisolated func callDidStart() {
-        Task {
+    func callDidStart() {
+        Task { @WebRTCActor in
             
             // skip if call is already running
             guard await stateHolder.getState() != .callIsRunning else { return }
             
             try await stateHolder.changeState(to: .callIsRunning)
-            await delegate?.callDidStart()
-            await stopConnectionTimeout()
+            delegate?.callDidStart()
+            stopConnectionTimeout()
         }
     }
     
-    nonisolated func peerDidAcceptCallRequest() {
-        Task {
+    func peerDidAcceptCallRequest() {
+        Task { @WebRTCActor in
             let state = await stateHolder.getState()
             
             // we are already connected
             guard state != .callIsRunning else { return }
             
             try await stateHolder.changeState(to: .connecting)
-            await startConnectionTimeout()
+            startConnectionTimeout()
         }
     }
     
-    nonisolated func didAcceptCallRequest() {
-        Task {
+    func didAcceptCallRequest() {
+        Task { @WebRTCActor in
             try await stateHolder.changeState(to: .connecting)
-            await startConnectionTimeout()
+            startConnectionTimeout()
         }
     }
     
-    nonisolated func didReceiveDataChannel(_ dataChannel: WRKDataChannel) {
-        Task {
-            await delegate?.didReceiveDataChannel(dataChannel)
-        }
+    func didReceiveDataChannel(_ dataChannel: WRKDataChannel) {
+        delegate?.didReceiveDataChannel(dataChannel)
     }
 }
 
@@ -176,7 +170,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
 private extension DefaultCallManager {
     
     func startConnectionTimeout() {
-        connectionTimeout = Task { [weak self] in
+        connectionTimeout = Task { @WebRTCActor [weak self] in
             await self?.onConnectionTimeout()
         }
     }
