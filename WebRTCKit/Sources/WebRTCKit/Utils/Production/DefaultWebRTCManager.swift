@@ -82,12 +82,18 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         let peerConnection = try await makePeerConnection()
         self.peerConnection = peerConnection
         
-        // add the media stream to the peer connection
-        if let localAudioTrack, let localVideoTrack {
+        // add the audio track to the peer connection
+        if let localAudioTrack {
             await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
+        } else {
+            await addAudioTrack(to: peerConnection)
+        }
+        
+        // add the video track to the peer connection
+        if let localVideoTrack {
             await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
         } else {
-            await addMediaStream(to: peerConnection)
+            await addVideoTrack(to: peerConnection)
         }
         
         return peerID
@@ -526,14 +532,9 @@ private extension DefaultWebRTCManager {
         return peerConnection
     }
     
-    func addMediaStream(to peerConnection: WRKRTCPeerConnection) async {
+    func addAudioTrack(to peerConnection: WRKRTCPeerConnection) async {
         
-        // video
-        let videoSource = factory.videoSource()
-        let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
-        self.videoSource = videoSource
-        
-        // audio
+        // create audio track
         let audioSource = factory.audioSource(
             with: RTCMediaConstraints(
                 mandatoryConstraints: [
@@ -546,20 +547,38 @@ private extension DefaultWebRTCManager {
         )
         let localAudioTrack = factory.audioTrack(with: audioSource, trackId: "localAudioTrack")
         
-        // add tracks to the peer connection
-        await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        // add audio track to the peer connection
         await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
         
-        // set audio & video encoding parameters
-        bitrateAdjustor.setStartEncodingParameters(peerConnection: peerConnection)
+        // set audio encoding parameters
+        bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
         
-        // save media tracks
-        self.localVideoTrack = localVideoTrack
+        // save audio track
         self.localAudioTrack = localAudioTrack
         
-        print("ℹ️ Successfully started capturing audio/video.")
+        print("ℹ️ Successfully added audio track.")
+    }
+    
+    func addVideoTrack(to peerConnection: WRKRTCPeerConnection) async {
         
+        // create video track
+        let videoSource = factory.videoSource()
+        let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
+        self.videoSource = videoSource
+        
+        // add video track to the peer connection
+        await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        
+        // set video encoding parameters
+        bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection)
+        
+        // save video track
+        self.localVideoTrack = localVideoTrack
+        
+        // pass video track to the delegate
         delegate?.didAddLocalVideoTrack(localVideoTrack)
+        
+        print("ℹ️ Successfully added video track.")
     }
     
     func sendOffer(to peerID: PeerID, peerConnection: WRKRTCPeerConnection, iceRestart: Bool = false) async throws {

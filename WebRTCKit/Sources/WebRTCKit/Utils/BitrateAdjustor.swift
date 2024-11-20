@@ -12,7 +12,7 @@ protocol BitrateAdjustor {
     
     func stop()
     
-    func setStartEncodingParameters(peerConnection: WRKRTCPeerConnection)
+    func setStartEncodingParameters(for type: BitrateType, peerConnection: WRKRTCPeerConnection)
 }
 
 final class BitrateAdjustorImpl: BitrateAdjustor {
@@ -33,32 +33,12 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         tasks.cancelAll()
     }
     
-    func setStartEncodingParameters(peerConnection: any WRKRTCPeerConnection) {
-        
-        // set video parameters
-        if
-            let videoSender = peerConnection.senders.first(where: { $0.track?.kind == BitrateType.video.rawValue }),
-            let encoding = videoSender.parameters.encodings.first
-        {
-            let parameters = videoSender.parameters
-            encoding.minBitrateBps = NSNumber(value: config.video.minBitrate)
-            encoding.maxBitrateBps = NSNumber(value: config.video.startBitrate)
-            encoding.maxFramerate = 30
-            encoding.scaleResolutionDownBy = calculateVideoScaling(for: config.video.startBitrate)
-            parameters.encodings = [encoding]
-            videoSender.parameters = parameters
-        }
-        
-        // set audio parameters
-        if
-            let audioSender = peerConnection.senders.first(where: { $0.track?.kind == BitrateType.audio.rawValue }),
-            let encoding = audioSender.parameters.encodings.first
-        {
-            let parameters = audioSender.parameters
-            encoding.minBitrateBps = NSNumber(value: config.audio.minBitrate)
-            encoding.maxBitrateBps = NSNumber(value: config.audio.startBitrate)
-            parameters.encodings = [encoding]
-            audioSender.parameters = parameters
+    func setStartEncodingParameters(for type: BitrateType, peerConnection: any WRKRTCPeerConnection) {
+        switch type {
+        case .audio:
+            setStartAudioEncodingParameters(peerConnection)
+        case .video:
+            setStartVideoEncodingParameters(peerConnection)
         }
     }
 }
@@ -289,5 +269,33 @@ private extension BitrateAdjustorImpl {
             packetLoss: packetLoss,
             handleCriticalPacketLoss: false
         )
+    }
+    
+    func setStartAudioEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
+        if
+            let audioSender = peerConnection.senders.first(where: { $0.track?.kind == BitrateType.audio.rawValue }),
+            let encoding = audioSender.parameters.encodings.first
+        {
+            let parameters = audioSender.parameters
+            encoding.minBitrateBps = NSNumber(value: config.audio.minBitrate)
+            encoding.maxBitrateBps = NSNumber(value: config.audio.startBitrate)
+            parameters.encodings = [encoding]
+            audioSender.parameters = parameters
+        }
+    }
+    
+    func setStartVideoEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
+        if
+            let videoSender = peerConnection.senders.first(where: { $0.track?.kind == BitrateType.video.rawValue }),
+            let encoding = videoSender.parameters.encodings.first
+        {
+            let parameters = videoSender.parameters
+            encoding.minBitrateBps = NSNumber(value: config.video.minBitrate)
+            encoding.maxBitrateBps = NSNumber(value: config.video.startBitrate)
+            encoding.maxFramerate = 30
+            encoding.scaleResolutionDownBy = calculateVideoScaling(for: config.video.startBitrate)
+            parameters.encodings = [encoding]
+            videoSender.parameters = parameters
+        }
     }
 }
