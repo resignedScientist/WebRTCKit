@@ -24,6 +24,8 @@ protocol WRKRTCPeerConnection: Sendable {
     @discardableResult
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender?
     
+    func removeTrack(_ sender: RtpSender) async -> Bool
+    
     /// Provide a remote candidate to the ICE Agent.
     func add(_ candidate: ICECandidate) async throws
     
@@ -62,7 +64,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     private weak var _delegate: WRKRTCPeerConnectionDelegate?
     private let _peerConnection: RTCPeerConnection
-    private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCPeerConnection")
+    private let queue = WebRTCActor.queue
     
     var peerConnection: RTCPeerConnection {
         queue.sync {
@@ -136,6 +138,14 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
                 } else {
                     continuation.resume(returning: nil)
                 }
+            }
+        }
+    }
+    
+    func removeTrack(_ sender: RtpSender) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                self._peerConnection.removeTrack(sender.unwrapUnsafely())
             }
         }
     }
