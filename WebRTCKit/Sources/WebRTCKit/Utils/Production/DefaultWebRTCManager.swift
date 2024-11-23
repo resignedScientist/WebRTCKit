@@ -89,19 +89,19 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             await addAudioTrack(to: peerConnection)
         }
         
-        // add the video track to the peer connection
-        if let localVideoTrack {
-            await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
-        } else {
-            await addVideoTrack(to: peerConnection)
-        }
-        
         return peerID
     }
     
     func startVideoRecording(videoCapturer: VideoCapturer? = nil) async throws {
         guard let peerConnection else {
             throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")
+        }
+        
+        // add the video track to the peer connection
+        if let localVideoTrack {
+            await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        } else {
+            await addVideoTrack(to: peerConnection)
         }
         
         let videoDevice = CaptureDevice(
@@ -497,7 +497,7 @@ private extension DefaultWebRTCManager {
         let constraints = RTCMediaConstraints(
             mandatoryConstraints: [
                 kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueTrue,
-                kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueTrue
+                kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueFalse
             ],
             optionalConstraints: nil
         )
