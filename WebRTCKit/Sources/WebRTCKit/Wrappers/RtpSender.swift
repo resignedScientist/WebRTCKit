@@ -1,9 +1,11 @@
 import WebRTC
 
+let sendableQueue = DispatchQueue(label: "com.webrtckit.sendable")
+
 final class RtpSender: @unchecked Sendable {
     
     private let sender: RTCRtpSender
-    private let queue = WebRTCActor.queue
+    private let queue = sendableQueue
     
     var track: RTCMediaStreamTrack? {
         queue.sync {
