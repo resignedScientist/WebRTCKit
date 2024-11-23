@@ -102,6 +102,9 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// Start the local recording of audio & video streams using the default video capturer.
     func startVideoRecording() async throws
     
+    /// Stop the local video recording by removing the local video track & stopping the video capturer.
+    func stopVideoRecording() async
+    
     /// Initialize a call with another peer.
     ///
     /// - Parameter peerID: The ID of the remote peer.
@@ -173,6 +176,10 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func startVideoRecording() async throws {
         try await container.webRTCManager.startVideoRecording(videoCapturer: nil)
+    }
+    
+    func stopVideoRecording() async {
+        await container.webRTCManager.stopVideoRecording()
     }
     
     func sendCallRequest(to peerID: PeerID) async throws {

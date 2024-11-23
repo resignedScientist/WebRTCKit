@@ -19,6 +19,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var remoteVideoTrack: WRKRTCVideoTrack?
     private var localAudioTrack: WRKRTCAudioTrack?
     private var localVideoTrack: WRKRTCVideoTrack?
+    private var localVideoSender: RtpSender?
     private var localPeerID: PeerID?
     private var remotePeerID: PeerID?
     
@@ -163,6 +164,21 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
                 fps: 30
             )
         }
+    }
+    
+    func stopVideoRecording() async {
+        guard let peerConnection, let localVideoSender else { return }
+        
+        // stop video capturer
+        async let stopVideoCapturer: Void? = videoCapturer?.stop()
+        
+        // remove connection
+        async let removeTrack = peerConnection.removeTrack(localVideoSender)
+        
+        let _ = await (stopVideoCapturer, removeTrack)
+        
+        videoCapturer = nil
+        self.localVideoSender = nil
     }
     
     func startVideoCall(to peerID: PeerID) async throws {

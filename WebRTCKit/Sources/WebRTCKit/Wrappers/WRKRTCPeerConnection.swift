@@ -24,6 +24,7 @@ protocol WRKRTCPeerConnection: Sendable {
     @discardableResult
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender?
     
+    @discardableResult
     func removeTrack(_ sender: RtpSender) async -> Bool
     
     /// Provide a remote candidate to the ICE Agent.

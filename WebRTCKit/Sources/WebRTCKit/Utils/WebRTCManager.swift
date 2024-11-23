@@ -54,6 +54,8 @@ protocol WebRTCManager: Sendable {
     
     func startVideoRecording(videoCapturer: VideoCapturer?) async throws
     
+    func stopVideoRecording() async
+    
     func startVideoCall(to peerID: PeerID) async throws
     
     func stopVideoCall() async throws

@@ -51,4 +51,19 @@ final class VideoCapturer: @unchecked Sendable {
             try await videoCapturer.start()
         }
     }
+    
+    func stop() async {
+        if let videoCapturer = videoCapturer as? PreviewVideoCapturer {
+            await videoCapturer.stop()
+        } else if videoCapturer is RTCCameraVideoCapturer {
+            await withCheckedContinuation { continuation in
+                queue.async {
+                    guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
+                    videoCapturer.stopCapture {
+                        continuation.resume()
+                    }
+                }
+            }
+        }
+    }
 }
