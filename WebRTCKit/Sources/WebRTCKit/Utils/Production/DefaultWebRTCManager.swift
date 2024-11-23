@@ -179,6 +179,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         videoCapturer = nil
         self.localVideoSender = nil
+        
+        print("ℹ️ Video recording stopped.")
     }
     
     func startVideoCall(to peerID: PeerID) async throws {
