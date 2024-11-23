@@ -155,7 +155,8 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     func removeTrack(_ sender: RtpSender) async -> Bool {
         return await withCheckedContinuation { continuation in
             queue.async {
-                self._peerConnection.removeTrack(sender.unwrapUnsafely())
+                let result = self._peerConnection.removeTrack(sender.unwrapUnsafely())
+                continuation.resume(returning: result)
             }
         }
     }
