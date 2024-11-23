@@ -20,6 +20,10 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
+    func stopVideoRecording() async {
+        
+    }
+    
     func stopVideoCall() async {
         
     }
