@@ -167,18 +167,21 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func stopVideoRecording() async {
-        guard let peerConnection, let localVideoSender else { return }
         
         // stop video capturer
         async let stopVideoCapturer: Void? = videoCapturer?.stop()
         
-        // remove connection
-        async let removeTrack = peerConnection.removeTrack(localVideoSender)
+        // remove video track
+        if let peerConnection, let localVideoSender {
+            await peerConnection.removeTrack(localVideoSender)
+            self.localVideoSender = nil
+            print("ℹ️ Local video track removed.")
+        } else {
+            print("ℹ️ Video sender is nil. No video track to remove.")
+        }
         
-        let _ = await (stopVideoCapturer, removeTrack)
-        
+        await stopVideoCapturer
         videoCapturer = nil
-        self.localVideoSender = nil
         
         print("ℹ️ Video recording stopped.")
     }
