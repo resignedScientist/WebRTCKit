@@ -99,9 +99,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         return peerID
     }
     
-    func startRecording(videoCapturer: VideoCapturer? = nil) async throws {
-        guard peerConnection != nil else {
-            throw WebRTCManagerError.critical("⚠️ startRecording failed; Missing peer connection. Did you call setup()?")
+    func startVideoRecording(videoCapturer: VideoCapturer? = nil) async throws {
+        guard let peerConnection else {
+            throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")
         }
         
         let videoDevice = CaptureDevice(
