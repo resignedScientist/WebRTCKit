@@ -107,9 +107,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             await addVideoTrack(to: peerConnection)
         }
         
-        // start bitrate adjustor
-        bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
-        
         let videoDevice = CaptureDevice(
             AVCaptureDevice.default(
                 .builtInWideAngleCamera,
@@ -169,6 +166,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
                 fps: 30
             )
         }
+        
+        // start bitrate adjustor
+        bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
     }
     
     func stopVideoRecording() async {
