@@ -184,6 +184,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         await stopVideoCapturer
         videoCapturer = nil
         
+        // stop bitrate adjustor for video
+        await bitrateAdjustor.stop(for: .video)
+        
         print("ℹ️ Video recording stopped.")
     }
     
@@ -245,7 +248,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         remotePeerID = nil
         receivedOfferSDP = nil
         callIsRunning = false
-        bitrateAdjustor.stop()
+        await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
     }
     

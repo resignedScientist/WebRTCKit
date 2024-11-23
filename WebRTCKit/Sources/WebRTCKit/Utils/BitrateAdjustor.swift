@@ -10,7 +10,9 @@ protocol BitrateAdjustor {
     
     func start(peerConnection: WRKRTCPeerConnection)
     
-    func stop()
+    func stop() async
+    
+    func stop(for type: BitrateType) async
     
     func setStartEncodingParameters(for type: BitrateType, peerConnection: WRKRTCPeerConnection)
 }
@@ -24,13 +26,34 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     private let audioNetworkDataCache: NetworkDataCache = NetworkDataCacheImpl()
     private let videoNetworkDataCache: NetworkDataCache = NetworkDataCacheImpl()
     private var tasks: [Task<Void, Never>] = []
+    private var runningTypes: Set<BitrateType> = []
     
     func start(peerConnection: WRKRTCPeerConnection) {
         registerStatisticObservers(peerConnection: peerConnection)
     }
     
-    func stop() {
+    func stop() async {
         tasks.cancelAll()
+        runningTypes.removeAll()
+        await audioNetworkDataCache.deleteAllData()
+        await videoNetworkDataCache.deleteAllData()
+    }
+    
+    func stop(for type: BitrateType) async {
+        runningTypes.remove(type)
+        
+        // delete cached network data for that type
+        switch type {
+        case .audio:
+            await audioNetworkDataCache.deleteAllData()
+        case .video:
+            await videoNetworkDataCache.deleteAllData()
+        }
+        
+        // stop all tasks if nothing is running anymore
+        if runningTypes.isEmpty {
+            tasks.cancelAll()
+        }
     }
     
     func setStartEncodingParameters(for type: BitrateType, peerConnection: any WRKRTCPeerConnection) {
@@ -229,10 +252,13 @@ private extension BitrateAdjustorImpl {
     }
     
     func runFastTask(for type: BitrateType, peerConnection: WRKRTCPeerConnection) async {
-        guard let dataPoint = await fetchStats(
-            peerConnection: peerConnection,
-            for: type
-        ) else { return }
+        guard
+            runningTypes.contains(type),
+            let dataPoint = await fetchStats(
+                peerConnection: peerConnection,
+                for: type
+            )
+        else { return }
         
         let networkDataCache = getNetworkDataCache(for: type)
         let config = getConfig(for: type)
@@ -254,6 +280,8 @@ private extension BitrateAdjustorImpl {
     }
     
     func runSlowTask(for type: BitrateType, peerConnection: WRKRTCPeerConnection) async {
+        
+        guard runningTypes.contains(type) else { return }
         
         let adjustmentTracker = getAdjustmentTracker(for: type)
         let networkDataCache = getNetworkDataCache(for: type)
