@@ -10,6 +10,8 @@ public protocol WRKDataChannel: AnyObject, Sendable {
     
     @discardableResult
     func sendData(_ data: Data) async -> Bool
+    
+    func close()
 }
 
 final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
@@ -43,6 +45,12 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
                 let success = self.dataChannel.sendData(buffer)
                 continuation.resume(returning: success)
             }
+        }
+    }
+    
+    func close() {
+        queue.async {
+            self.dataChannel.close()
         }
     }
 }
