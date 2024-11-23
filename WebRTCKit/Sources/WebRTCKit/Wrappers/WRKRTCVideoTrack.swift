@@ -16,6 +16,19 @@ final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
         }
     }
     
+    public var isEnabled: Bool {
+        get {
+            queue.sync {
+                _videoTrack.isEnabled
+            }
+        }
+        set {
+            queue.sync {
+                _videoTrack.isEnabled = newValue
+            }
+        }
+    }
+    
     init(_ videoTrack: RTCVideoTrack) {
         self._videoTrack = videoTrack
     }

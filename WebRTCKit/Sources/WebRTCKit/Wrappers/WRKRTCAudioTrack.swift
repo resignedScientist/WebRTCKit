@@ -15,6 +15,19 @@ final class WRKRTCAudioTrackImpl: WRKRTCAudioTrack, @unchecked Sendable {
         }
     }
     
+    public var isEnabled: Bool {
+        get {
+            queue.sync {
+                _audioTrack.isEnabled
+            }
+        }
+        set {
+            queue.sync {
+                _audioTrack.isEnabled = newValue
+            }
+        }
+    }
+    
     init(_ audioTrack: RTCAudioTrack) {
         self._audioTrack = audioTrack
     }

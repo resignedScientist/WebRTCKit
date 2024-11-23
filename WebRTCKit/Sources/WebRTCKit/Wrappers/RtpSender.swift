@@ -1,9 +1,11 @@
 import WebRTC
 
+let sendableQueue = DispatchQueue(label: "com.webrtckit.sendable")
+
 final class RtpSender: @unchecked Sendable {
     
     private let sender: RTCRtpSender
-    private let queue = DispatchQueue(label: "com.webrtckit.RtpSender")
+    private let queue = sendableQueue
     
     var track: RTCMediaStreamTrack? {
         queue.sync {
@@ -26,5 +28,10 @@ final class RtpSender: @unchecked Sendable {
     
     init(sender: RTCRtpSender) {
         self.sender = sender
+    }
+    
+    func unwrapUnsafely() -> RTCRtpSender {
+        assert(RunLoop.current == queue)
+        return sender
     }
 }
