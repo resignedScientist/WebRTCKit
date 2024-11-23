@@ -175,6 +175,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         if let peerConnection, let localVideoSender {
             await peerConnection.removeTrack(localVideoSender)
             self.localVideoSender = nil
+            localVideoTrack = nil
             print("ℹ️ Local video track removed.")
         } else {
             print("ℹ️ Video sender is nil. No video track to remove.")
