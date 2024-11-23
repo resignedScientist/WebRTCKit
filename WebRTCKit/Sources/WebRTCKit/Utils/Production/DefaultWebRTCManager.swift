@@ -100,7 +100,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         // add the video track to the peer connection
         if let localVideoTrack {
-            await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
         } else {
             await addVideoTrack(to: peerConnection)
         }
@@ -600,7 +600,7 @@ private extension DefaultWebRTCManager {
         self.videoSource = videoSource
         
         // add video track to the peer connection
-        await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
         
         // set video encoding parameters
         bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection)
