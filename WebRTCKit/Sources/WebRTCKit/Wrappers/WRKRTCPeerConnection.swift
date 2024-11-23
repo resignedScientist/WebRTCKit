@@ -307,6 +307,20 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
         }
     }
     
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
+        let receiver = RtpReceiver(rtpReceiver)
+        queue.async {
+            self._delegate?.peerConnection(self, didAdd: receiver)
+        }
+    }
+    
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
+        let receiver = RtpReceiver(rtpReceiver)
+        queue.async {
+            self._delegate?.peerConnection(self, didRemove: receiver)
+        }
+    }
+    
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
         queue.async {
             self._delegate?.peerConnectionShouldNegotiate(self)

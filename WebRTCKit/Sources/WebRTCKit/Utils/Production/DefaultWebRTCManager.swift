@@ -415,6 +415,23 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         print("ℹ️ Remote peer did remove a media stream.")
     }
     
+    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
+        Task { @WebRTCActor in
+            guard let track = rtpReceiver.track as? RTCVideoTrack else { return }
+            let remoteVideoTrack = WRKRTCVideoTrackImpl(track)
+            self.remoteVideoTrack = remoteVideoTrack
+            delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
+        }
+    }
+    
+    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver) {
+        Task { @WebRTCActor [self] in
+            guard rtpReceiver.track?.kind == "video", let remoteVideoTrack else { return }
+            self.remoteVideoTrack = nil
+            delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+        }
+    }
+    
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
         Task { @WebRTCActor in
             await handleNegotiation(peerConnection)
@@ -748,19 +765,6 @@ private extension DefaultWebRTCManager {
             // ICE-restart or re-negotiation
             try await peerConnection.setRemoteDescription(sdp)
             try await sendAnswer(to: remotePeerID, peerConnection: peerConnection)
-            
-            // set remote video track again (in case it was enabled / disabled)
-            if
-                let videoSender = peerConnection.receivers.first(where: { $0.track?.kind == "video" }),
-                let videoTrack = videoSender.track as? RTCVideoTrack
-            {
-                let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack)
-                self.remoteVideoTrack = remoteVideoTrack
-                delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
-            } else if let remoteVideoTrack {
-                self.remoteVideoTrack = nil
-                delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
-            }
         }
     }
     
