@@ -90,6 +90,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             await addAudioTrack(to: peerConnection)
         }
         
+        bitrateAdjustor.start(for: .audio, peerConnection: peerConnection)
+        
         return peerID
     }
     
@@ -104,6 +106,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         } else {
             await addVideoTrack(to: peerConnection)
         }
+        
+        // start bitrate adjustor
+        bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
         
         let videoDevice = CaptureDevice(
             AVCaptureDevice.default(
@@ -570,8 +575,6 @@ private extension DefaultWebRTCManager {
         ) else {
             throw WebRTCManagerError.critical("Failed to create peer connection.")
         }
-        
-        bitrateAdjustor.start(peerConnection: peerConnection)
         
         return peerConnection
     }

@@ -8,7 +8,7 @@ enum BitrateType: String, Equatable {
 @WebRTCActor
 protocol BitrateAdjustor {
     
-    func start(peerConnection: WRKRTCPeerConnection)
+    func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection)
     
     func stop() async
     
@@ -28,8 +28,11 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     private var tasks: [Task<Void, Never>] = []
     private var runningTypes: Set<BitrateType> = []
     
-    func start(peerConnection: WRKRTCPeerConnection) {
-        registerStatisticObservers(peerConnection: peerConnection)
+    func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection) {
+        runningTypes.insert(type)
+        if tasks.isEmpty {
+            registerStatisticObservers(peerConnection: peerConnection)
+        }
     }
     
     func stop() async {
