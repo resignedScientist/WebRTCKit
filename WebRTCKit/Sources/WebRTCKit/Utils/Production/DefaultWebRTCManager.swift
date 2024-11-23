@@ -757,8 +757,9 @@ private extension DefaultWebRTCManager {
                 let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack)
                 self.remoteVideoTrack = remoteVideoTrack
                 delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
-            } else {
-                remoteVideoTrack = nil
+            } else if let remoteVideoTrack {
+                self.remoteVideoTrack = nil
+                delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
             }
         }
     }
