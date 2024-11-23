@@ -21,6 +21,11 @@ protocol WRKRTCPeerConnection: Sendable {
     /// Use isEqual: instead of == to compare RTCRtpSender instances.
     var senders: [RtpSender] { get }
     
+    /// Gets all RTCRtpReceivers associated with this peer connection.
+    /// Note: reading this property returns different instances of RTCRtpReceiver.
+    /// Use isEqual: instead of == to compare RTCRtpReceiver instances.
+    var receivers: [RTCRtpReceiver] { get }
+    
     @discardableResult
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender?
     
@@ -110,6 +115,10 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
         _peerConnection.senders.map {
             RtpSender(sender: $0)
         }
+    }
+    
+    var receivers: [RTCRtpReceiver] {
+        _peerConnection.receivers
     }
     
     init(_ peerConnection: RTCPeerConnection, delegate: WRKRTCPeerConnectionDelegate? = nil) {
