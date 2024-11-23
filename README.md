@@ -66,9 +66,43 @@ try await webRTCController.endCall()
 try await webRTCController.disconnect()
 ```
 
+## Configuration changes while calling
+
+To more efficiently make configuration changes while calling
+and only send one updated negotiation offer to our peer,
+you can make use of `startConfiguration` and `commitConfiguration`.
+
+For opening data channels, this is necessary.
+
+```swift
+// start the configuration which prevents sending negotiation offers
+try await webRTCController.startConfiguration()
+
+// make changes here like starting video recording or opening data channels
+
+// commit the configuration which sends one negotiation offer with all changes
+try await webRTCController.commitConfiguration()
+```
+
+## Adding Video
+
+The call starts with only audio. To enable video, you should call:
+
+```swift
+try await webRTCController.startVideoRecording(videoCapturer: videoCapturer)
+```
+
+You can do this before starting the call or in the middle of the call.
+
 ## Data Channels
 
-There is also support for data channels. This is only possible after the `callDidStart` function of the `CallManagerDelegate` was called. You can easily add them like this:
+There is also support for data channels. This is only possible after the `callDidStart` function
+of the `CallManagerDelegate` was called.
+
+You need to call `startConfiguration` before adding them and `commitConfiguration`
+after adding them for them to be opened.
+
+Here is an example on how to open them:
 
 ```swift
 func openDataChannels() async throws {
