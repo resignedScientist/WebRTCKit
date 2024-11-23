@@ -416,6 +416,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
+        print("ℹ️ Remote peer did add receiver.")
         Task { @WebRTCActor in
             guard let track = rtpReceiver.track as? RTCVideoTrack else { return }
             let remoteVideoTrack = WRKRTCVideoTrackImpl(track)
@@ -425,6 +426,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver) {
+        print("ℹ️ Remote peer did remove receiver.")
         Task { @WebRTCActor [self] in
             guard rtpReceiver.track?.kind == "video", let remoteVideoTrack else { return }
             self.remoteVideoTrack = nil
