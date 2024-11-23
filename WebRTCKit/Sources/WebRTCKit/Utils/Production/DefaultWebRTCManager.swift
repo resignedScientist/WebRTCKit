@@ -752,7 +752,8 @@ private extension DefaultWebRTCManager {
             // set remote video track again (in case it was enabled / disabled)
             if
                 let videoSender = peerConnection.receivers.first(where: { $0.track?.kind == "video" }),
-                let videoTrack = videoSender.track as? RTCVideoTrack
+                let videoTrack = videoSender.track as? RTCVideoTrack,
+                videoTrack.isEnabled
             {
                 let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack)
                 self.remoteVideoTrack = remoteVideoTrack
