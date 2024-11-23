@@ -76,6 +76,10 @@ extension DefaultCallManager: WebRTCManagerDelegate {
         delegate?.showRemoteVideo(videoTrack)
     }
     
+    func didRemoveRemoteVideoTrack(_ videoTrack: any WRKRTCVideoTrack) {
+        delegate?.remoteVideoTrackWasRemoved(videoTrack)
+    }
+    
     func didReceiveEndCall() {
         Task { @WebRTCActor in
             

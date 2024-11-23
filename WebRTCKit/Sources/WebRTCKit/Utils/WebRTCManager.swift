@@ -21,9 +21,14 @@ public enum WebRTCManagerError: LocalizedError, Equatable {
 @WebRTCActor
 protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
+    /// We added a local video track.
     func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack)
     
+    /// Our peer added a local video track (which is our remote video track).
     func didAddRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    
+    /// Our peer removed his local video track (which is our remote video track).
+    func didRemoveRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
     
     /// We received an endCall message from our peer and should react to it.
     func didReceiveEndCall()
@@ -31,14 +36,19 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     /// The call did end.
     func callDidEnd()
     
+    /// We received a call offer.
     func didReceiveOffer(from peerID: PeerID)
     
+    /// Our peer accepted our call request.
     func peerDidAcceptCallRequest()
     
+    /// We accepted the call request.
     func didAcceptCallRequest()
     
+    /// The call did start successfully. You are now able to open data channels.
     func callDidStart()
     
+    /// There was some kind of error.
     func onError(_ error: WebRTCManagerError)
     
     /// Called when the peer created a new data channel.

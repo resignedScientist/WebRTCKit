@@ -90,6 +90,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             await addAudioTrack(to: peerConnection)
         }
         
+        bitrateAdjustor.start(for: .audio, peerConnection: peerConnection)
+        
         return peerID
     }
     
@@ -100,7 +102,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         // add the video track to the peer connection
         if let localVideoTrack {
-            await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
         } else {
             await addVideoTrack(to: peerConnection)
         }
@@ -164,21 +166,33 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
                 fps: 30
             )
         }
+        
+        // start bitrate adjustor
+        bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
     }
     
     func stopVideoRecording() async {
-        guard let peerConnection, let localVideoSender else { return }
         
         // stop video capturer
         async let stopVideoCapturer: Void? = videoCapturer?.stop()
         
-        // remove connection
-        async let removeTrack = peerConnection.removeTrack(localVideoSender)
+        // remove video track
+        if let peerConnection, let localVideoSender {
+            await peerConnection.removeTrack(localVideoSender)
+            self.localVideoSender = nil
+            localVideoTrack = nil
+            print("ℹ️ Local video track removed.")
+        } else {
+            print("ℹ️ Video sender is nil. No video track to remove.")
+        }
         
-        let _ = await (stopVideoCapturer, removeTrack)
-        
+        await stopVideoCapturer
         videoCapturer = nil
-        self.localVideoSender = nil
+        
+        // stop bitrate adjustor for video
+        await bitrateAdjustor.stop(for: .video)
+        
+        print("ℹ️ Video recording stopped.")
     }
     
     func startVideoCall(to peerID: PeerID) async throws {
@@ -239,7 +253,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         remotePeerID = nil
         receivedOfferSDP = nil
         callIsRunning = false
-        bitrateAdjustor.stop()
+        await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
     }
     
@@ -415,6 +429,25 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         print("ℹ️ Remote peer did remove a media stream.")
     }
     
+    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
+        print("ℹ️ Remote peer did add receiver.")
+        Task { @WebRTCActor in
+            guard let track = rtpReceiver.track as? RTCVideoTrack else { return }
+            let remoteVideoTrack = WRKRTCVideoTrackImpl(track)
+            self.remoteVideoTrack = remoteVideoTrack
+            delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
+        }
+    }
+    
+    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver) {
+        print("ℹ️ Remote peer did remove receiver.")
+        Task { @WebRTCActor [self] in
+            guard rtpReceiver.track?.kind == "video", let remoteVideoTrack else { return }
+            self.remoteVideoTrack = nil
+            delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+        }
+    }
+    
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
         Task { @WebRTCActor in
             await handleNegotiation(peerConnection)
@@ -543,8 +576,6 @@ private extension DefaultWebRTCManager {
             throw WebRTCManagerError.critical("Failed to create peer connection.")
         }
         
-        bitrateAdjustor.start(peerConnection: peerConnection)
-        
         return peerConnection
     }
     
@@ -583,7 +614,7 @@ private extension DefaultWebRTCManager {
         self.videoSource = videoSource
         
         // add video track to the peer connection
-        await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
         
         // set video encoding parameters
         bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection)

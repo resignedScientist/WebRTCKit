@@ -21,6 +21,11 @@ protocol WRKRTCPeerConnection: Sendable {
     /// Use isEqual: instead of == to compare RTCRtpSender instances.
     var senders: [RtpSender] { get }
     
+    /// Gets all RTCRtpReceivers associated with this peer connection.
+    /// Note: reading this property returns different instances of RTCRtpReceiver.
+    /// Use isEqual: instead of == to compare RTCRtpReceiver instances.
+    var receivers: [RTCRtpReceiver] { get }
+    
     @discardableResult
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender?
     
@@ -112,6 +117,10 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
         }
     }
     
+    var receivers: [RTCRtpReceiver] {
+        _peerConnection.receivers
+    }
+    
     init(_ peerConnection: RTCPeerConnection, delegate: WRKRTCPeerConnectionDelegate? = nil) {
         self._peerConnection = peerConnection
         self._delegate = delegate
@@ -146,7 +155,8 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     func removeTrack(_ sender: RtpSender) async -> Bool {
         return await withCheckedContinuation { continuation in
             queue.async {
-                self._peerConnection.removeTrack(sender.unwrapUnsafely())
+                let result = self._peerConnection.removeTrack(sender.unwrapUnsafely())
+                continuation.resume(returning: result)
             }
         }
     }
@@ -295,6 +305,20 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
         let stream = WRKMediaStreamImpl(stream)
         queue.async {
             self._delegate?.peerConnection(self, didRemove: stream)
+        }
+    }
+    
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
+        let receiver = RtpReceiver(rtpReceiver)
+        queue.async {
+            self._delegate?.peerConnection(self, didAdd: receiver)
+        }
+    }
+    
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
+        let receiver = RtpReceiver(rtpReceiver)
+        queue.async {
+            self._delegate?.peerConnection(self, didRemove: receiver)
         }
     }
     

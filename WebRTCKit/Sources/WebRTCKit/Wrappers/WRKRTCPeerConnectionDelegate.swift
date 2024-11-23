@@ -12,6 +12,10 @@ protocol WRKRTCPeerConnectionDelegate: AnyObject, Sendable {
     /// This is not called when RTCSdpSemanticsUnifiedPlan is specified.
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove stream: WRKMediaStream)
     
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver)
+    
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver)
+    
     /// Called when negotiation is needed, for example ICE has restarted.
     func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection)
     

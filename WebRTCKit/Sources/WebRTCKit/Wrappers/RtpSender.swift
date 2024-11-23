@@ -1,6 +1,12 @@
 import WebRTC
 
-let sendableQueue = DispatchQueue(label: "com.webrtckit.sendable")
+let sendableQueueKey = DispatchSpecificKey<String>()
+let sendableQueueLabel = "com.webrtckit.sendable"
+let sendableQueue: DispatchQueue = {
+    let queue = DispatchQueue(label: sendableQueueLabel)
+    queue.setSpecific(key: sendableQueueKey, value: queue.label)
+    return queue
+}()
 
 final class RtpSender: @unchecked Sendable {
     
@@ -31,7 +37,7 @@ final class RtpSender: @unchecked Sendable {
     }
     
     func unwrapUnsafely() -> RTCRtpSender {
-        assert(RunLoop.current == queue)
+        assert(DispatchQueue.getSpecific(key: sendableQueueKey) == sendableQueueLabel)
         return sender
     }
 }
