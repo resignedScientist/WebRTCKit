@@ -307,10 +307,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("⚠️ Tried to start configuration before the call is running.")
         }
         
-        guard peerConnection.signalingState == .stable else {
-            throw WebRTCManagerError.critical("⚠️ Tried to start configuration, but the signaling state is not stable.")
-        }
-        
         isConfigurating = true
     }
     
