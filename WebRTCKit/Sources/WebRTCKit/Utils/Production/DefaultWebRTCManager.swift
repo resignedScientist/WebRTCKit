@@ -100,6 +100,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")
         }
         
+        guard !peerConnection.senders.contains(where: { $0.track?.kind == "video" }) else {
+            print("⚠️ Peer connection already contains a video track; we do not add a new one.")
+            return
+        }
+        
         // add the video track to the peer connection
         if let localVideoTrack {
             localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
