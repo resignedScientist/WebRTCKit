@@ -940,6 +940,7 @@ private extension DefaultWebRTCManager {
             let encoder = JSONEncoder()
             let signal = try encoder.encode(SessionDescription(from: sdp))
             try await signalingServer.sendSignal(signal, to: remotePeerID)
+            configurationChanged = false
             
             print("ℹ️ Negotiation sdp sent.")
         } catch {
