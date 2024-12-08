@@ -38,11 +38,17 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     /// Is the configuration of data channels and other parameters running?
     private var isConfigurating = false
     
+    /// Did we postpone the negotiation sdp until the signaling state is stable?
+    private var isCommitConfigurationPostponed = false
+    
     /// Is the call running?
     private var callIsRunning = false
     
     /// Are we currently processing cached ICE candidates?
     private var isProcessingCandidates = false
+    
+    /// Did we make changes that require a re-negotiation?
+    private var configurationChanged = false
     
     init(
         factory: WRKRTCPeerConnectionFactory,
@@ -308,6 +314,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         }
         
         isConfigurating = true
+        isCommitConfigurationPostponed = false
     }
     
     func commitConfiguration() async throws {
@@ -322,19 +329,24 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("⚠️ Tried to commit configuration before the call is running.")
         }
         
-        guard peerConnection.signalingState == .stable else {
-            throw WebRTCManagerError.critical("⚠️ Tried to commit configuration, but the signaling state is not stable.")
-        }
-        
         guard isConfigurating else {
             throw WebRTCManagerError.critical("⚠️ Tried to commit configuration before calling startConfiguration().")
+        }
+        
+        guard peerConnection.signalingState == .stable else {
+            print("ℹ️ Tried to commit configuration, but the signaling state is not stable; Postponing until stable.")
+            isCommitConfigurationPostponed = true
+            return
         }
         
         // stop configurating
         isConfigurating = false
         
+        // reset postponed state
+        isCommitConfigurationPostponed = false
+        
         // trigger the re-negotiation offer
-        peerConnectionShouldNegotiate(peerConnection)
+        await handleNegotiation(peerConnection)
     }
 }
 
@@ -406,6 +418,20 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange stateChanged: RTCSignalingState) {
         print("ℹ️ Signaling state: \(stateChanged)")
+        Task { @WebRTCActor in
+            if stateChanged == .stable, isCommitConfigurationPostponed {
+                isConfigurating = true
+                defer {
+                    isConfigurating = false
+                    isCommitConfigurationPostponed = false
+                }
+                do {
+                    try await commitConfiguration()
+                } catch {
+                    print("❌ WebRTCManager - failed to run postponed commit configuration: \(error)")
+                }
+            }
+        }
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd stream: WRKMediaStream) {
@@ -451,6 +477,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
         Task { @WebRTCActor in
+            configurationChanged = true
             await handleNegotiation(peerConnection)
         }
     }
@@ -757,6 +784,7 @@ private extension DefaultWebRTCManager {
         if peerConnection.signalingState != .stable {
             print("ℹ️ Received a remote offer while we have already generated a local offer.")
             if isPolite {
+                
                 // We are the polite peer, so we drop our local offer and take the received one.
                 // After that, we will immediately send an answer to our peer
                 // as he called us and we called him, meaning we both want that call.
@@ -764,6 +792,12 @@ private extension DefaultWebRTCManager {
                 try await peerConnection.setLocalDescription(.rollback)
                 try await peerConnection.setRemoteDescription(sdp)
                 try await sendAnswer(to: remotePeerID, peerConnection: peerConnection)
+                
+                if callIsRunning {
+                    print("ℹ️ The call is running which means both clients sent re-negotiation sdp; negotiating again…")
+                    configurationChanged = true
+                    await handleNegotiation(peerConnection)
+                }
             } else {
                 // We are the impolite peer, so we keep our local offer,
                 // ignore the received offer and wait for an answer from our peer.
@@ -885,6 +919,11 @@ private extension DefaultWebRTCManager {
             return
         }
         
+        guard configurationChanged else {
+            print("ℹ️ Negotiation skipped, because the configuration did not change.")
+            return
+        }
+        
         isPreparingOffer = true
         
         defer {
@@ -897,6 +936,7 @@ private extension DefaultWebRTCManager {
             let encoder = JSONEncoder()
             let signal = try encoder.encode(SessionDescription(from: sdp))
             try await signalingServer.sendSignal(signal, to: remotePeerID)
+            configurationChanged = false
             
             print("ℹ️ Negotiation sdp sent.")
         } catch {
