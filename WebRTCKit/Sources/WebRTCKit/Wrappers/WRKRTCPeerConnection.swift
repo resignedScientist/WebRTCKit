@@ -12,6 +12,8 @@ protocol WRKRTCPeerConnection: Sendable {
     
     var signalingState: RTCSignalingState { get }
     
+    var connectionState: RTCPeerConnectionState { get }
+    
     var localDescription: RTCSessionDescription? { get }
     
     var remoteDescription: RTCSessionDescription? { get }
@@ -97,6 +99,10 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     var iceConnectionState: RTCIceConnectionState {
         _peerConnection.iceConnectionState
+    }
+    
+    var connectionState: RTCPeerConnectionState {
+        _peerConnection.connectionState
     }
     
     var localDescription: RTCSessionDescription? {
