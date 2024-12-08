@@ -104,7 +104,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         }
         
         guard !peerConnection.senders.contains(where: { $0.track?.kind == "video" }) else {
-            print("⚠️ Peer connection already contains a video track; we do not add a new one.")
+            print("ℹ️ Peer connection already contains a video track; we remove the old one and add a new one.")
+            await stopVideoRecording()
+            try await startVideoRecording(videoCapturer: videoCapturer)
             return
         }
         
