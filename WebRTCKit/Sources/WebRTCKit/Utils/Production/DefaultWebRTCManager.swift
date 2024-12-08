@@ -328,14 +328,14 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("⚠️ Tried to commit configuration before the call is running.")
         }
         
+        guard isConfigurating else {
+            throw WebRTCManagerError.critical("⚠️ Tried to commit configuration before calling startConfiguration().")
+        }
+        
         guard peerConnection.signalingState == .stable else {
             print("ℹ️ Tried to commit configuration, but the signaling state is not stable; Postponing until stable.")
             isCommitConfigurationPostponed = true
             return
-        }
-        
-        guard isConfigurating else {
-            throw WebRTCManagerError.critical("⚠️ Tried to commit configuration before calling startConfiguration().")
         }
         
         // stop configurating
