@@ -47,6 +47,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     /// Are we currently processing cached ICE candidates?
     private var isProcessingCandidates = false
     
+    /// Did we make changes that require a re-negotiation?
+    private var configurationChanged = false
+    
     init(
         factory: WRKRTCPeerConnectionFactory,
         rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl(.sharedInstance())
@@ -343,7 +346,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         isCommitConfigurationPostponed = false
         
         // trigger the re-negotiation offer
-        peerConnectionShouldNegotiate(peerConnection)
+        await handleNegotiation(peerConnection)
     }
 }
 
@@ -474,6 +477,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
         Task { @WebRTCActor in
+            configurationChanged = true
             await handleNegotiation(peerConnection)
         }
     }
@@ -916,6 +920,11 @@ private extension DefaultWebRTCManager {
         
         guard !isConfigurating else {
             print("ℹ️ Negotiation skipped, because we are currently configuring the peer connection.")
+            return
+        }
+        
+        guard configurationChanged else {
+            print("ℹ️ Negotiation skipped, because the configuration did not change.")
             return
         }
         
