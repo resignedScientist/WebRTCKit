@@ -38,6 +38,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     /// Is the configuration of data channels and other parameters running?
     private var isConfigurating = false
     
+    /// Did we postpone the negotiation sdp until the signaling state is stable?
+    private var isCommitConfigurationPostponed = false
+    
     /// Is the call running?
     private var callIsRunning = false
     
@@ -308,6 +311,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         }
         
         isConfigurating = true
+        isCommitConfigurationPostponed = false
     }
     
     func commitConfiguration() async throws {
@@ -323,7 +327,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         }
         
         guard peerConnection.signalingState == .stable else {
-            throw WebRTCManagerError.critical("⚠️ Tried to commit configuration, but the signaling state is not stable.")
+            print("ℹ️ Tried to commit configuration, but the signaling state is not stable; Postponing until stable.")
+            isCommitConfigurationPostponed = true
+            return
         }
         
         guard isConfigurating else {
@@ -332,6 +338,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         // stop configurating
         isConfigurating = false
+        
+        // reset postponed state
+        isCommitConfigurationPostponed = false
         
         // trigger the re-negotiation offer
         peerConnectionShouldNegotiate(peerConnection)
@@ -406,6 +415,17 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange stateChanged: RTCSignalingState) {
         print("ℹ️ Signaling state: \(stateChanged)")
+        Task { @WebRTCActor in
+            if stateChanged == .stable, isCommitConfigurationPostponed {
+                do {
+                    try await commitConfiguration()
+                } catch {
+                    isConfigurating = false
+                    isCommitConfigurationPostponed = false
+                    print("❌ WebRTCManager - failed to commit configuration: \(error)")
+                }
+            }
+        }
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd stream: WRKMediaStream) {
