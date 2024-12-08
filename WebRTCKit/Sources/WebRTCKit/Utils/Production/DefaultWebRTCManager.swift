@@ -419,12 +419,15 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         print("ℹ️ Signaling state: \(stateChanged)")
         Task { @WebRTCActor in
             if stateChanged == .stable, isCommitConfigurationPostponed {
+                isConfigurating = true
+                defer {
+                    isConfigurating = false
+                    isCommitConfigurationPostponed = false
+                }
                 do {
                     try await commitConfiguration()
                 } catch {
-                    isConfigurating = false
-                    isCommitConfigurationPostponed = false
-                    print("❌ WebRTCManager - failed to commit configuration: \(error)")
+                    print("❌ WebRTCManager - failed to run postponed commit configuration: \(error)")
                 }
             }
         }
