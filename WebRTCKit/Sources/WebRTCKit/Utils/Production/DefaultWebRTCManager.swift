@@ -785,8 +785,6 @@ private extension DefaultWebRTCManager {
             print("ℹ️ Received a remote offer while we have already generated a local offer.")
             if isPolite {
                 
-                let localSDP = peerConnection.localDescription
-                
                 // We are the polite peer, so we drop our local offer and take the received one.
                 // After that, we will immediately send an answer to our peer
                 // as he called us and we called him, meaning we both want that call.
@@ -795,12 +793,10 @@ private extension DefaultWebRTCManager {
                 try await peerConnection.setRemoteDescription(sdp)
                 try await sendAnswer(to: remotePeerID, peerConnection: peerConnection)
                 
-                if callIsRunning, let localSDP {
-                    print("ℹ️ The call is running which means both clients sent re-negotiation sdp; sending our sdp…")
-                    try await peerConnection.setLocalDescription(SessionDescription(from: localSDP))
-                    let encoder = JSONEncoder()
-                    let signal = try encoder.encode(SessionDescription(from: localSDP))
-                    try await signalingServer.sendSignal(signal, to: remotePeerID)
+                if callIsRunning {
+                    print("ℹ️ The call is running which means both clients sent re-negotiation sdp; negotiating again…")
+                    configurationChanged = true
+                    await handleNegotiation(peerConnection)
                 }
             } else {
                 // We are the impolite peer, so we keep our local offer,
