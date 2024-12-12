@@ -2,12 +2,14 @@ import PushKit
 
 final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
     
+    private let log = Logger(caller: "VoIPPushHandler")
+    
     public override init() {
         super.init()
         let pushRegistry = PKPushRegistry(queue: .main)
         pushRegistry.delegate = self
         pushRegistry.desiredPushTypes = [.voIP]
-        print("ℹ️ Registered for receiving VoIP push notifications.")
+        log.info("Registered for receiving VoIP push notifications.")
     }
 }
 
@@ -20,7 +22,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         didUpdate pushCredentials: PKPushCredentials,
         for type: PKPushType
     ) {
-        print("🪲 Push Registry did update push credentials.")
+        log.debug("🪲 Push Registry did update push credentials.")
         // TODO
     }
     
@@ -29,7 +31,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         didReceiveIncomingPushWith payload: PKPushPayload,
         for type: PKPushType
     ) async {
-        print("🪲 Push Registry did receive incoming push notification.")
+        log.debug("🪲 Push Registry did receive incoming push notification.")
         // TODO
     }
 }

@@ -9,6 +9,8 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private let provider: WRKCXProvider
     private let callController: WRKCallController
     private let rtcAudioSession: WRKRTCAudioSession
+    private let log = Logger(caller: "VoIPCallProvider")
+    
     private var localPeerID: PeerID?
     private var currentCallID: UUID?
     private var startCallHandler: (@Sendable (Error?) -> Void)?
@@ -52,7 +54,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
             )
             doNotDisturbIsEnabled = false
         } catch CXErrorCodeIncomingCallError.filteredByDoNotDisturb {
-            print("⚠️ Do not disturb is enabled.")
+            log.info("Do not disturb is enabled.")
             doNotDisturbIsEnabled = true
         }
         
@@ -66,7 +68,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     ) async throws {
         
         guard startCallHandler == nil else {
-            print("⚠️ startOutgoingCall called, but we are already waiting for the call to start.")
+            log.fault("startOutgoingCall called, but we are already waiting for the call to start.")
             return
         }
         
@@ -114,12 +116,12 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     func acceptIncomingCall() async throws {
         
         guard let uuid = currentCallID else {
-            print("❌ No current call UUID available.")
+            log.fault("No current call UUID available.")
             return
         }
         
         guard answerCallHandler == nil else {
-            print("⚠️ acceptIncomingCall called, but we are already waiting for the answer to be sent.")
+            log.fault("acceptIncomingCall called, but we are already waiting for the answer to be sent.")
             return
         }
         
@@ -163,12 +165,12 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     func endCall() async throws {
         
         guard let uuid = currentCallID else {
-            print("ℹ️ End Call message received, but there is no call running.")
+            log.error("End Call message received, but there is no call running.")
             return
         }
         
         guard endCallHandler == nil, !isEndingCall else {
-            print("⚠️ endCall called, but we are already waiting for the call to end.")
+            log.error("endCall called, but we are already waiting for the call to end.")
             return
         }
         
@@ -218,7 +220,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
 extension DefaultVoIPCallProvider: CallProviderDelegate {
     
     func providerDidReset(_ provider: WRKCXProvider) async {
-        print("ℹ️ CXProvider did reset.")
+        log.info("CXProvider did reset.")
     }
     
     func provider(_ provider: WRKCXProvider, perform action: StartCallAction) async {
@@ -230,7 +232,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
             action.fulfill()
             startCallHandler?(nil)
         } catch {
-            print("⚠️ Start Call Action failed - \(error)")
+            log.error("Start Call Action failed - \(error)")
             action.fail()
             startCallHandler?(error)
         }
@@ -242,7 +244,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
             action.fulfill()
             answerCallHandler?(nil)
         } catch {
-            print("⚠️ Answer Call Action failed - \(error)")
+            log.error("Answer Call Action failed - \(error)")
             action.fail()
             answerCallHandler?(error)
         }
@@ -261,19 +263,19 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
             action.fulfill()
             endCallHandler?(nil)
         } catch {
-            print("⚠️ End Call Action failed - \(error)")
+            log.error("End Call Action failed - \(error)")
             action.fail()
             endCallHandler?(error)
         }
     }
     
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
-        print("ℹ️ VoIPCallProvider - Audio Session Activated")
+        log.info("Audio Session Activated")
         await activateAudioSession()
     }
     
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
-        print("ℹ️ VoIPCallProvider - Audio Session Deactivated")
+        log.info("Audio Session Deactivated")
         await deactivateAudioSession()
     }
 }
@@ -323,7 +325,7 @@ private extension DefaultVoIPCallProvider {
         do {
             try await rtcAudioSession.setConfiguration(configuration)
         } catch {
-            print("⚠️ VoIPCallProvider - Failed to configure audio session: \(error)")
+            log.error("Failed to configure audio session: \(error)")
         }
         
         await rtcAudioSession.unlockForConfiguration()
@@ -338,7 +340,7 @@ private extension DefaultVoIPCallProvider {
                 options: [.mixWithOthers]
             )
         } catch {
-            print("⚠️ VoIPCallProvider - Failed to reset audio configuration: \(error)")
+            log.error("Failed to reset audio configuration: \(error)")
         }
     }
     
@@ -348,7 +350,7 @@ private extension DefaultVoIPCallProvider {
             try await rtcAudioSession.setActive(active)
             rtcAudioSession.isAudioEnabled = active
         } catch {
-            print("⚠️ VoIPCallProvider - Failed to set audio session active (\(active)): \(error)")
+            log.error("Failed to set audio session active (\(active)): \(error)")
         }
         await rtcAudioSession.unlockForConfiguration()
     }

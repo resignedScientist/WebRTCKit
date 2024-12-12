@@ -6,6 +6,8 @@ final class DefaultNetworkMonitor: NetworkMonitor {
     
     private let monitor: WRKNetworkPathMonitor
     private let queue = DispatchQueue(label: "NetworkMonitorQueue")
+    private let log = Logger(caller: "NetworkMonitor")
+    
     private var currentStatus: NWPath.Status = .satisfied
     
     init(monitor: WRKNetworkPathMonitor = WRKNetworkPathMonitorImpl(NWPathMonitor())) {
@@ -34,17 +36,17 @@ private extension DefaultNetworkMonitor {
         switch path.status {
         case .satisfied:
             if currentStatus != .satisfied {
-                print("ℹ️ Connection is satisfied.")
+                log.info("Connection is satisfied.")
                 signalingServer.onConnectionSatisfied()
             }
         case .unsatisfied:
             if currentStatus != .unsatisfied {
-                print("⚠️ Connection is unsatisfied")
+                log.info("Connection is unsatisfied")
                 signalingServer.onConnectionUnsatisfied()
             }
         case .requiresConnection:
             if currentStatus != .requiresConnection {
-                print("ℹ️ Connection is requiresConnection")
+                log.info("Connection is requiresConnection")
             }
         @unknown default:
             break
