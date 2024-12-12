@@ -25,6 +25,8 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     private let videoAdjustmentTracker: AdjustmentTracker = AdjustmentTrackerImpl(cooldownDuration: 3)
     private let audioNetworkDataCache: NetworkDataCache = NetworkDataCacheImpl()
     private let videoNetworkDataCache: NetworkDataCache = NetworkDataCacheImpl()
+    private let log = Logger(caller: "BitrateAdjustor")
+    
     private var tasks: [Task<Void, Never>] = []
     private var runningTypes: Set<BitrateType> = []
     
@@ -193,9 +195,9 @@ private extension BitrateAdjustorImpl {
         if type == .video {
             let scalingFactor = calculateVideoScaling(for: bitrate)
             encoding.scaleResolutionDownBy = scalingFactor
-            print("ℹ️ Adjusted video bitrate to \(bitrate) with scaling factor \(scalingFactor).")
+            log.info("Adjusted video bitrate to \(bitrate) with scaling factor \(scalingFactor).")
         } else {
-            print("ℹ️ Adjusted audio bitrate to \(bitrate).")
+            log.info("Adjusted audio bitrate to \(bitrate).")
         }
         
         let parameters = sender.parameters

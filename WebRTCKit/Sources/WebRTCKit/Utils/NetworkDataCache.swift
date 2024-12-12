@@ -28,6 +28,8 @@ actor NetworkDataCacheImpl: NetworkDataCache {
     
     private var dataPoints: [NetworkDataPoint] = []
     
+    private let log = Logger(caller: "NetworkDataCache")
+    
     func addDataPoint(_ dataPoint: NetworkDataPoint) {
         dataPoints.append(dataPoint)
         removeOldDataPoints()
@@ -55,7 +57,7 @@ actor NetworkDataCacheImpl: NetworkDataCache {
             
             // make sure we have at least 2 points for calculation
             guard dataPoints.count > 1 else {
-                print("⚠️ Not enough data points collected yet to calculate packet loss.")
+                log.info("Not enough data points collected yet to calculate packet loss.")
                 return nil
             }
             let pointBeforeLast = dataPoints[dataPoints.count - 2]
@@ -68,7 +70,7 @@ actor NetworkDataCacheImpl: NetworkDataCache {
         }
         
         guard packetsSent > 0 else {
-            print("⚠️ Cannot get packet loss rate - no packets sent in the given time interval.")
+            log.error("No packets sent in the given time interval.")
             return 1
         }
         

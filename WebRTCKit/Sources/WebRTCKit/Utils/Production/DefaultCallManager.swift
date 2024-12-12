@@ -9,7 +9,10 @@ final class DefaultCallManager: CallManager {
     @Inject(\.webRTCManager) private var webRTCManager
     @Inject(\.signalingServer) private var signalingServer
     @Inject(\.config) private var config
+    
     private let stateHolder: CallManagerStateHolder
+    private let log = Logger(caller: "CallManager")
+    
     private var connectionTimeout: Task<Void, Never>?
     private var state: CallManagerState = .idle
     
@@ -90,7 +93,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                 try await stateHolder.changeState(to: .endingCall)
                 try await callProvider.endCall()
             } catch {
-                print("⚠️ CallManager.didReceiveEndCall failed - \(error)")
+                log.error("DidReceiveEndCall failed - \(error)")
             }
         }
     }
@@ -113,9 +116,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                 )
                 delegate?.didReceiveIncomingCall(from: peerID)
             } catch let error as CXErrorCodeIncomingCallError {
-                print("⚠️ didReceiveOffer failed - \(error.code)")
+                log.error("DidReceiveOffer failed - \(error.code)")
             } catch {
-                print("⚠️ didReceiveOffer failed - \(error)")
+                log.error("DidReceiveOffer failed - \(error)")
             }
         }
     }
@@ -128,7 +131,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                 try await stateHolder.changeState(to: .idle)
                 delegate?.callDidEnd(withError: .webRTCManagerError(error))
             } catch {
-                print("⚠️ CallManager.onError failed - \(error)")
+                log.error("OnError failed - \(error)")
             }
         }
     }
@@ -193,7 +196,7 @@ private extension DefaultCallManager {
         do {
             try await Task.sleep(nanoseconds: 1_000_000_000 * config.connectionTimeout)
             if !Task.isCancelled {
-                print("⚠️ Connection timeout.")
+                log.error("Connection timeout.")
                 
                 // If state is idle, the peers connection timeout was triggered first.
                 if await stateHolder.getState() != .idle {
@@ -203,7 +206,7 @@ private extension DefaultCallManager {
             }
         } catch {
             if !(error is CancellationError) {
-                print("⚠️ Error aborting connecting call - \(error)")
+                log.error("Error aborting connecting call - \(error)")
             }
         }
     }

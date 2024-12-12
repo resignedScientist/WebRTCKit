@@ -62,6 +62,8 @@ private extension WebRTCView {
     class Coordinator {
         @Binding var aspectRatio: CGFloat
         
+        private let log = Logger(caller: "WebRTCVideoView", category: .userInterface)
+        
         init(aspectRatio: Binding<CGFloat>) {
             _aspectRatio = aspectRatio
         }
@@ -73,7 +75,7 @@ private extension WebRTCView {
 extension WebRTCView.Coordinator: RTCVideoViewDelegate {
     
     func videoView(_ videoView: any RTCVideoRenderer, didChangeVideoSize size: CGSize) {
-        print("ℹ️ Did change video size to \(size)")
+        log.info("Did change video size to \(size)")
         aspectRatio = size.width / size.height
     }
 }

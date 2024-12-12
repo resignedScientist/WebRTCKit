@@ -3,6 +3,7 @@ import Foundation
 
 enum LoggerCategory: String {
     case `default`
+    case userInterface
 }
 
 final class Logger: Sendable {

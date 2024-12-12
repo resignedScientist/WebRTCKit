@@ -85,6 +85,8 @@ actor CallManagerStateHolderImpl: CallManagerStateHolder {
     
     private var state: CallManagerState
     
+    private let log = Logger(caller: "CallManagerStateHolder")
+    
     init(initialState state: CallManagerState) {
         self.state = state
     }
@@ -102,7 +104,7 @@ actor CallManagerStateHolderImpl: CallManagerStateHolder {
             )
         }
         
-        print("ℹ️ CallState changed from \(state) to \(newState)")
+        log.info("CallState changed from \(state) to \(newState)")
         
         state = newState
     }
