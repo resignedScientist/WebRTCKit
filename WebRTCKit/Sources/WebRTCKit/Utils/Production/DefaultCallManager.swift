@@ -29,6 +29,7 @@ final class DefaultCallManager: CallManager {
     }
     
     func sendCallRequest(to peerID: PeerID) async throws {
+        log.info("Sending call request…")
         try await stateHolder.changeState(to: .sendingCallRequest)
         try await callProvider.startOutgoingCall(
             uuid: UUID(),
@@ -38,6 +39,7 @@ final class DefaultCallManager: CallManager {
     }
     
     func answerCallRequest(accept: Bool) async throws {
+        log.info("Answering call request (accept = \(accept))…")
         try await stateHolder.changeState(to: .answeringCallRequest)
         
         if accept {
@@ -48,12 +50,14 @@ final class DefaultCallManager: CallManager {
     }
     
     func endCall() async throws {
+        log.info("Ending call…")
         try await stateHolder.changeState(to: .endingCall)
         try await callProvider.endCall()
         stopConnectionTimeout()
     }
     
     func disconnect() async throws {
+        log.info("Disconnecting…")
         
         // end call if it is running
         if await stateHolder.canChangeState(to: .endingCall) {
