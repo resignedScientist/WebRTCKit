@@ -104,7 +104,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")
         }
         
-        guard !peerConnection.senders.contains(where: { $0.track?.kind == "video" }) else {
+        guard !isVideoRecording() else {
             log.error("Peer connection already contains a video track; we do not add a new one.")
             return
         }
@@ -202,6 +202,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         await bitrateAdjustor.stop(for: .video)
         
         log.info("Video recording stopped.")
+    }
+    
+    func isVideoRecording() -> Bool {
+        peerConnection?.senders.contains(where: { $0.track?.kind == "video" }) == true
     }
     
     func startVideoCall(to peerID: PeerID) async throws {

@@ -66,6 +66,9 @@ protocol WebRTCManager: Sendable {
     
     func stopVideoRecording() async
     
+    /// Was a video track added by calling `startVideoRecording`?
+    func isVideoRecording() -> Bool
+    
     func startVideoCall(to peerID: PeerID) async throws
     
     func stopVideoCall() async throws

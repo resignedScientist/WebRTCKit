@@ -28,6 +28,10 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
+    func isVideoRecording() -> Bool {
+        false
+    }
+    
     func answerCall() async throws {
         
     }
