@@ -35,16 +35,12 @@ public enum CallManagerState: Equatable, Sendable {
                 .handlingError
             ].contains(fromState)
         case .callIsRunning:
-            return [
-                .sendingCallRequest, // for fast connections
-                .receivingCallRequest, // for fast connections
-                .connecting
-            ].contains(fromState)
+            return [.connecting].contains(fromState)
         case .receivingCallRequest:
             // we do not allow knocking for now
             return [.idle].contains(fromState)
         case .sendingCallRequest:
-            return [.idle, .endingCall].contains(fromState)
+            return [.idle].contains(fromState)
         case .answeringCallRequest:
             return [.receivingCallRequest].contains(fromState)
         case .endingCall:
