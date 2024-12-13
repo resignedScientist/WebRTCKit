@@ -29,26 +29,7 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     /// Called when the audio session is deactivated outside of the app by iOS.
     func audioSessionDidDeactivate(_ session: WRKAVAudioSession) async
     
-    /// Request exclusive access to the audio session for configuration. This call
-    /// will block if the lock is held by another object.
-    func lockForConfiguration() async
-    
-    /// Relinquishes exclusive access to the audio session.
-    func unlockForConfiguration() async
-    
-    /// If `active`, activates the audio session if it isn't already active.
-    /// Successful calls must be balanced with a setActive:NO when activation is no
-    /// longer required. If not `active`, deactivates the audio session if one is
-    /// active and this is the last balanced call. When deactivating, the
-    /// AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation option is passed to
-    /// AVAudioSession.
-    func setActive(_ active: Bool) async throws
-    
-    /// Applies the configuration to the current session. Attempts to set all
-    /// properties even if previous ones fail. Only the last error will be
-    /// returned.
-    /// `lockForConfiguration` must be called first.
-    func setConfiguration(_ configuration: RTCAudioSessionConfiguration) async throws
+    func perform(_ action: @escaping @Sendable (_ audioSession: RTCAudioSession) -> Void)
 }
 
 final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
@@ -114,48 +95,9 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
         }
     }
     
-    func lockForConfiguration() async {
-        return await withCheckedContinuation { continuation in
-            queue.async {
-                self._audioSession.lockForConfiguration()
-                continuation.resume()
-            }
-        }
-    }
-    
-    func unlockForConfiguration() async {
-        return await withCheckedContinuation { continuation in
-            queue.async {
-                self._audioSession.unlockForConfiguration()
-                continuation.resume()
-            }
-        }
-    }
-    
-    func setActive(_ active: Bool) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
-                do {
-                    try self._audioSession.setActive(active)
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-    }
-    
-    func setConfiguration(_ configuration: RTCAudioSessionConfiguration) async throws {
-        let config = AudioSessionConfiguration(from: configuration)
-        return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
-                do {
-                    try self._audioSession.setConfiguration(config.toRTCAudioSessionConfiguration())
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
+    func perform(_ action: @escaping @Sendable (_ audioSession: RTCAudioSession) -> Void) {
+        queue.async {
+            action(self._audioSession)
         }
     }
 }
