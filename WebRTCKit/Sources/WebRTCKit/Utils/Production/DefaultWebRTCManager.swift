@@ -42,9 +42,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     /// Did we postpone the negotiation sdp until the signaling state is stable?
     private var isCommitConfigurationPostponed = false
     
-    /// Is the call running?
-    private var callIsRunning = false
-    
     /// Are we currently processing cached ICE candidates?
     private var isProcessingCandidates = false
     
@@ -249,8 +246,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         delegate?.didAcceptCallRequest()
         
         // check if we are already connected
-        if [.connected, .completed].contains(peerConnection.iceConnectionState) {
-            callDidStart()
+        if peerConnection.connectionState == .connected {
+            delegate?.callDidStart()
         }
         
         // process ICE candidates
@@ -264,7 +261,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         remoteVideoTrack = nil
         remotePeerID = nil
         receivedOfferSDP = nil
-        callIsRunning = false
         await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
     }
@@ -518,7 +514,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             case .new, .disconnected, .failed, .closed, .connecting:
                 break
             case .connected:
-                callDidStart()
+                delegate?.callDidStart()
             @unknown default:
                 break
             }
@@ -794,7 +790,7 @@ private extension DefaultWebRTCManager {
                 try await peerConnection.setRemoteDescription(sdp)
                 try await sendAnswer(to: remotePeerID, peerConnection: peerConnection)
                 
-                if callIsRunning {
+                if peerConnection.connectionState == .connected {
                     log.info("The call is running which means both clients sent re-negotiation sdp; negotiating again…")
                     configurationChanged = true
                     await handleNegotiation(peerConnection)
@@ -807,7 +803,7 @@ private extension DefaultWebRTCManager {
             return
         }
         
-        if receivedOfferSDP == nil, !callIsRunning {
+        if peerConnection.connectionState != .connected {
             // incoming call
             self.receivedOfferSDP = sdp
             delegate?.didReceiveOffer(from: remotePeerID)
@@ -833,15 +829,10 @@ private extension DefaultWebRTCManager {
             delegate?.peerDidAcceptCallRequest()
             
             // check if we are already connected
-            if [.connected, .completed].contains(peerConnection.iceConnectionState) {
-                callDidStart()
+            if peerConnection.connectionState == .connected {
+                delegate?.callDidStart()
             }
         }
-    }
-    
-    func callDidStart() {
-        callIsRunning = true
-        delegate?.callDidStart()
     }
     
     func handleReceivedSignal(
