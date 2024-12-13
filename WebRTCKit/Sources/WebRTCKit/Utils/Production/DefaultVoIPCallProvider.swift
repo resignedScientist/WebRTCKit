@@ -311,24 +311,29 @@ private extension DefaultVoIPCallProvider {
     }
     
     nonisolated func setupAudioConfiguration() async {
-        await rtcAudioSession.lockForConfiguration()
-        
-        let configuration = RTCAudioSessionConfiguration.webRTC()
-        configuration.categoryOptions = [
-            .allowBluetooth,
-            .allowBluetoothA2DP,
-            .allowAirPlay,
-            .defaultToSpeaker,
-            .duckOthers
-        ]
-        
-        do {
-            try await rtcAudioSession.setConfiguration(configuration)
-        } catch {
-            log.error("Failed to configure audio session: \(error)")
+        return await withCheckedContinuation { [log] continuation in
+            rtcAudioSession.perform { audioSession in
+                audioSession.lockForConfiguration()
+                
+                let configuration = RTCAudioSessionConfiguration.webRTC()
+                configuration.categoryOptions = [
+                    .allowBluetooth,
+                    .allowBluetoothA2DP,
+                    .allowAirPlay,
+                    .defaultToSpeaker,
+                    .duckOthers
+                ]
+                
+                do {
+                    try audioSession.setConfiguration(configuration)
+                } catch {
+                    log.error("Failed to configure audio session: \(error)")
+                }
+                
+                audioSession.unlockForConfiguration()
+                continuation.resume()
+            }
         }
-        
-        await rtcAudioSession.unlockForConfiguration()
     }
     
     nonisolated func resetAudioConfiguration() {
@@ -345,13 +350,20 @@ private extension DefaultVoIPCallProvider {
     }
     
     nonisolated func setAudioSessionActive(_ active: Bool) async {
-        await rtcAudioSession.lockForConfiguration()
-        do {
-            try await rtcAudioSession.setActive(active)
-            rtcAudioSession.isAudioEnabled = active
-        } catch {
-            log.error("Failed to set audio session active (\(active)): \(error)")
+        return await withCheckedContinuation { [log, active] continuation in
+            rtcAudioSession.perform { audioSession in
+                audioSession.lockForConfiguration()
+                
+                do {
+                    try audioSession.setActive(active)
+                    audioSession.isAudioEnabled = active
+                } catch {
+                    log.error("Failed to set audio session active (\(active)): \(error)")
+                }
+                
+                audioSession.unlockForConfiguration()
+                continuation.resume()
+            }
         }
-        await rtcAudioSession.unlockForConfiguration()
     }
 }
