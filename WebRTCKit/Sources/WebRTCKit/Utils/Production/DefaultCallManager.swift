@@ -142,9 +142,13 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             // skip if call is already running
             guard await stateHolder.getState() != .callIsRunning else { return }
             
-            try await stateHolder.changeState(to: .callIsRunning)
-            delegate?.callDidStart()
-            stopConnectionTimeout()
+            do {
+                try await stateHolder.changeState(to: .callIsRunning)
+                delegate?.callDidStart()
+                stopConnectionTimeout()
+            } catch {
+                log.fault("Failed to change state to 'callIsRunning' - \(error)")
+            }
         }
     }
     
@@ -155,15 +159,23 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             // we are already connected
             guard state != .callIsRunning else { return }
             
-            try await stateHolder.changeState(to: .connecting)
-            startConnectionTimeout()
+            do {
+                try await stateHolder.changeState(to: .connecting)
+                startConnectionTimeout()
+            } catch {
+                log.fault("Failed to change state to 'connecting' - \(error)")
+            }
         }
     }
     
     func didAcceptCallRequest() {
         Task { @WebRTCActor in
-            try await stateHolder.changeState(to: .connecting)
-            startConnectionTimeout()
+            do {
+                try await stateHolder.changeState(to: .connecting)
+                startConnectionTimeout()
+            } catch {
+                log.fault("Failed to change state to 'connecting' - \(error)")
+            }
         }
     }
     

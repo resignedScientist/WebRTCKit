@@ -36,7 +36,8 @@ public enum CallManagerState: Equatable, Sendable {
             ].contains(fromState)
         case .callIsRunning:
             return [
-                .sendingCallRequest,
+                .sendingCallRequest, // for fast connections
+                .receivingCallRequest, // for fast connections
                 .connecting
             ].contains(fromState)
         case .receivingCallRequest:
