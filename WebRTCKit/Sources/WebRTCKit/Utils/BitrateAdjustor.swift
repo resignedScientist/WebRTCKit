@@ -1,19 +1,36 @@
 import Foundation
 
+/// An enumeration representing the type of stream for the bitrate to adjust.
 enum BitrateType: String, Equatable {
+    
+    /// Case representing the audio stream.
     case audio
+    
+    /// Case representing the video stream.
     case video
 }
 
+/// A protocol defining methods to adjust and manage bitrate settings for peer connections.
 @WebRTCActor
 protocol BitrateAdjustor {
     
+    /// Starts adjusting the bitrate for a specific type.
+    /// - Parameters:
+    ///   - type: The type of bitrate adjustment to start.
+    ///   - peerConnection: The peer connection on which to adjust the bitrate.
     func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection)
     
+    /// Stops all bitrate adjustments.
     func stop() async
     
+    /// Stops adjusting the bitrate for a specific type.
+    /// - Parameter type: The type of bitrate adjustment to stop.
     func stop(for type: BitrateType) async
     
+    /// Sets the initial encoding parameters for a specific type.
+    /// - Parameters:
+    ///   - type: The type of bitrate for which to set the initial encoding parameters.
+    ///   - peerConnection: The peer connection on which to set the encoding parameters.
     func setStartEncodingParameters(for type: BitrateType, peerConnection: WRKRTCPeerConnection)
 }
 

@@ -27,6 +27,11 @@ public enum CallManagerState: Equatable, Sendable {
     /// We are trying to establish a peer-to-peer connection
     case connecting
     
+    /// Determines if the state can change from one state to another.
+    /// - Parameters:
+    ///   - fromState: The current state.
+    ///   - toState: The state to change to.
+    /// - Returns: True if the state can be changed to the specified state.
     static func canChangeState(from fromState: CallManagerState, to toState: CallManagerState) -> Bool {
         switch toState {
         case .idle:
@@ -69,12 +74,21 @@ public enum CallManagerState: Equatable, Sendable {
     }
 }
 
+/// Protocol to hold and manage call states.
 protocol CallManagerStateHolder: Actor {
     
+    /// Gets the current state.
+    /// - Returns: The current call manager state.
     func getState() async -> CallManagerState
     
+    /// Changes the current state to a new state.
+    /// - Parameter newState: The new state to change to.
+    /// - Throws: An error if the state transition is not allowed.
     func changeState(to newState: CallManagerState) async throws
     
+    /// Determines if the state can change to the specified new state.
+    /// - Parameter newState: The new state to verify.
+    /// - Returns: True if the state can change.
     func canChangeState(to newState: CallManagerState) async -> Bool
 }
 
@@ -134,59 +148,58 @@ public enum CallManagerError: LocalizedError, Equatable {
 public protocol CallManagerDelegate: AnyObject, Sendable {
     
     /// We received an incoming call.
-    ///
     /// - Parameter peerID: The ID of the peer which is calling.
     func didReceiveIncomingCall(from peerID: PeerID)
     
     /// Tells the delegate to show the local video stream.
-    ///
-    /// - Parameters:
-    ///   - videoTrack: The local video track.
+    /// - Parameter videoTrack: The local video track.
     func showLocalVideo(_ videoTrack: WRKRTCVideoTrack)
     
     /// Tells the delegate to show the remote video stream.
-    ///
-    /// - Parameters:
-    ///   - videoTrack: The remote video track.
+    /// - Parameter videoTrack: The remote video track.
     func showRemoteVideo(_ videoTrack: WRKRTCVideoTrack)
     
     /// Tells the delegate that the remote video track has been removed.
-    ///
-    /// - Parameters:
-    ///   - videoTrack: The remote video track.
+    /// - Parameter videoTrack: The remote video track.
     func remoteVideoTrackWasRemoved(_ videoTrack: WRKRTCVideoTrack)
     
     /// The call did start.
     func callDidStart()
     
     /// The call did end.
+    /// - Parameter error: Error if the call ended with an error.
     func callDidEnd(withError error: CallManagerError?)
     
     /// Called when the peer created a new data channel.
+    /// - Parameter dataChannel: The new data channel.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
 }
 
 @WebRTCActor
 protocol CallManager: Sendable {
     
+    /// Sets the delegate to handle call events.
+    /// - Parameter delegate: The delegate to handle call events.
     func setDelegate(_ delegate: CallManagerDelegate?)
     
     /// Called after the DIContainer was initialized and is ready to go.
     func setup() async
     
     /// Call another peer.
-    ///
     /// - Parameter peerID: The ID of the peer to call.
+    /// - Throws: An error if the call request fails.
     func sendCallRequest(to peerID: PeerID) async throws
     
     /// Answer an incoming call.
-    ///
     /// - Parameter accept: True if we accept it, false if we decline it.
+    /// - Throws: An error if answering the call request fails.
     func answerCallRequest(accept: Bool) async throws
     
     /// End a running call.
+    /// - Throws: An error if ending the call fails.
     func endCall() async throws
     
     /// End a call if it is running and disconnect from the signaling server.
+    /// - Throws: An error if disconnecting fails.
     func disconnect() async throws
 }

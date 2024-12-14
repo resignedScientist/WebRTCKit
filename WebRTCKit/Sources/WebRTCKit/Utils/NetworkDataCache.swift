@@ -9,6 +9,8 @@ private enum Constants {
     static let maxDataPoints = 10
 }
 
+/// The NetworkDataCache protocol provides the interface for caching network data points
+/// and computing packet loss rate over a specified time interval.
 protocol NetworkDataCache: Actor {
     
     /// Add a data point. Should be called every second.
