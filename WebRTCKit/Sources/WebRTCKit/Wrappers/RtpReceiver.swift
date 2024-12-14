@@ -1,7 +1,5 @@
 import WebRTC
 
-//RTCRtpReceiver
-
 final class RtpReceiver: @unchecked Sendable {
     
     private let receiver: RTCRtpReceiver
