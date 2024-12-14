@@ -11,10 +11,6 @@ WebRTCKit is a repository that simplifies WebRTC for the use in an iOS app. It i
 - Add support for muting audio (including feedback when muted while speaking)
 - Add support for turning the camera on/off
 
-## WARNING
-
-This repository is still in alpha state. That means, that it is not 100% stable or tested and everything you see is subject to change.
-
 # Installation
 
 You can use Swift Package Manager to integrate WebRTCKit into your app using this URL:
