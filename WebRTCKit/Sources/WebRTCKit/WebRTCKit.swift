@@ -20,8 +20,11 @@ public struct WebRTCKit {
     /// Initialize the WebRTCKit.
     ///
     /// - Parameters:
-    ///   - mode: The initialization mode. The default is "production".
+    ///   - mode: The initialization mode. The default is `production`, while `previews` is using mock data.
     ///   - signalingServer: A reference to the signaling server connection to use.
+    ///   - config: The configuration settings to apply.
+    ///   - enableVerboseLogging: A Boolean value that determines wether verbose logging for WebRTC is enabled.
+    ///   - audioDevice: An optional audio device to use.
     /// - Returns: The controller to interact with the WebRTCKit.
     public static func initialize(
         for mode: InitializingMode = .production,
