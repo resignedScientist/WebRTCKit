@@ -191,6 +191,15 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
 }
 
+extension CallManagerDelegate {
+    
+    func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack) {}
+    
+    func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack) {}
+    
+    func remoteVideoTrackWasRemoved(_ videoTrack: WRKRTCVideoTrack) {}
+}
+
 @WebRTCActor
 protocol CallManager: Sendable {
     
