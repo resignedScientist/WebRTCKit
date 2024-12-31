@@ -151,13 +151,29 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// - Parameter peerID: The ID of the peer which is calling.
     func didReceiveIncomingCall(from peerID: PeerID)
     
-    /// Tells the delegate to show the local video stream.
+    /// We did add a local video track to the stream.
+    ///
+    /// The view can show the local video using the `WebRTCVideoView`.
     /// - Parameter videoTrack: The local video track.
-    func showLocalVideo(_ videoTrack: WRKRTCVideoTrack)
+    func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack)
     
-    /// Tells the delegate to show the remote video stream.
+    /// Our remote peer did add a video track to the stream.
+    ///
+    /// The view can show the remote video using the `WebRTCVideoView`.
     /// - Parameter videoTrack: The remote video track.
-    func showRemoteVideo(_ videoTrack: WRKRTCVideoTrack)
+    func didAddRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    
+    /// We did add a local audio track to the session.
+    ///
+    /// It will be sent automatically. You can use this track instance to mute it for example.
+    /// - Parameter audioTrack: The local audio track.
+    func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    
+    /// Our remote peer did add an audio track to the session.
+    ///
+    /// It will be played automatically. You can use this track instance to mute it for example.
+    /// - Parameter audioTrack: The remote audio track.
+    func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
     
     /// Tells the delegate that the remote video track has been removed.
     /// - Parameter videoTrack: The remote video track.

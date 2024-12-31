@@ -35,6 +35,12 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     /// Called when a remote video track has been removed by the peer.
     func didRemoveRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
     
+    /// Called when a local audio track has been added.
+    func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    
+    /// Called when a remote audio track has been added by the peer.
+    func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    
     /// Triggered when an end call message is received from the peer.
     func didReceiveEndCall()
     
