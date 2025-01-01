@@ -9,6 +9,8 @@ final class WRKRTCAudioTrackImpl: WRKRTCAudioTrack, @unchecked Sendable {
     private let _audioTrack: RTCAudioTrack
     private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCAudioTrack")
     
+    public let source: MediaTrackSource
+    
     var audioTrack: RTCAudioTrack {
         queue.sync {
             _audioTrack
@@ -28,7 +30,8 @@ final class WRKRTCAudioTrackImpl: WRKRTCAudioTrack, @unchecked Sendable {
         }
     }
     
-    init(_ audioTrack: RTCAudioTrack) {
+    init(_ audioTrack: RTCAudioTrack, source: MediaTrackSource) {
         self._audioTrack = audioTrack
+        self.source = source
     }
 }

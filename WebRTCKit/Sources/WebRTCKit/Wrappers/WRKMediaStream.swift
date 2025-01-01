@@ -2,6 +2,8 @@ import WebRTC
 
 public protocol WRKMediaStream: AnyObject, Sendable {
     
+    var source: MediaTrackSource { get }
+    
     var audioTracks: [WRKRTCAudioTrack] { get }
     
     var videoTracks: [WRKRTCVideoTrack] { get }
@@ -14,12 +16,13 @@ public protocol WRKMediaStream: AnyObject, Sendable {
 final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     
     let mediaStream: RTCMediaStream
+    let source: MediaTrackSource
     private let queue = DispatchQueue(label: "com.webrtckit.WRKMediaStream")
     
     var audioTracks: [WRKRTCAudioTrack] {
         queue.sync {
             mediaStream.audioTracks.map {
-                WRKRTCAudioTrackImpl($0)
+                WRKRTCAudioTrackImpl($0, source: source)
             }
         }
     }
@@ -27,13 +30,14 @@ final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     var videoTracks: [WRKRTCVideoTrack] {
         queue.sync {
             mediaStream.videoTracks.map {
-                WRKRTCVideoTrackImpl($0)
+                WRKRTCVideoTrackImpl($0, source: source)
             }
         }
     }
     
-    init(_ mediaStream: RTCMediaStream) {
+    init(_ mediaStream: RTCMediaStream, source: MediaTrackSource) {
         self.mediaStream = mediaStream
+        self.source = source
     }
     
     func addAudioTrack(_ audioTrack: WRKRTCAudioTrack) async {

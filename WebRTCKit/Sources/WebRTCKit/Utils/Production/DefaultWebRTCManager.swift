@@ -468,14 +468,14 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             
             // video
             if let videoTrack = rtpReceiver.track as? RTCVideoTrack {
-                let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack)
+                let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack, source: .remote)
                 self.remoteVideoTrack = remoteVideoTrack
                 delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
             }
             
             // audio
             if let audioTrack = rtpReceiver.track as? RTCAudioTrack {
-                let remoteAudioTrack = WRKRTCAudioTrackImpl(audioTrack)
+                let remoteAudioTrack = WRKRTCAudioTrackImpl(audioTrack, source: .remote)
                 self.remoteAudioTrack = remoteAudioTrack
                 delegate?.didAddRemoteAudioTrack(remoteAudioTrack)
             }
