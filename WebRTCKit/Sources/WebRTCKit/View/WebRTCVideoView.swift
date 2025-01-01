@@ -42,7 +42,7 @@ private struct WebRTCView: UIViewRepresentable {
     @Binding var aspectRatio: CGFloat
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(aspectRatio: $aspectRatio)
+        Coordinator(aspectRatio: $aspectRatio, source: videoTrack.source)
     }
 
     func makeUIView(context: Context) -> RTCMTLVideoView {
@@ -54,6 +54,7 @@ private struct WebRTCView: UIViewRepresentable {
 
     func updateUIView(_ uiView: RTCMTLVideoView, context: Context) {
         videoTrack.add(uiView)
+        context.coordinator.source = videoTrack.source
     }
 }
 
@@ -61,11 +62,13 @@ private extension WebRTCView {
     
     class Coordinator {
         @Binding var aspectRatio: CGFloat
+        var source: MediaTrackSource
         
         private let log = Logger(caller: "WebRTCVideoView", category: .userInterface)
         
-        init(aspectRatio: Binding<CGFloat>) {
+        init(aspectRatio: Binding<CGFloat>, source: MediaTrackSource) {
             _aspectRatio = aspectRatio
+            self.source = source
         }
     }
 }
@@ -75,7 +78,7 @@ private extension WebRTCView {
 extension WebRTCView.Coordinator: RTCVideoViewDelegate {
     
     func videoView(_ videoView: any RTCVideoRenderer, didChangeVideoSize size: CGSize) {
-        log.info("Did change video size to \(size)")
+        log.info("\(source) video stream did change video size to \(size)")
         aspectRatio = size.width / size.height
     }
 }

@@ -7,10 +7,6 @@ WebRTCKit is a repository that simplifies WebRTC for the use in an iOS app. It i
 - Automatic Bitrate adjustment based on network conditions.
 - Completely compatible with Swift 6 and it's enforced thread safety.
 
-## Upcoming Features / TODOs:
-- Add support for muting audio (including feedback when muted while speaking)
-- Add support for turning the camera on/off
-
 # Installation
 
 You can use Swift Package Manager to integrate WebRTCKit into your app using this URL:
@@ -345,7 +341,7 @@ public protocol SignalingServerConnection: Sendable {
 }
 ```
 
-### CallManagerDelegate
+## CallManagerDelegate
 
 The `CallManagerDelegate` looks like this. Most of the times the delegate will be something like your view model.
 
@@ -355,34 +351,70 @@ You will receive data channels only when the other peer is opening the channel. 
 public protocol CallManagerDelegate: AnyObject, Sendable {
     
     /// We received an incoming call.
-    ///
     /// - Parameter peerID: The ID of the peer which is calling.
     func didReceiveIncomingCall(from peerID: PeerID)
     
-    /// Tells the delegate to show the local video stream.
+    /// We did add a local video track to the stream.
     ///
-    /// - Parameters:
-    ///   - videoTrack: The local video track.
-    func showLocalVideo(_ videoTrack: WRKRTCVideoTrack)
+    /// The view can show the local video using the `WebRTCVideoView`.
+    /// - Parameter videoTrack: The local video track.
+    func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack)
     
-    /// Tells the delegate to show the remote video stream.
+    /// Our remote peer did add a video track to the stream.
     ///
-    /// - Parameters:
-    ///   - videoTrack: The remote video track.
-    func showRemoteVideo(_ videoTrack: WRKRTCVideoTrack)
+    /// The view can show the remote video using the `WebRTCVideoView`.
+    /// - Parameter videoTrack: The remote video track.
+    func didAddRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    
+    /// We did add a local audio track to the session.
+    ///
+    /// It will be sent automatically. You can use this track instance to mute it for example.
+    /// - Parameter audioTrack: The local audio track.
+    func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    
+    /// Our remote peer did add an audio track to the session.
+    ///
+    /// It will be played automatically. You can use this track instance to mute it for example.
+    /// - Parameter audioTrack: The remote audio track.
+    func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    
+    /// Tells the delegate that the remote video track has been removed.
+    /// - Parameter videoTrack: The remote video track.
+    func remoteVideoTrackWasRemoved(_ videoTrack: WRKRTCVideoTrack)
     
     /// The call did start.
     func callDidStart()
     
     /// The call did end.
+    /// - Parameter error: Error if the call ended with an error.
     func callDidEnd(withError error: CallManagerError?)
     
     /// Called when the peer created a new data channel.
+    /// - Parameter dataChannel: The new data channel.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
 }
 ```
 
-### WebRTCVideoView
+### Muting / Unmuting Audio tracks
+
+In these delegate methods, you will receive a reference to the local and remote audio tracks:
+
+```swift
+    func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    
+    func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+```
+You can mute the audio of each track by setting the `isEnabled` property.
+
+```swift
+// mute audio
+audioTrack.isEnabled = true
+
+// unmute audio
+audioTrack.isEnabled = false
+```
+
+## WebRTCVideoView
 
 Video tracks contain the local or remote video stream. 
 

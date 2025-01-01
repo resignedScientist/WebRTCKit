@@ -301,14 +301,14 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
-        let stream = WRKMediaStreamImpl(stream)
+        let stream = WRKMediaStreamImpl(stream, source: .remote)
         queue.async {
             self._delegate?.peerConnection(self, didAdd: stream)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
-        let stream = WRKMediaStreamImpl(stream)
+        let stream = WRKMediaStreamImpl(stream, source: .remote)
         queue.async {
             self._delegate?.peerConnection(self, didRemove: stream)
         }

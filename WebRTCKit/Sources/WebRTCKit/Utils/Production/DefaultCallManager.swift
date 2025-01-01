@@ -76,15 +76,23 @@ final class DefaultCallManager: CallManager {
 extension DefaultCallManager: WebRTCManagerDelegate {
     
     func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack) {
-        delegate?.showLocalVideo(videoTrack)
+        delegate?.didAddLocalVideoTrack(videoTrack)
     }
     
     func didAddRemoteVideoTrack(_ videoTrack: any WRKRTCVideoTrack) {
-        delegate?.showRemoteVideo(videoTrack)
+        delegate?.didAddRemoteVideoTrack(videoTrack)
     }
     
     func didRemoveRemoteVideoTrack(_ videoTrack: any WRKRTCVideoTrack) {
         delegate?.remoteVideoTrackWasRemoved(videoTrack)
+    }
+    
+    func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack) {
+        delegate?.didAddLocalAudioTrack(audioTrack)
+    }
+    
+    func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack) {
+        delegate?.didAddRemoteAudioTrack(audioTrack)
     }
     
     func didReceiveEndCall() {

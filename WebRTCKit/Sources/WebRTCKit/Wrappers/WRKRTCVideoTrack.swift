@@ -1,5 +1,15 @@
 import WebRTC
 
+/// The source where a media track is being recorded.
+public enum MediaTrackSource {
+    
+    /// This track is being recorded locally on the device.
+    case local
+    
+    /// This track is being recorded by our remote peer.
+    case remote
+}
+
 public protocol WRKRTCVideoTrack: WRKRTCMediaStreamTrack {
     
     func add(_ renderer: RTCVideoRenderer)
@@ -9,6 +19,8 @@ final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
     
     private let _videoTrack: RTCVideoTrack
     private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCVideoTrack")
+    
+    public let source: MediaTrackSource
     
     public var videoTrack: RTCVideoTrack {
         queue.sync {
@@ -29,8 +41,9 @@ final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
         }
     }
     
-    init(_ videoTrack: RTCVideoTrack) {
+    init(_ videoTrack: RTCVideoTrack, source: MediaTrackSource) {
         self._videoTrack = videoTrack
+        self.source = source
     }
     
     func add(_ renderer: RTCVideoRenderer) {

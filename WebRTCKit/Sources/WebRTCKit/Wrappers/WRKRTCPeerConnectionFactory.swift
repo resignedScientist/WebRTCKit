@@ -54,7 +54,8 @@ final class WRKRTCPeerConnectionFactoryImpl: WRKRTCPeerConnectionFactory {
     func videoTrack(with videoSource: WRKRTCVideoSource, trackId: String) -> WRKRTCVideoTrack {
         if let videoSource = (videoSource as? WRKRTCVideoSourceImpl)?.videoSource {
             return WRKRTCVideoTrackImpl(
-                factory.videoTrack(with: videoSource, trackId: trackId)
+                factory.videoTrack(with: videoSource, trackId: trackId),
+                source: .local
             )
         }
         fatalError("Mixing mock videoSource with prod PeerConnectionFactory")
@@ -69,7 +70,8 @@ final class WRKRTCPeerConnectionFactoryImpl: WRKRTCPeerConnectionFactory {
     func audioTrack(with audioSource: WRKRTCAudioSource, trackId: String) -> WRKRTCAudioTrack {
         if let audioSource = (audioSource as? WRKRTCAudioSourceImpl)?.audioSource {
             return WRKRTCAudioTrackImpl(
-                factory.audioTrack(with: audioSource, trackId: trackId)
+                factory.audioTrack(with: audioSource, trackId: trackId),
+                source: .local
             )
         }
         fatalError("Mixing mock audioSource with prod PeerConnectionFactory")

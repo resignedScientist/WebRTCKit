@@ -90,6 +90,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         // add the audio track to the peer connection
         if let localAudioTrack {
             await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
+            delegate?.didAddLocalAudioTrack(localAudioTrack)
         } else {
             await addAudioTrack(to: peerConnection)
         }
@@ -444,8 +445,12 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             
             log.info("Remote peer did add media stream; audio: \(hasAudio), video: \(hasVideo)")
             
-            setRemoteAudioTrack(audioTrack)
-            setRemoteVideoTrack(videoTrack)
+            self.remoteAudioTrack = audioTrack
+            self.remoteVideoTrack = videoTrack
+            
+            if let audioTrack {
+                delegate?.didAddRemoteAudioTrack(audioTrack)
+            }
             
             if let videoTrack {
                 delegate?.didAddRemoteVideoTrack(videoTrack)
@@ -460,10 +465,20 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
         log.info("Remote peer did add receiver.")
         Task { @WebRTCActor in
-            guard let track = rtpReceiver.track as? RTCVideoTrack else { return }
-            let remoteVideoTrack = WRKRTCVideoTrackImpl(track)
-            self.remoteVideoTrack = remoteVideoTrack
-            delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
+            
+            // video
+            if let videoTrack = rtpReceiver.track as? RTCVideoTrack {
+                let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack, source: .remote)
+                self.remoteVideoTrack = remoteVideoTrack
+                delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
+            }
+            
+            // audio
+            if let audioTrack = rtpReceiver.track as? RTCAudioTrack {
+                let remoteAudioTrack = WRKRTCAudioTrackImpl(audioTrack, source: .remote)
+                self.remoteAudioTrack = remoteAudioTrack
+                delegate?.didAddRemoteAudioTrack(remoteAudioTrack)
+            }
         }
     }
     
@@ -631,6 +646,9 @@ private extension DefaultWebRTCManager {
         
         // save audio track
         self.localAudioTrack = localAudioTrack
+        
+        // inform our delegate
+        delegate?.didAddLocalAudioTrack(localAudioTrack)
         
         log.info("Successfully added audio track.")
     }
@@ -890,14 +908,6 @@ private extension DefaultWebRTCManager {
                 print(signalStr)
             }
         }
-    }
-    
-    func setRemoteAudioTrack(_ remoteAudioTrack: WRKRTCAudioTrack?) {
-        self.remoteAudioTrack = remoteAudioTrack
-    }
-    
-    func setRemoteVideoTrack(_ remoteVideoTrack: WRKRTCVideoTrack?) {
-        self.remoteVideoTrack = remoteVideoTrack
     }
     
     func handleNegotiation(_ peerConnection: WRKRTCPeerConnection) async {
