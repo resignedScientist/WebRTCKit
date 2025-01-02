@@ -408,10 +408,10 @@ You can mute the audio of each track by setting the `isEnabled` property.
 
 ```swift
 // mute audio
-audioTrack.isEnabled = true
+audioTrack.isEnabled = false
 
 // unmute audio
-audioTrack.isEnabled = false
+audioTrack.isEnabled = true
 ```
 
 ## WebRTCVideoView
