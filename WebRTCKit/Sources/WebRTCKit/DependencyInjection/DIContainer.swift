@@ -12,38 +12,6 @@ struct DIContainer: Sendable {
     let networkMonitor: NetworkMonitor
     
     init(
-        for mode: InitializingMode,
-        signalingServer: SignalingServerConnection,
-        config: Config,
-        audioDevice: RTCAudioDevice?
-    ) {
-        self.config = config
-        
-        // This one we need to get from outside
-        // as every app needs to use their own implementation of it.
-        self.signalingServer = signalingServer
-        
-        switch mode {
-        case .previews:
-            self.webRTCManager = PreviewWebRTCManager()
-            self.callProvider = PreviewVoIPCallProvider()
-            self.pushHandler = PreviewVoIPPushHandler()
-            self.callManager = PreviewCallManager()
-            self.networkMonitor = PreviewNetworkMonitor()
-        case .production:
-            self.webRTCManager = DefaultWebRTCManager(
-                factory: WRKRTCPeerConnectionFactoryImpl(
-                    audioDevice: audioDevice
-                )
-            )
-            self.callProvider = DefaultVoIPCallProvider()
-            self.pushHandler = DefaultVoIPPushHandler()
-            self.callManager = DefaultCallManager()
-            self.networkMonitor = DefaultNetworkMonitor()
-        }
-    }
-    
-    init(
         config: Config,
         webRTCManager: WebRTCManager,
         callProvider: VoIPCallProvider,

@@ -18,7 +18,7 @@ public extension WebRTCKit {
         /// The bitrate configuration for audio data.
         public let audio: BitrateConfig
         
-        static var preview: Config {
+        public static var preview: Config {
             Config(
                 iceServers: [],
                 connectionTimeout: 2,

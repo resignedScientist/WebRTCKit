@@ -1,16 +1,5 @@
 import Foundation
 
-#warning("TODO: this can be removed in the future as users of WebRTCKit can define their own error type.")
-public enum SignalingServerConnectionError: Error {
-    
-    /// A critical error occurred.
-    /// - Parameter message: The message describing the error.
-    case critical(_ message: String)
-    
-    /// There is no internet connection available.
-    case noInternetConnection
-}
-
 @WebRTCActor
 public protocol SignalingServerDelegate: AnyObject, Sendable {
     
