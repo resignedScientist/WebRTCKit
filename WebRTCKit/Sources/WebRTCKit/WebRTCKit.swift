@@ -2,42 +2,37 @@ import WebRTC
 
 public typealias PeerID = String
 
-/// The initialization mode of the framework.
-public enum InitializingMode {
-    
-    /// Mode for SwiftUI previews.
-    case previews
-    
-    /// Mode for production.
-    case production
-}
-
 @WebRTCActor
 public struct WebRTCKit {
     
     static var container: DIContainer?
     
-    /// Initialize the WebRTCKit.
+    /// Initialize the WebRTCKit for production.
     ///
     /// - Parameters:
-    ///   - mode: The initialization mode. The default is `production`, while `previews` is using mock data.
     ///   - signalingServer: A reference to the signaling server connection to use.
     ///   - config: The configuration settings to apply.
     ///   - enableVerboseLogging: A Boolean value that determines wether verbose logging for WebRTC is enabled.
     ///   - audioDevice: An optional audio device to use.
     /// - Returns: The controller to interact with the WebRTCKit.
     public static func initialize(
-        for mode: InitializingMode = .production,
         signalingServer: SignalingServerConnection,
         config: Config,
         enableVerboseLogging: Bool = false,
         audioDevice: RTCAudioDevice? = nil
     ) -> WebRTCController {
         let container = DIContainer(
-            for: mode,
+            config: .preview,
+            webRTCManager: DefaultWebRTCManager(
+                factory: WRKRTCPeerConnectionFactoryImpl(
+                    audioDevice: audioDevice
+                )
+            ),
+            callProvider: DefaultVoIPCallProvider(),
+            pushHandler: DefaultVoIPPushHandler(),
             signalingServer: signalingServer,
-            config: config,
-            audioDevice: audioDevice
+            callManager: DefaultCallManager(),
+            networkMonitor: DefaultNetworkMonitor()
         )
         
         WebRTCKit.container = container
@@ -49,6 +44,23 @@ public struct WebRTCKit {
         Task {
             await container.setup()
         }
+        
+        return WebRTCControllerImpl(container: container)
+    }
+    
+    /// Initialize the framework for testing or previews using mock classes.
+    public static func initializeForTesting() -> WebRTCController {
+        let container = DIContainer(
+            config: .preview,
+            webRTCManager: PreviewWebRTCManager(),
+            callProvider: PreviewVoIPCallProvider(),
+            pushHandler: PreviewVoIPPushHandler(),
+            signalingServer: PreviewSignalingServerConnection(),
+            callManager: PreviewCallManager(),
+            networkMonitor: PreviewNetworkMonitor()
+        )
+        
+        WebRTCKit.container = container
         
         return WebRTCControllerImpl(container: container)
     }
