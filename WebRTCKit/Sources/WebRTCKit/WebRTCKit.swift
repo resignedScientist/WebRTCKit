@@ -22,7 +22,7 @@ public struct WebRTCKit {
         audioDevice: RTCAudioDevice? = nil
     ) -> WebRTCController {
         let container = DIContainer(
-            config: .preview,
+            config: config,
             webRTCManager: DefaultWebRTCManager(
                 factory: WRKRTCPeerConnectionFactoryImpl(
                     audioDevice: audioDevice
