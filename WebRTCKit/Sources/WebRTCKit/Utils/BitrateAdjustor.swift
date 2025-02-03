@@ -52,6 +52,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         if tasks.isEmpty {
             registerStatisticObservers(peerConnection: peerConnection)
         }
+        log.info("Started for \(type)")
     }
     
     func stop() async {
@@ -59,6 +60,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         runningTypes.removeAll()
         await audioNetworkDataCache.deleteAllData()
         await videoNetworkDataCache.deleteAllData()
+        log.info("Stopped")
     }
     
     func stop(for type: BitrateType) async {
@@ -76,6 +78,8 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         if runningTypes.isEmpty {
             tasks.cancelAll()
         }
+        
+        log.info("Stopped for \(type)")
     }
     
     func setStartEncodingParameters(for type: BitrateType, peerConnection: any WRKRTCPeerConnection) {

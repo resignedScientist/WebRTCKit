@@ -72,7 +72,7 @@ actor NetworkDataCacheImpl: NetworkDataCache {
         }
         
         guard packetsSent > 0 else {
-            log.error("No packets sent in the given time interval.")
+            log.info("No packets sent in the given time interval.")
             return 1
         }
         
