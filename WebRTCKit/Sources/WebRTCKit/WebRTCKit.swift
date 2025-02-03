@@ -18,8 +18,8 @@ public struct WebRTCKit {
     public static func initialize(
         signalingServer: SignalingServerConnection,
         config: Config,
-        enableVerboseLogging: Bool = false,
-        audioDevice: RTCAudioDevice? = nil
+        audioDevice: RTCAudioDevice? = nil,
+        logLevel: LogLevel = .error
     ) -> WebRTCController {
         let container = DIContainer(
             config: config,
@@ -32,12 +32,13 @@ public struct WebRTCKit {
             pushHandler: DefaultVoIPPushHandler(),
             signalingServer: signalingServer,
             callManager: DefaultCallManager(),
-            networkMonitor: DefaultNetworkMonitor()
+            networkMonitor: DefaultNetworkMonitor(),
+            logLevel: logLevel
         )
         
         WebRTCKit.container = container
         
-        if enableVerboseLogging {
+        if logLevel == .verbose {
             RTCSetMinDebugLogLevel(.verbose)
         }
         
@@ -57,7 +58,8 @@ public struct WebRTCKit {
             pushHandler: PreviewVoIPPushHandler(),
             signalingServer: PreviewSignalingServerConnection(),
             callManager: PreviewCallManager(),
-            networkMonitor: PreviewNetworkMonitor()
+            networkMonitor: PreviewNetworkMonitor(),
+            logLevel: .debug
         )
         
         WebRTCKit.container = container
@@ -82,7 +84,8 @@ public struct WebRTCKit {
             pushHandler: pushHandler,
             signalingServer: signalingServer,
             callManager: callManager,
-            networkMonitor: networkMonitor
+            networkMonitor: networkMonitor,
+            logLevel: .debug
         )
         
         WebRTCKit.container = container
