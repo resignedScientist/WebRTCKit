@@ -36,3 +36,12 @@ struct DIContainer: Sendable {
         await callManager.setup()
     }
 }
+
+// MARK: - Instance actor
+
+extension DIContainer {
+    
+    actor Instance {
+        static var shared: DIContainer?
+    }
+}

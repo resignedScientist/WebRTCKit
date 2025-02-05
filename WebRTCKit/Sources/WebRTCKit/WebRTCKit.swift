@@ -5,8 +5,6 @@ public typealias PeerID = String
 @WebRTCActor
 public struct WebRTCKit {
     
-    static var container: DIContainer?
-    
     /// Initialize the WebRTCKit for production.
     ///
     /// - Parameters:
@@ -36,7 +34,7 @@ public struct WebRTCKit {
             logLevel: logLevel
         )
         
-        WebRTCKit.container = container
+        DIContainer.Instance.shared = container
         
         if logLevel == .verbose {
             RTCSetMinDebugLogLevel(.verbose)
@@ -62,7 +60,7 @@ public struct WebRTCKit {
             logLevel: .debug
         )
         
-        WebRTCKit.container = container
+        DIContainer.Instance.shared = container
         
         return WebRTCControllerImpl(container: container)
     }
@@ -88,7 +86,7 @@ public struct WebRTCKit {
             logLevel: .debug
         )
         
-        WebRTCKit.container = container
+        DIContainer.Instance.shared = container
         
         Task {
             await container.setup()

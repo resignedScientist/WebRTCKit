@@ -1,9 +1,8 @@
-@WebRTCActor
 @propertyWrapper struct Inject<T> {
     
     private let keyPath: KeyPath<DIContainer, T>
     private var container: DIContainer {
-        WebRTCKit.container!
+        DIContainer.Instance.shared!
     }
     
     init(_ keyPath: KeyPath<DIContainer, T>) {
