@@ -3,7 +3,7 @@ import WebRTC
 @WebRTCActor
 struct DIContainer: Sendable {
     
-    let config: Config
+    let config: WebRTCKitConfig
     let webRTCManager: WebRTCManager
     let callProvider: VoIPCallProvider
     let pushHandler: VoIPPushHandler
@@ -13,7 +13,7 @@ struct DIContainer: Sendable {
     let logLevel: LogLevel
     
     init(
-        config: Config,
+        config: WebRTCKitConfig,
         webRTCManager: WebRTCManager,
         callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,

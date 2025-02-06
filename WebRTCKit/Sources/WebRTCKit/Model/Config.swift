@@ -1,6 +1,7 @@
 import WebRTC
 
-typealias Config = WebRTCKit.Config
+public typealias WebRTCKitConfig = WebRTCKit.Config
+public typealias BitrateConfig = WebRTCKit.Config.Bitrate
 
 public extension WebRTCKit {
     
@@ -27,16 +28,36 @@ public extension WebRTCKit {
             )
         }
         
+        /// - Parameters:
+        ///   - iceServers: The ICE-Servers to use for connection establishment.
+        ///   - connectionTimeout: The number of seconds we can be in the connecting state before aborting the call.
+        ///   - video: The bitrate configuration for video data.
+        ///   - audio: The bitrate configuration for audio data.
         public init(
-            iceServers: [ICEServer],
-            connectionTimeout: UInt64,
-            video: BitrateConfig,
-            audio: BitrateConfig
+            iceServers: [ICEServer]? = nil,
+            connectionTimeout: UInt64? = nil,
+            video: BitrateConfig? = nil,
+            audio: BitrateConfig? = nil
         ) {
-            self.iceServers = iceServers
-            self.connectionTimeout = connectionTimeout
-            self.video = video
-            self.audio = audio
+            self.iceServers = iceServers ?? []
+            self.connectionTimeout = connectionTimeout ?? 30
+            self.video = video ?? .defaultForVideo
+            self.audio = audio ?? .defaultForAudio
+        }
+        
+        public init(from decoder: any Decoder) throws {
+            let container: KeyedDecodingContainer<WebRTCKit.Config.CodingKeys> = try decoder.container(keyedBy: WebRTCKit.Config.CodingKeys.self)
+            let iceServers = try container.decode([ICEServer].self, forKey: WebRTCKit.Config.CodingKeys.iceServers)
+            let connectionTimeout = try container.decode(UInt64.self, forKey: WebRTCKit.Config.CodingKeys.connectionTimeout)
+            let video = try container.decode(BitrateConfig.self, forKey: WebRTCKit.Config.CodingKeys.video)
+            let audio = try container.decode(BitrateConfig.self, forKey: WebRTCKit.Config.CodingKeys.audio)
+            
+            self.init(
+                iceServers: iceServers,
+                connectionTimeout: connectionTimeout,
+                video: video,
+                audio: audio
+            )
         }
     }
 }
@@ -54,7 +75,7 @@ public struct ICEServer: Codable, Sendable {
         urlStrings: [String],
         username: String? = nil,
         credential: String? = nil,
-        tlsCertPolicy: RTCTlsCertPolicy = .secure,
+        tlsCertPolicy: RTCTlsCertPolicy? = nil,
         hostname: String? = nil,
         tlsAlpnProtocols: [String]? = nil,
         tlsEllipticCurves: [String]? = nil
@@ -62,7 +83,7 @@ public struct ICEServer: Codable, Sendable {
         self.urlStrings = urlStrings
         self.username = username
         self.credential = credential
-        self.tlsCertPolicy = tlsCertPolicy
+        self.tlsCertPolicy = tlsCertPolicy ?? .secure
         self.hostname = hostname
         self.tlsAlpnProtocols = tlsAlpnProtocols
         self.tlsEllipticCurves = tlsEllipticCurves
@@ -73,23 +94,31 @@ extension ICEServer {
     
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.urlStrings = try container.decode([String].self, forKey: .urlStrings)
-        self.username = try container.decodeIfPresent(String.self, forKey: .username)
-        self.credential = try container.decodeIfPresent(String.self, forKey: .credential)
-        self.tlsCertPolicy = try container.decodeIfPresent(RTCTlsCertPolicy.self, forKey: .tlsCertPolicy) ?? .secure
-        self.hostname = try container.decodeIfPresent(String.self, forKey: .hostname)
-        self.tlsAlpnProtocols = try container.decodeIfPresent([String].self, forKey: .tlsAlpnProtocols)
-        self.tlsEllipticCurves = try container.decodeIfPresent([String].self, forKey: .tlsEllipticCurves)
+        let urlStrings = try container.decode([String].self, forKey: .urlStrings)
+        let username = try container.decodeIfPresent(String.self, forKey: .username)
+        let credential = try container.decodeIfPresent(String.self, forKey: .credential)
+        let tlsCertPolicy = try container.decodeIfPresent(RTCTlsCertPolicy.self, forKey: .tlsCertPolicy)
+        let hostname = try container.decodeIfPresent(String.self, forKey: .hostname)
+        let tlsAlpnProtocols = try container.decodeIfPresent([String].self, forKey: .tlsAlpnProtocols)
+        let tlsEllipticCurves = try container.decodeIfPresent([String].self, forKey: .tlsEllipticCurves)
+        
+        self.init(
+            urlStrings: urlStrings,
+            username: username,
+            credential: credential,
+            tlsCertPolicy: tlsCertPolicy,
+            hostname: hostname,
+            tlsAlpnProtocols: tlsAlpnProtocols,
+            tlsEllipticCurves: tlsEllipticCurves
+        )
     }
 }
 
-extension RTCTlsCertPolicy: Codable {
-    
-}
+extension RTCTlsCertPolicy: Codable {}
 
-public extension Config {
+public extension WebRTCKit.Config {
     
-    struct BitrateConfig: Codable, Sendable {
+    struct Bitrate: Codable, Sendable {
         
         /// The bitrate does not go below this value.
         let minBitrate: Int
@@ -118,7 +147,7 @@ public extension Config {
         /// The percentage threshold under which packet loss counts as low (value between 0-1).
         let lowPacketLossThreshold: Double
         
-        public static var defaultForVideo: BitrateConfig {
+        public static var defaultForVideo: Bitrate {
             BitrateConfig(
                 minBitrate: 100_000,
                 maxBitrate: 6_000_000,
@@ -132,7 +161,7 @@ public extension Config {
             )
         }
         
-        public static var defaultForAudio: BitrateConfig {
+        public static var defaultForAudio: Bitrate {
             BitrateConfig(
                 minBitrate: 6_000,
                 maxBitrate: 96_000,
