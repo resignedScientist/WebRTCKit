@@ -10,7 +10,6 @@ struct DIContainer: Sendable {
     let signalingServer: SignalingServerConnection
     let callManager: CallManager
     let networkMonitor: NetworkMonitor
-    let logLevel: LogLevel
     
     init(
         config: WebRTCKitConfig,
@@ -19,8 +18,7 @@ struct DIContainer: Sendable {
         pushHandler: VoIPPushHandler,
         signalingServer: SignalingServerConnection,
         callManager: CallManager,
-        networkMonitor: NetworkMonitor,
-        logLevel: LogLevel
+        networkMonitor: NetworkMonitor
     ) {
         self.config = config
         self.webRTCManager = webRTCManager
@@ -29,7 +27,6 @@ struct DIContainer: Sendable {
         self.signalingServer = signalingServer
         self.callManager = callManager
         self.networkMonitor = networkMonitor
-        self.logLevel = logLevel
     }
     
     func setup() async {
@@ -43,5 +40,6 @@ extension DIContainer {
     
     actor Instance {
         static var shared: DIContainer?
+        static var logLevel: LogLevel?
     }
 }

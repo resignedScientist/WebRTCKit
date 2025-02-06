@@ -19,6 +19,9 @@ public struct WebRTCKit {
         audioDevice: RTCAudioDevice? = nil,
         logLevel: LogLevel = .error
     ) -> WebRTCController {
+        
+        DIContainer.Instance.logLevel = logLevel
+        
         let container = DIContainer(
             config: config,
             webRTCManager: DefaultWebRTCManager(
@@ -30,8 +33,7 @@ public struct WebRTCKit {
             pushHandler: DefaultVoIPPushHandler(),
             signalingServer: signalingServer,
             callManager: DefaultCallManager(),
-            networkMonitor: DefaultNetworkMonitor(),
-            logLevel: logLevel
+            networkMonitor: DefaultNetworkMonitor()
         )
         
         DIContainer.Instance.shared = container
@@ -49,6 +51,9 @@ public struct WebRTCKit {
     
     /// Initialize the framework for testing or previews using mock classes.
     public static func initializeForTesting() -> WebRTCController {
+        
+        DIContainer.Instance.logLevel = .debug
+        
         let container = DIContainer(
             config: .preview,
             webRTCManager: PreviewWebRTCManager(),
@@ -56,8 +61,7 @@ public struct WebRTCKit {
             pushHandler: PreviewVoIPPushHandler(),
             signalingServer: PreviewSignalingServerConnection(),
             callManager: PreviewCallManager(),
-            networkMonitor: PreviewNetworkMonitor(),
-            logLevel: .debug
+            networkMonitor: PreviewNetworkMonitor()
         )
         
         DIContainer.Instance.shared = container
@@ -75,6 +79,9 @@ public struct WebRTCKit {
         callManager: CallManager,
         networkMonitor: NetworkMonitor
     ) -> WebRTCController {
+        
+        DIContainer.Instance.logLevel = .debug
+        
         let container = DIContainer(
             config: config,
             webRTCManager: webRTCManager,
@@ -82,8 +89,7 @@ public struct WebRTCKit {
             pushHandler: pushHandler,
             signalingServer: signalingServer,
             callManager: callManager,
-            networkMonitor: networkMonitor,
-            logLevel: .debug
+            networkMonitor: networkMonitor
         )
         
         DIContainer.Instance.shared = container

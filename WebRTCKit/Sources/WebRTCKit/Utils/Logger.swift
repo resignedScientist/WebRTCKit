@@ -16,7 +16,7 @@ enum LoggerCategory: String {
 final class Logger: Sendable {
     
     private var logLevel: LogLevel {
-        DIContainer.Instance.shared!.logLevel
+        DIContainer.Instance.logLevel!
     }
     
     private let log: OSLog
