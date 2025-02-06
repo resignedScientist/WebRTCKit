@@ -47,10 +47,10 @@ public extension WebRTCKit {
         
         public init(from decoder: any Decoder) throws {
             let container: KeyedDecodingContainer<WebRTCKit.Config.CodingKeys> = try decoder.container(keyedBy: WebRTCKit.Config.CodingKeys.self)
-            let iceServers = try container.decode([ICEServer].self, forKey: WebRTCKit.Config.CodingKeys.iceServers)
-            let connectionTimeout = try container.decode(UInt64.self, forKey: WebRTCKit.Config.CodingKeys.connectionTimeout)
-            let video = try container.decode(BitrateConfig.self, forKey: WebRTCKit.Config.CodingKeys.video)
-            let audio = try container.decode(BitrateConfig.self, forKey: WebRTCKit.Config.CodingKeys.audio)
+            let iceServers = try container.decodeIfPresent([ICEServer].self, forKey: WebRTCKit.Config.CodingKeys.iceServers)
+            let connectionTimeout = try container.decodeIfPresent(UInt64.self, forKey: WebRTCKit.Config.CodingKeys.connectionTimeout)
+            let video = try container.decodeIfPresent(BitrateConfig.self, forKey: WebRTCKit.Config.CodingKeys.video)
+            let audio = try container.decodeIfPresent(BitrateConfig.self, forKey: WebRTCKit.Config.CodingKeys.audio)
             
             self.init(
                 iceServers: iceServers,
