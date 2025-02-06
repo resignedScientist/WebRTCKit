@@ -250,7 +250,7 @@ private extension BitrateAdjustorImpl {
         }
     }
     
-    func getConfig(for type: BitrateType) -> Config.BitrateConfig {
+    func getConfig(for type: BitrateType) -> BitrateConfig {
         switch type {
         case .audio:
             return config.audio
