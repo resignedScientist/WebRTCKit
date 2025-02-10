@@ -629,9 +629,9 @@ private extension DefaultWebRTCManager {
         let audioSource = factory.audioSource(
             with: RTCMediaConstraints(
                 mandatoryConstraints: [
-                    "echoCancellation": "true",
-                    "noiseSuppression": "true",
-                    "autoGainControl": "true"
+                    "googEchoCancellation": kRTCMediaConstraintsValueTrue,
+                    "googNoiseSuppression": kRTCMediaConstraintsValueTrue,
+                    "googAutoGainControl": kRTCMediaConstraintsValueTrue
                 ],
                 optionalConstraints: nil
             )
