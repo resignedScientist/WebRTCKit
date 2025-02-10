@@ -289,6 +289,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("⚠️ Call startConfiguration() first before adding data channels!")
         }
         
+        // we need to send a negotiation sdp in the case of channel opening while calling
+        configurationChanged = true
+        
         let dataChannel = peerConnection.dataChannel(
             forLabel: label,
             configuration: config ?? RTCDataChannelConfiguration()
