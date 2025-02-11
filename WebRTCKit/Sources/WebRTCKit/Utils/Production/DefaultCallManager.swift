@@ -14,10 +14,13 @@ final class DefaultCallManager: CallManager {
     private let log = Logger(caller: "CallManager")
     
     private var connectionTimeout: Task<Void, Never>?
-    private(set) var state: CallManagerState = .idle
     
     init(stateHolder: CallManagerStateHolder = CallManagerStateHolderImpl(initialState: .idle)) {
         self.stateHolder = stateHolder
+    }
+    
+    func getState() async -> CallManagerState {
+        await stateHolder.getState()
     }
     
     func setDelegate(_ delegate: CallManagerDelegate?) {

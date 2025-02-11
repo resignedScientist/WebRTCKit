@@ -260,7 +260,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         #endif
         
         // check if we are in the right call state for this
-        guard callManager.state != .receivingCallRequest else { return }
+        let callState = await callManager.getState()
+        guard callState != .idle else { return }
         
         do {
             try await webRTCManager.stopVideoCall()
