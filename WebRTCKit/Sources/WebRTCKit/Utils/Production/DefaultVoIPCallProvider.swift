@@ -44,6 +44,9 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         hasVideo: Bool
     ) async throws {
         
+        // prevent receiving two calls from the same UUID
+        guard currentCallID != uuid else { return }
+        
         let update = CXCallUpdate()
         update.remoteHandle = CXHandle(type: .generic, value: handle)
         update.hasVideo = hasVideo
