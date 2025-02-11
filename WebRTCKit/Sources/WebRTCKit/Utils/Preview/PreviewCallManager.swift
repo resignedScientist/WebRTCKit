@@ -2,6 +2,8 @@ import Foundation
 
 final class PreviewCallManager: CallManager {
     
+    var state: CallManagerState = .idle
+    
     private weak var delegate: CallManagerDelegate?
     
     func setDelegate(_ delegate: CallManagerDelegate?) {
