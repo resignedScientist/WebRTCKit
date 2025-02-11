@@ -496,7 +496,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
         Task { @WebRTCActor in
-            configurationChanged = true
+//            configurationChanged = true
             await handleNegotiation(peerConnection)
         }
     }
