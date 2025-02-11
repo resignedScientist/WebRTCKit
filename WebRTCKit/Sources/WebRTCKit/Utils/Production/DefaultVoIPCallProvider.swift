@@ -5,6 +5,7 @@ import WebRTC
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     @Inject(\.webRTCManager) private var webRTCManager
+    @Inject(\.callManager) private var callManager
     
     private let provider: WRKCXProvider
     private let callController: WRKCallController
@@ -257,6 +258,9 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         #if targetEnvironment(simulator)
         guard isEndingCall else { return }
         #endif
+        
+        // check if we are in the right call state for this
+        guard callManager.state != .receivingCallRequest else { return }
         
         do {
             try await webRTCManager.stopVideoCall()

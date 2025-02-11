@@ -14,7 +14,7 @@ final class DefaultCallManager: CallManager {
     private let log = Logger(caller: "CallManager")
     
     private var connectionTimeout: Task<Void, Never>?
-    private var state: CallManagerState = .idle
+    private(set) var state: CallManagerState = .idle
     
     init(stateHolder: CallManagerStateHolder = CallManagerStateHolderImpl(initialState: .idle)) {
         self.stateHolder = stateHolder

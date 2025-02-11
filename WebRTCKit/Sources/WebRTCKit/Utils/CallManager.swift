@@ -203,6 +203,8 @@ extension CallManagerDelegate {
 @WebRTCActor
 protocol CallManager: Sendable {
     
+    var state: CallManagerState { get }
+    
     /// Sets the delegate to handle call events.
     /// - Parameter delegate: The delegate to handle call events.
     func setDelegate(_ delegate: CallManagerDelegate?)
