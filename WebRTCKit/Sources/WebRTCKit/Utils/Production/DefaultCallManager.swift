@@ -43,7 +43,7 @@ final class DefaultCallManager: CallManager {
     
     func answerCallRequest(accept: Bool) async throws {
         log.info("Answering call request (accept = \(accept))…")
-        try await stateHolder.changeState(to: .answeringCallRequest)
+        try await stateHolder.changeState(to: .connecting)
         
         if accept {
             try await callProvider.acceptIncomingCall()
@@ -141,7 +141,6 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     func onError(_ error: WebRTCManagerError) {
         Task { @WebRTCActor in
             do {
-                try await stateHolder.changeState(to: .handlingError)
                 try await callProvider.endCall()
                 try await stateHolder.changeState(to: .idle)
                 delegate?.callDidEnd(withError: .webRTCManagerError(error))
