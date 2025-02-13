@@ -117,13 +117,17 @@ extension DefaultCallManager: WebRTCManagerDelegate {
         Task { @WebRTCActor in
             let state = await stateHolder.getState()
             
-            // If in the connecting state, go to endingCall first
-            if state == .connecting {
-                try await stateHolder.changeState(to: .endingCall)
+            do {
+                // If in the connecting or receivingCallRequest state, go to endingCall first
+                if state == .connecting || state == .receivingCallRequest {
+                    try await stateHolder.changeState(to: .endingCall)
+                }
+                
+                try await stateHolder.changeState(to: .idle)
+                delegate?.callDidEnd(withError: nil)
+            } catch {
+                log.fault("callDidEnd did fail - \(error)")
             }
-            
-            try await stateHolder.changeState(to: .idle)
-            delegate?.callDidEnd(withError: nil)
         }
     }
     
