@@ -196,6 +196,17 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel) {
         delegate?.didReceiveDataChannel(dataChannel)
     }
+    
+    func didLosePeerConnection() {
+        Task { @WebRTCActor in
+            do {
+                try await stateHolder.changeState(to: .connecting)
+                startConnectionTimeout()
+            } catch {
+                log.fault("Failed to change state to 'connecting' - \(error)")
+            }
+        }
+    }
 }
 
 // MARK: - Private functions

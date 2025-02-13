@@ -228,13 +228,13 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         log.info("Stopping video call…")
         
         // send end call message to our peer
-        if let remotePeerID {
-            do {
-                try await signalingServer.sendEndCall(to: remotePeerID)
-            } catch {
-                log.error("Failed to send 'end call' message to our peer.")
-            }
-        }
+//        if let remotePeerID {
+//            do {
+//                try await signalingServer.sendEndCall(to: remotePeerID)
+//            } catch {
+//                log.error("Failed to send 'end call' message to our peer.")
+//            }
+//        }
 
         await disconnect()
         delegate?.callDidEnd()
@@ -533,10 +533,14 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         Task { @WebRTCActor in
             log.info("Peer connection state: \(newState)")
             switch newState {
-            case .new, .disconnected, .failed, .closed, .connecting:
+            case .new, .connecting:
                 break
             case .connected:
                 delegate?.callDidStart()
+            case .disconnected:
+                delegate?.didLosePeerConnection()
+            case .closed, .failed:
+                delegate?.callDidEnd()
             @unknown default:
                 break
             }
