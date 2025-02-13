@@ -259,9 +259,19 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         // For some reason on simulators & on mac catalyst (designed for iPad),
         // the end call action is called immediately after accepting a call.
         // Maybe because of no CallKit support there?
-        #if targetEnvironment(simulator) || targetEnvironment(macCatalyst)
-        guard isEndingCall else { return }
-        #endif
+        let isSimulator: Bool = {
+            #if targetEnvironment(simulator)
+            return true
+            #else
+            return false
+            #endif
+        }()
+        let isMacCatalyst = ProcessInfo.processInfo.isiOSAppOnMac
+        
+        // So on these platforms, we only allow ending calls if the actual button in the app was pressed.
+        if isSimulator || isMacCatalyst {
+            guard isEndingCall else { return }
+        }
         
         do {
             try await webRTCManager.stopVideoCall()
