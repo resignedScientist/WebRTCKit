@@ -228,13 +228,13 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         log.info("Stopping video call…")
         
         // send end call message to our peer
-//        if let remotePeerID {
-//            do {
-//                try await signalingServer.sendEndCall(to: remotePeerID)
-//            } catch {
-//                log.error("Failed to send 'end call' message to our peer.")
-//            }
-//        }
+        if let remotePeerID {
+            do {
+                try await signalingServer.sendEndCall(to: remotePeerID)
+            } catch {
+                log.error("Failed to send 'end call' message to our peer.")
+            }
+        }
 
         await disconnect()
         delegate?.callDidEnd()
