@@ -47,7 +47,8 @@ public enum CallManagerState: Equatable, Sendable {
         case .connecting:
             return [
                 .sendingCallRequest,
-                .receivingCallRequest
+                .receivingCallRequest,
+                .callIsRunning
             ].contains(fromState)
         }
     }
