@@ -256,15 +256,12 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     
     func provider(_ provider: WRKCXProvider, perform action: EndCallAction) async {
         
-        // For some reason on simulators, the end call action is called immediately
-        // after accepting a call. Maybe because of no CallKit support there?
-        #if targetEnvironment(simulator)
+        // For some reason on simulators & on mac catalyst (designed for iPad),
+        // the end call action is called immediately after accepting a call.
+        // Maybe because of no CallKit support there?
+        #if targetEnvironment(simulator) || targetEnvironment(macCatalyst)
         guard isEndingCall else { return }
         #endif
-        
-        // check if we are in the right call state for this
-        let callState = await callManager.getState()
-        guard callState != .sendingCallRequest else { return }
         
         do {
             try await webRTCManager.stopVideoCall()
