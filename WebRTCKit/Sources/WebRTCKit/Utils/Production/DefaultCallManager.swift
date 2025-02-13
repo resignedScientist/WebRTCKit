@@ -202,6 +202,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             do {
                 try await stateHolder.changeState(to: .connecting)
                 startConnectionTimeout()
+                delegate?.didLosePeerConnection()
             } catch {
                 log.fault("Failed to change state to 'connecting' - \(error)")
             }

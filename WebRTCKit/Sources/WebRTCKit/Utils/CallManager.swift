@@ -169,6 +169,9 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// Called when the peer created a new data channel.
     /// - Parameter dataChannel: The new data channel.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+    
+    /// Called when we lost the connection to our peer.
+    func didLosePeerConnection()
 }
 
 extension CallManagerDelegate {
