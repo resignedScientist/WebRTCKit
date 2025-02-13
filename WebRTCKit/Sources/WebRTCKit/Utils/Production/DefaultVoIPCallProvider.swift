@@ -5,6 +5,7 @@ import WebRTC
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     @Inject(\.webRTCManager) private var webRTCManager
+    @Inject(\.callManager) private var callManager
     
     private let provider: WRKCXProvider
     private let callController: WRKCallController
@@ -42,6 +43,9 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         handle: String,
         hasVideo: Bool
     ) async throws {
+        
+        // prevent receiving two calls from the same UUID
+        guard currentCallID != uuid else { return }
         
         let update = CXCallUpdate()
         update.remoteHandle = CXHandle(type: .generic, value: handle)
@@ -252,11 +256,22 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     
     func provider(_ provider: WRKCXProvider, perform action: EndCallAction) async {
         
-        // For some reason on simulators, the end call action is called immediately
-        // after accepting a call. Maybe because of no CallKit support there?
-        #if targetEnvironment(simulator)
-        guard isEndingCall else { return }
-        #endif
+        // For some reason on simulators & on mac catalyst (designed for iPad),
+        // the end call action is called immediately after accepting a call.
+        // Maybe because of no CallKit support there?
+        let isSimulator: Bool = {
+            #if targetEnvironment(simulator)
+            return true
+            #else
+            return false
+            #endif
+        }()
+        let isMacCatalyst = ProcessInfo.processInfo.isiOSAppOnMac
+        
+        // So on these platforms, we only allow ending calls if the actual button in the app was pressed.
+        if isSimulator || isMacCatalyst {
+            guard isEndingCall else { return }
+        }
         
         do {
             try await webRTCManager.stopVideoCall()

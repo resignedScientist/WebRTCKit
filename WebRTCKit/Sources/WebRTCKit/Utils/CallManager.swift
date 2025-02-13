@@ -15,14 +15,8 @@ public enum CallManagerState: Equatable, Sendable {
     /// We are calling another peer.
     case sendingCallRequest
     
-    /// We are accepting or denying a call request from another peer.
-    case answeringCallRequest
-    
     /// We are ending a call.
     case endingCall
-    
-    /// We are handling a critical error.
-    case handlingError
     
     /// We are trying to establish a peer-to-peer connection
     case connecting
@@ -35,10 +29,7 @@ public enum CallManagerState: Equatable, Sendable {
     static func canChangeState(from fromState: CallManagerState, to toState: CallManagerState) -> Bool {
         switch toState {
         case .idle:
-            return [
-                .endingCall,
-                .handlingError
-            ].contains(fromState)
+            return [.endingCall].contains(fromState)
         case .callIsRunning:
             return [.connecting].contains(fromState)
         case .receivingCallRequest:
@@ -46,29 +37,18 @@ public enum CallManagerState: Equatable, Sendable {
             return [.idle].contains(fromState)
         case .sendingCallRequest:
             return [.idle].contains(fromState)
-        case .answeringCallRequest:
-            return [.receivingCallRequest].contains(fromState)
         case .endingCall:
             return [
                 .callIsRunning,
                 .sendingCallRequest,
                 .receivingCallRequest,
-                .answeringCallRequest,
-                .connecting
-            ].contains(fromState)
-        case .handlingError:
-            return [
-                .callIsRunning,
-                .receivingCallRequest,
-                .sendingCallRequest,
-                .answeringCallRequest,
-                .endingCall,
                 .connecting
             ].contains(fromState)
         case .connecting:
             return [
                 .sendingCallRequest,
-                .answeringCallRequest
+                .receivingCallRequest,
+                .callIsRunning
             ].contains(fromState)
         }
     }
@@ -189,6 +169,9 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// Called when the peer created a new data channel.
     /// - Parameter dataChannel: The new data channel.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+    
+    /// Called when we lost the connection to our peer.
+    func didLosePeerConnection()
 }
 
 extension CallManagerDelegate {
@@ -202,6 +185,8 @@ extension CallManagerDelegate {
 
 @WebRTCActor
 protocol CallManager: Sendable {
+    
+    func getState() async -> CallManagerState
     
     /// Sets the delegate to handle call events.
     /// - Parameter delegate: The delegate to handle call events.

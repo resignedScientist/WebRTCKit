@@ -4,6 +4,10 @@ final class PreviewCallManager: CallManager {
     
     private weak var delegate: CallManagerDelegate?
     
+    func getState() async -> CallManagerState {
+        .idle
+    }
+    
     func setDelegate(_ delegate: CallManagerDelegate?) {
         self.delegate = delegate
     }

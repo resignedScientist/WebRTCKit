@@ -496,7 +496,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
         Task { @WebRTCActor in
-            configurationChanged = true
+//            configurationChanged = true
             await handleNegotiation(peerConnection)
         }
     }
@@ -533,10 +533,14 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         Task { @WebRTCActor in
             log.info("Peer connection state: \(newState)")
             switch newState {
-            case .new, .disconnected, .failed, .closed, .connecting:
+            case .new, .connecting:
                 break
             case .connected:
                 delegate?.callDidStart()
+            case .disconnected:
+                delegate?.didLosePeerConnection()
+            case .closed, .failed:
+                delegate?.callDidEnd()
             @unknown default:
                 break
             }

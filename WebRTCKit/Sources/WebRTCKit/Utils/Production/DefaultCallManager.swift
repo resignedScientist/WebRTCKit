@@ -14,10 +14,13 @@ final class DefaultCallManager: CallManager {
     private let log = Logger(caller: "CallManager")
     
     private var connectionTimeout: Task<Void, Never>?
-    private var state: CallManagerState = .idle
     
     init(stateHolder: CallManagerStateHolder = CallManagerStateHolderImpl(initialState: .idle)) {
         self.stateHolder = stateHolder
+    }
+    
+    func getState() async -> CallManagerState {
+        await stateHolder.getState()
     }
     
     func setDelegate(_ delegate: CallManagerDelegate?) {
@@ -40,7 +43,7 @@ final class DefaultCallManager: CallManager {
     
     func answerCallRequest(accept: Bool) async throws {
         log.info("Answering call request (accept = \(accept))…")
-        try await stateHolder.changeState(to: .answeringCallRequest)
+        try await stateHolder.changeState(to: .connecting)
         
         if accept {
             try await callProvider.acceptIncomingCall()
@@ -112,6 +115,13 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func callDidEnd() {
         Task { @WebRTCActor in
+            let state = await stateHolder.getState()
+            
+            // If in the connecting state, go to endingCall first
+            if state == .connecting {
+                try await stateHolder.changeState(to: .endingCall)
+            }
+            
             try await stateHolder.changeState(to: .idle)
             delegate?.callDidEnd(withError: nil)
         }
@@ -138,7 +148,6 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     func onError(_ error: WebRTCManagerError) {
         Task { @WebRTCActor in
             do {
-                try await stateHolder.changeState(to: .handlingError)
                 try await callProvider.endCall()
                 try await stateHolder.changeState(to: .idle)
                 delegate?.callDidEnd(withError: .webRTCManagerError(error))
@@ -193,6 +202,18 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel) {
         delegate?.didReceiveDataChannel(dataChannel)
+    }
+    
+    func didLosePeerConnection() {
+        Task { @WebRTCActor in
+            do {
+                try await stateHolder.changeState(to: .connecting)
+                startConnectionTimeout()
+                delegate?.didLosePeerConnection()
+            } catch {
+                log.fault("Failed to change state to 'connecting' - \(error)")
+            }
+        }
     }
 }
 

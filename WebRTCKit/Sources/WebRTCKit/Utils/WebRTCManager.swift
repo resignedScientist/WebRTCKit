@@ -64,6 +64,9 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
     /// Called when a new data channel is created by the peer.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+    
+    /// Called when we lost the connection to our peer.
+    func didLosePeerConnection()
 }
 
 @WebRTCActor
