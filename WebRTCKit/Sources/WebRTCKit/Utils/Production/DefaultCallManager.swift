@@ -115,6 +115,13 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func callDidEnd() {
         Task { @WebRTCActor in
+            let state = await stateHolder.getState()
+            
+            // If in the connecting state, go to endingCall first
+            if state == .connecting {
+                try await stateHolder.changeState(to: .endingCall)
+            }
+            
             try await stateHolder.changeState(to: .idle)
             delegate?.callDidEnd(withError: nil)
         }
