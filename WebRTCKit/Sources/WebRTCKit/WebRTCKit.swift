@@ -18,7 +18,7 @@ public struct WebRTCKit {
         config: Config,
         audioDevice: RTCAudioDevice? = nil,
         logLevel: LogLevel = .error
-    ) -> WebRTCController {
+    ) async -> WebRTCController {
         
         DIContainer.Instance.logLevel = logLevel
         
@@ -42,9 +42,7 @@ public struct WebRTCKit {
             RTCSetMinDebugLogLevel(.verbose)
         }
         
-        Task {
-            await container.setup()
-        }
+        await container.setup()
         
         return WebRTCControllerImpl(container: container)
     }
