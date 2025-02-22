@@ -43,20 +43,24 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     private let audioNetworkDataCache: NetworkDataCache = NetworkDataCacheImpl()
     private let videoNetworkDataCache: NetworkDataCache = NetworkDataCacheImpl()
     private let log = Logger(caller: "BitrateAdjustor")
+    private var slowTimer: DispatchSourceTimer?
+    private var fastTimer: DispatchSourceTimer?
     
-    private var tasks: [Task<Void, Never>] = []
     private var runningTypes: Set<BitrateType> = []
     
     func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection) {
         runningTypes.insert(type)
-        if tasks.isEmpty {
+        if slowTimer == nil || fastTimer == nil {
             registerStatisticObservers(peerConnection: peerConnection)
         }
         log.info("Started for \(type)")
     }
     
     func stop() async {
-        tasks.cancelAll()
+        fastTimer?.cancel()
+        slowTimer?.cancel()
+        fastTimer = nil
+        slowTimer = nil
         runningTypes.removeAll()
         await audioNetworkDataCache.deleteAllData()
         await videoNetworkDataCache.deleteAllData()
@@ -74,9 +78,12 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
             await videoNetworkDataCache.deleteAllData()
         }
         
-        // stop all tasks if nothing is running anymore
+        // stop all timers if nothing is running anymore
         if runningTypes.isEmpty {
-            tasks.cancelAll()
+            fastTimer?.cancel()
+            slowTimer?.cancel()
+            fastTimer = nil
+            slowTimer = nil
         }
         
         log.info("Stopped for \(type)")
@@ -99,33 +106,48 @@ private extension BitrateAdjustorImpl {
     func registerStatisticObservers(peerConnection: WRKRTCPeerConnection) {
         
         // fast task (every second)
-        Task {
-            while !Task.isCancelled {
-                
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                
-                guard !Task.isCancelled else { return }
-                
-                async let videoTask: Void = runFastTask(for: .video, peerConnection: peerConnection)
-                async let audioTask: Void = runFastTask(for: .audio, peerConnection: peerConnection)
-                
-                _ = await (videoTask, audioTask)
+        let fastTimer = DispatchSource.makeTimerSource(queue: WebRTCActor.queue)
+        fastTimer.setEventHandler { [weak self] in
+            Task { @WebRTCActor in
+                await withDiscardingTaskGroup { taskGroup in
+                    
+                    // video
+                    taskGroup.addTask { [weak self] in
+                        await self?.runFastTask(for: .video, peerConnection: peerConnection)
+                    }
+                    
+                    // audio
+                    taskGroup.addTask { [weak self] in
+                        await self?.runFastTask(for: .audio, peerConnection: peerConnection)
+                    }
+                }
             }
-        }.store(in: &tasks)
+        }
+        fastTimer.schedule(deadline: .now(), repeating: .seconds(1))
+        fastTimer.resume()
+        self.fastTimer = fastTimer
         
         // slow task (every 5 seconds)
-        Task {
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
-                
-                guard !Task.isCancelled else { return }
-                
-                async let videoTask: Void = runSlowTask(for: .video, peerConnection: peerConnection)
-                async let audioTask: Void = runSlowTask(for: .audio, peerConnection: peerConnection)
-                
-                _ = await (videoTask, audioTask)
+        let slowTimer = DispatchSource.makeTimerSource(queue: WebRTCActor.queue)
+        slowTimer.setEventHandler { [weak self] in
+            Task { @WebRTCActor in
+                await withDiscardingTaskGroup { taskGroup in
+                    
+                    // video
+                    taskGroup.addTask { [weak self] in
+                        await self?.runSlowTask(for: .video, peerConnection: peerConnection)
+                    }
+                    
+                    // audio
+                    taskGroup.addTask { [weak self] in
+                        await self?.runSlowTask(for: .audio, peerConnection: peerConnection)
+                    }
+                }
             }
-        }.store(in: &tasks)
+        }
+        slowTimer.schedule(deadline: .now(), repeating: .seconds(5))
+        slowTimer.resume()
+        self.slowTimer = slowTimer
     }
     
     func fetchStats(peerConnection: WRKRTCPeerConnection, for type: BitrateType) async -> NetworkDataPoint? {

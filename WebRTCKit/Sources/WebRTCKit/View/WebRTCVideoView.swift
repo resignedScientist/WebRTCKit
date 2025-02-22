@@ -7,32 +7,41 @@ public struct WebRTCVideoView: View {
     
     private let videoTrack: WRKRTCVideoTrack?
     private let aspectFit: Bool
+    private let isMirrored: Bool
     
-    public init(videoTrack: WRKRTCVideoTrack?, aspectFit: Bool = true) {
+    public init(
+        videoTrack: WRKRTCVideoTrack?,
+        aspectFit: Bool = true,
+        isMirrored: Bool = false
+    ) {
         self.videoTrack = videoTrack
         self.aspectFit = aspectFit
+        self.isMirrored = isMirrored
     }
     
     public var body: some View {
-        if aspectFit {
-            Group {
-                if let videoTrack {
-                    WebRTCView(videoTrack: videoTrack, aspectRatio: $aspectRatio)
-                } else {
-                    Color.clear
+        Group {
+            if aspectFit {
+                Group {
+                    if let videoTrack {
+                        WebRTCView(videoTrack: videoTrack, aspectRatio: $aspectRatio)
+                    } else {
+                        Color.clear
+                    }
                 }
-            }
-            .aspectRatio(aspectFit ? aspectRatio : nil, contentMode: .fit)
-            .animation(.default, value: aspectRatio)
-        } else {
-            Group {
-                if let videoTrack {
-                    WebRTCView(videoTrack: videoTrack, aspectRatio: $aspectRatio)
-                } else {
-                    Color.clear
+                .aspectRatio(aspectFit ? aspectRatio : nil, contentMode: .fit)
+                .animation(.default, value: aspectRatio)
+            } else {
+                Group {
+                    if let videoTrack {
+                        WebRTCView(videoTrack: videoTrack, aspectRatio: $aspectRatio)
+                    } else {
+                        Color.clear
+                    }
                 }
             }
         }
+        .scaleEffect(x: isMirrored ? -1 : 1)
     }
 }
 
