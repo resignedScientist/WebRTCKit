@@ -41,5 +41,6 @@ extension DIContainer {
     actor Instance {
         static var shared: DIContainer?
         static var logLevel: LogLevel?
+        static var loggerDelegate: LoggerDelegate?
     }
 }

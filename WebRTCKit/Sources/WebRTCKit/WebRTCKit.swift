@@ -6,21 +6,25 @@ public typealias PeerID = String
 public struct WebRTCKit {
     
     /// Initialize the WebRTCKit for production.
-    ///
+    /// 
     /// - Parameters:
     ///   - signalingServer: A reference to the signaling server connection to use.
     ///   - config: The configuration settings to apply.
     ///   - enableVerboseLogging: A Boolean value that determines wether verbose logging for WebRTC is enabled.
     ///   - audioDevice: An optional audio device to use.
+    ///   - logLevel: The log level for our logger; defaults to only log errors.
+    ///   - loggerDelegate: A delegate for the logger that receives all the logs.
     /// - Returns: The controller to interact with the WebRTCKit.
     public static func initialize(
         signalingServer: SignalingServerConnection,
         config: Config,
         audioDevice: RTCAudioDevice? = nil,
-        logLevel: LogLevel = .error
+        logLevel: LogLevel = .error,
+        loggerDelegate: LoggerDelegate? = nil
     ) async -> WebRTCController {
         
         DIContainer.Instance.logLevel = logLevel
+        DIContainer.Instance.loggerDelegate = loggerDelegate
         
         let container = DIContainer(
             config: config,
@@ -76,7 +80,7 @@ public struct WebRTCKit {
         signalingServer: SignalingServerConnection,
         callManager: CallManager,
         networkMonitor: NetworkMonitor
-    ) -> WebRTCController {
+    ) async -> WebRTCController {
         
         DIContainer.Instance.logLevel = .debug
         
@@ -92,9 +96,7 @@ public struct WebRTCKit {
         
         DIContainer.Instance.shared = container
         
-        Task {
-            await container.setup()
-        }
+        await container.setup()
         
         return WebRTCControllerImpl(container: container)
     }
