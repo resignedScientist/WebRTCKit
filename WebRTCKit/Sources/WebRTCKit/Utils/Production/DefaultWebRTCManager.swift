@@ -110,6 +110,17 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             return
         }
         
+        guard let videoDevice = CaptureDevice(
+            AVCaptureDevice.default(
+                .builtInWideAngleCamera,
+                for: .video,
+                position: .front
+            )
+        ) else {
+            log.info("Did not find a capturing device. Skipping local video.")
+            return
+        }
+        
         // add the video track to the peer connection
         if let localVideoTrack {
             localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
@@ -117,33 +128,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             await addVideoTrack(to: peerConnection)
         }
         
-        let videoDevice = CaptureDevice(
-            AVCaptureDevice.default(
-                .builtInWideAngleCamera,
-                for: .video,
-                position: .front
-            )
-        )
-        
-        if videoDevice == nil {
-            
-            // We do not have a capturing device,
-            // so we are assuming, we are running on the simulator.
-            // -> We use an example video as input
-            
-            log.info("Did not find a capturing device. Using example video as input.")
-            
-            guard let videoSource else { return }
-            
-            let videoCapturer = VideoCapturer(
-                PreviewVideoCapturer(delegate: videoSource)
-            )
-            
-            // start playing video
-            try await videoCapturer.start()
-            
-            self.videoCapturer = videoCapturer
-        } else if let videoCapturer { // use custom input
+        if let videoCapturer { // use custom input
             videoCapturer.delegate = videoSource
             self.videoCapturer = videoCapturer
             log.info("Using custom video capturer as input.")
@@ -152,7 +137,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             // use default front camera as input
             
             guard
-                let videoDevice,
                 let format = videoDevice.formats.last(where: { format in
                     let resolution = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
                     return resolution.height <= 480
