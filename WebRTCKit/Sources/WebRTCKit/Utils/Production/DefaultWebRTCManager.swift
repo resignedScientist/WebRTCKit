@@ -15,7 +15,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
     private var peerConnection: WRKRTCPeerConnection?
     private var videoCapturer: VideoCapturer?
-    private var videoSource: WRKRTCVideoSource?
+    private var videoSource: RTCVideoSource?
     private var remoteAudioTrack: WRKRTCAudioTrack?
     private var remoteVideoTrack: WRKRTCVideoTrack?
     private var localAudioTrack: WRKRTCAudioTrack?
