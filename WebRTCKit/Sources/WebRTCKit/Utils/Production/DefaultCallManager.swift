@@ -98,6 +98,10 @@ extension DefaultCallManager: WebRTCManagerDelegate {
         delegate?.didAddRemoteAudioTrack(audioTrack)
     }
     
+    func didRemoveRemoteAudioTrack(_ audioTrack: any WRKRTCAudioTrack) {
+        delegate?.remoteAudioTrackWasRemoved(audioTrack)
+    }
+    
     func didReceiveEndCall() {
         Task { @WebRTCActor in
             

@@ -159,6 +159,10 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// - Parameter videoTrack: The remote video track.
     func remoteVideoTrackWasRemoved(_ videoTrack: WRKRTCVideoTrack)
     
+    /// Tells the delegate that the remote audio track has been removed.
+    /// - Parameter audioTrack: The remote audio track.
+    func remoteAudioTrackWasRemoved(_ audioTrack: WRKRTCAudioTrack)
+    
     /// The call did start.
     func callDidStart()
     
@@ -181,6 +185,8 @@ extension CallManagerDelegate {
     func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack) {}
     
     func remoteVideoTrackWasRemoved(_ videoTrack: WRKRTCVideoTrack) {}
+    
+    func remoteAudioTrackWasRemoved(_ audioTrack: WRKRTCAudioTrack) {}
 }
 
 @WebRTCActor

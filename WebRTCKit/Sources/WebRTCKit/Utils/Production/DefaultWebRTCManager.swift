@@ -437,7 +437,6 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
-        log.info("Remote peer did add receiver.")
         Task { @WebRTCActor in
             
             // video
@@ -445,6 +444,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack, source: .remote)
                 self.remoteVideoTrack = remoteVideoTrack
                 delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
+                log.info("Remote peer did add receiver for video.")
             }
             
             // audio
@@ -452,16 +452,27 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 let remoteAudioTrack = WRKRTCAudioTrackImpl(audioTrack, source: .remote)
                 self.remoteAudioTrack = remoteAudioTrack
                 delegate?.didAddRemoteAudioTrack(remoteAudioTrack)
+                log.info("Remote peer did add receiver for audio.")
             }
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver) {
-        log.info("Remote peer did remove receiver.")
         Task { @WebRTCActor [self] in
-            guard rtpReceiver.track?.kind == "video", let remoteVideoTrack else { return }
-            self.remoteVideoTrack = nil
-            delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+            
+            // video
+            if rtpReceiver.track is RTCVideoTrack, let remoteVideoTrack {
+                self.remoteVideoTrack = nil
+                delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+                log.info("Remote peer did remove receiver for video.")
+            }
+            
+            // audio
+            if rtpReceiver.track is RTCAudioTrack, let remoteAudioTrack {
+                self.remoteAudioTrack = nil
+                delegate?.didRemoveRemoteAudioTrack(remoteAudioTrack)
+                log.info("Remote peer did remove receiver for audio.")
+            }
         }
     }
     
