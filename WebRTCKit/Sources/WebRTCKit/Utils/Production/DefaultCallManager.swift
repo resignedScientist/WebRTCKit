@@ -179,10 +179,10 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     func callDidStart() {
         Task { @WebRTCActor in
             
-            log.info("callDidStart()")
-            
             // skip if call is already running
             guard await stateHolder.getState() != .callIsRunning else { return }
+            
+            log.info("callDidStart()")
             
             do {
                 try await stateHolder.changeState(to: .callIsRunning)
