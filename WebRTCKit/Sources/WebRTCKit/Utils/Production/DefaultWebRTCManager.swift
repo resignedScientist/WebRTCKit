@@ -95,6 +95,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             await addAudioTrack(to: peerConnection)
         }
         
+        try await startVideoRecording()
+        
         bitrateAdjustor.start(for: .audio, peerConnection: peerConnection)
         
         return peerID
