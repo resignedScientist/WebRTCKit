@@ -146,6 +146,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         } else if let videoCapturer { // use custom input
             videoCapturer.delegate = videoSource
             self.videoCapturer = videoCapturer
+            log.info("Using custom video capturer as input.")
         } else {
             
             // use default front camera as input
@@ -175,6 +176,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
                 with: videoDevice,
                 fps: 30
             )
+            
+            log.info("Video capturing started using default front camera as input.")
         }
         
         // start bitrate adjustor
