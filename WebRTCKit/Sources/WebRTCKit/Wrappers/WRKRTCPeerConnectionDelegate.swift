@@ -5,13 +5,6 @@ protocol WRKRTCPeerConnectionDelegate: AnyObject, Sendable {
     /// Called when the SignalingState changed.
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange stateChanged: RTCSignalingState)
     
-    /// Called when media is received on a new stream from remote peer.
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd stream: WRKMediaStream)
-    
-    /// Called when a remote peer closes a stream.
-    /// This is not called when RTCSdpSemanticsUnifiedPlan is specified.
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove stream: WRKMediaStream)
-    
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver)
     
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver)

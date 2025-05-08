@@ -98,11 +98,17 @@ extension DefaultCallManager: WebRTCManagerDelegate {
         delegate?.didAddRemoteAudioTrack(audioTrack)
     }
     
+    func didRemoveRemoteAudioTrack(_ audioTrack: any WRKRTCAudioTrack) {
+        delegate?.remoteAudioTrackWasRemoved(audioTrack)
+    }
+    
     func didReceiveEndCall() {
         Task { @WebRTCActor in
             
             // this is the end call confirmation; we can ignore it
             guard await stateHolder.getState() != .idle else { return }
+            
+            log.info("didReceiveEndCall()")
             
             do {
                 try await stateHolder.changeState(to: .endingCall)
@@ -115,6 +121,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func callDidEnd() {
         Task { @WebRTCActor in
+            
+            log.info("callDidEnd()")
+            
             let state = await stateHolder.getState()
             
             do {
@@ -133,6 +142,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func didReceiveOffer(from peerID: PeerID) {
         Task { @WebRTCActor in
+            
+            log.info("didReceiveOffer()")
+            
             do {
                 try await stateHolder.changeState(to: .receivingCallRequest)
                 try await callProvider.reportIncomingCall(
@@ -151,6 +163,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func onError(_ error: WebRTCManagerError) {
         Task { @WebRTCActor in
+            
+            log.error("onError - \(error)")
+            
             do {
                 try await callProvider.endCall()
                 try await stateHolder.changeState(to: .idle)
@@ -167,6 +182,8 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             // skip if call is already running
             guard await stateHolder.getState() != .callIsRunning else { return }
             
+            log.info("callDidStart()")
+            
             do {
                 try await stateHolder.changeState(to: .callIsRunning)
                 delegate?.callDidStart()
@@ -179,6 +196,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func peerDidAcceptCallRequest() {
         Task { @WebRTCActor in
+            
+            log.info("peerDidAcceptCallRequest()")
+            
             let state = await stateHolder.getState()
             
             // we are already connected
@@ -195,6 +215,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func didAcceptCallRequest() {
         Task { @WebRTCActor in
+            
+            log.info("didAcceptCallRequest()")
+            
             do {
                 try await stateHolder.changeState(to: .connecting)
                 startConnectionTimeout()
@@ -210,6 +233,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     
     func didLosePeerConnection() {
         Task { @WebRTCActor in
+            
+            log.info("didLosePeerConnection()")
+            
             do {
                 try await stateHolder.changeState(to: .connecting)
                 startConnectionTimeout()

@@ -9,13 +9,13 @@ protocol WRKRTCPeerConnectionFactory: AnyObject {
         delegate: WRKRTCPeerConnectionDelegate?
     ) -> WRKRTCPeerConnection?
     
-    func videoSource() -> WRKRTCVideoSource
+    func videoSource() -> RTCVideoSource
     
-    func videoTrack(with videoSource: WRKRTCVideoSource, trackId: String) -> WRKRTCVideoTrack
+    func videoTrack(with videoSource: RTCVideoSource, trackId: String) -> WRKRTCVideoTrack
     
-    func audioSource(with constraints: RTCMediaConstraints?) -> WRKRTCAudioSource
+    func audioSource(with constraints: RTCMediaConstraints?) -> RTCAudioSource
     
-    func audioTrack(with audioSource: WRKRTCAudioSource, trackId: String) -> WRKRTCAudioTrack
+    func audioTrack(with audioSource: RTCAudioSource, trackId: String) -> WRKRTCAudioTrack
 }
 
 final class WRKRTCPeerConnectionFactoryImpl: WRKRTCPeerConnectionFactory {
@@ -45,35 +45,25 @@ final class WRKRTCPeerConnectionFactoryImpl: WRKRTCPeerConnectionFactory {
         return nil
     }
     
-    func videoSource() -> WRKRTCVideoSource {
-        WRKRTCVideoSourceImpl(
-            factory.videoSource()
+    func videoSource() -> RTCVideoSource {
+        factory.videoSource()
+    }
+    
+    func videoTrack(with videoSource: RTCVideoSource, trackId: String) -> WRKRTCVideoTrack {
+        WRKRTCVideoTrackImpl(
+            factory.videoTrack(with: videoSource, trackId: trackId),
+            source: .local
         )
     }
     
-    func videoTrack(with videoSource: WRKRTCVideoSource, trackId: String) -> WRKRTCVideoTrack {
-        if let videoSource = (videoSource as? WRKRTCVideoSourceImpl)?.videoSource {
-            return WRKRTCVideoTrackImpl(
-                factory.videoTrack(with: videoSource, trackId: trackId),
-                source: .local
-            )
-        }
-        fatalError("Mixing mock videoSource with prod PeerConnectionFactory")
+    func audioSource(with constraints: RTCMediaConstraints?) -> RTCAudioSource {
+        factory.audioSource(with: constraints)
     }
     
-    func audioSource(with constraints: RTCMediaConstraints?) -> WRKRTCAudioSource {
-        WRKRTCAudioSourceImpl(
-            factory.audioSource(with: constraints)
+    func audioTrack(with audioSource: RTCAudioSource, trackId: String) -> WRKRTCAudioTrack {
+        WRKRTCAudioTrackImpl(
+            factory.audioTrack(with: audioSource, trackId: trackId),
+            source: .local
         )
-    }
-    
-    func audioTrack(with audioSource: WRKRTCAudioSource, trackId: String) -> WRKRTCAudioTrack {
-        if let audioSource = (audioSource as? WRKRTCAudioSourceImpl)?.audioSource {
-            return WRKRTCAudioTrackImpl(
-                factory.audioTrack(with: audioSource, trackId: trackId),
-                source: .local
-            )
-        }
-        fatalError("Mixing mock audioSource with prod PeerConnectionFactory")
     }
 }

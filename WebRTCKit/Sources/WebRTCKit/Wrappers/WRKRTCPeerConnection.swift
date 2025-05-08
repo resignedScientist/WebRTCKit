@@ -300,19 +300,11 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
-        let stream = WRKMediaStreamImpl(stream, source: .remote)
-        queue.async {
-            self._delegate?.peerConnection(self, didAdd: stream)
-        }
-    }
+    /// legacy code for plan B, not use for unified semantics
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
     
-    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
-        let stream = WRKMediaStreamImpl(stream, source: .remote)
-        queue.async {
-            self._delegate?.peerConnection(self, didRemove: stream)
-        }
-    }
+    /// legacy code for plan B, not use for unified semantics
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
         let receiver = RtpReceiver(rtpReceiver)

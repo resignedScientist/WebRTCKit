@@ -15,7 +15,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
     private var peerConnection: WRKRTCPeerConnection?
     private var videoCapturer: VideoCapturer?
-    private var videoSource: WRKRTCVideoSource?
+    private var videoSource: RTCVideoSource?
     private var remoteAudioTrack: WRKRTCAudioTrack?
     private var remoteVideoTrack: WRKRTCVideoTrack?
     private var localAudioTrack: WRKRTCAudioTrack?
@@ -110,40 +110,32 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             return
         }
         
-        // add the video track to the peer connection
-        if let localVideoTrack {
-            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
-        } else {
-            await addVideoTrack(to: peerConnection)
+        guard await AVCaptureDevice.requestAccess(for: .video) else {
+            log.error("Camera access has not been granted! Cannot add video stream.")
+            return
         }
         
-        let videoDevice = CaptureDevice(
+        guard let videoDevice = CaptureDevice(
             AVCaptureDevice.default(
                 .builtInWideAngleCamera,
                 for: .video,
                 position: .front
             )
-        )
+        ) else {
+            log.info("Did not find a capturing device. Skipping local video.")
+            return
+        }
         
-        if videoDevice == nil {
-            
-            // We do not have a capturing device,
-            // so we are assuming, we are running on the simulator.
-            // -> We use an example video as input
-            
-            log.info("Did not find a capturing device. Using example video as input.")
-            
-            guard let videoSource else { return }
-            
-            let videoCapturer = VideoCapturer(
-                PreviewVideoCapturer(delegate: videoSource)
-            )
-            
-            // start playing video
-            try await videoCapturer.start()
-            
-            self.videoCapturer = videoCapturer
-        } else if let videoCapturer { // use custom input
+        // use the existing video source or create a new one
+        let videoSource = videoSource ?? factory.videoSource()
+        
+        // add the video track to the peer connection
+        await addVideoTrack(to: peerConnection, videoSource: videoSource)
+        
+        // save the video source
+        self.videoSource = videoSource
+        
+        if let videoCapturer { // use custom input
             videoCapturer.delegate = videoSource
             self.videoCapturer = videoCapturer
             log.info("Using custom video capturer as input.")
@@ -152,12 +144,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             // use default front camera as input
             
             guard
-                let videoDevice,
                 let format = videoDevice.formats.last(where: { format in
                     let resolution = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
                     return resolution.height <= 480
-                }),
-                let videoSource
+                })
             else { return }
             
             // set resolution
@@ -209,7 +199,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func isVideoRecording() -> Bool {
-        peerConnection?.senders.contains(where: { $0.track?.kind == "video" }) == true
+        peerConnection?.senders.contains(where: { $0.track is RTCVideoTrack }) == true
     }
     
     func startVideoCall(to peerID: PeerID) async throws {
@@ -442,34 +432,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd stream: WRKMediaStream) {
-        Task { @WebRTCActor in
-            let audioTrack = stream.audioTracks.first
-            let videoTrack = stream.videoTracks.first
-            let hasAudio = audioTrack != nil
-            let hasVideo = videoTrack != nil
-            
-            log.info("Remote peer did add media stream; audio: \(hasAudio), video: \(hasVideo)")
-            
-            self.remoteAudioTrack = audioTrack
-            self.remoteVideoTrack = videoTrack
-            
-            if let audioTrack {
-                delegate?.didAddRemoteAudioTrack(audioTrack)
-            }
-            
-            if let videoTrack {
-                delegate?.didAddRemoteVideoTrack(videoTrack)
-            }
-        }
-    }
-    
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove stream: WRKMediaStream) {
-        log.info("Remote peer did remove a media stream.")
-    }
-    
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
-        log.info("Remote peer did add receiver.")
         Task { @WebRTCActor in
             
             // video
@@ -477,6 +440,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack, source: .remote)
                 self.remoteVideoTrack = remoteVideoTrack
                 delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
+                log.info("Remote peer did add receiver for video.")
             }
             
             // audio
@@ -484,16 +448,27 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 let remoteAudioTrack = WRKRTCAudioTrackImpl(audioTrack, source: .remote)
                 self.remoteAudioTrack = remoteAudioTrack
                 delegate?.didAddRemoteAudioTrack(remoteAudioTrack)
+                log.info("Remote peer did add receiver for audio.")
             }
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver) {
-        log.info("Remote peer did remove receiver.")
         Task { @WebRTCActor [self] in
-            guard rtpReceiver.track?.kind == "video", let remoteVideoTrack else { return }
-            self.remoteVideoTrack = nil
-            delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+            
+            // video
+            if rtpReceiver.track is RTCVideoTrack, let remoteVideoTrack {
+                self.remoteVideoTrack = nil
+                delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+                log.info("Remote peer did remove receiver for video.")
+            }
+            
+            // audio
+            if rtpReceiver.track is RTCAudioTrack, let remoteAudioTrack {
+                self.remoteAudioTrack = nil
+                delegate?.didRemoveRemoteAudioTrack(remoteAudioTrack)
+                log.info("Remote peer did remove receiver for audio.")
+            }
         }
     }
     
@@ -663,12 +638,16 @@ private extension DefaultWebRTCManager {
         log.info("Successfully added audio track.")
     }
     
-    func addVideoTrack(to peerConnection: WRKRTCPeerConnection) async {
+    func addVideoTrack(to peerConnection: WRKRTCPeerConnection, videoSource: RTCVideoSource) async {
+        
+        // use the existing video track if it exists
+        if let localVideoTrack {
+            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+            return
+        }
         
         // create video track
-        let videoSource = factory.videoSource()
         let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
-        self.videoSource = videoSource
         
         // add video track to the peer connection
         localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])

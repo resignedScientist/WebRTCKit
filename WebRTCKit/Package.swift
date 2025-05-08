@@ -16,7 +16,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor(from: "130.0.0"))
+        .package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor(from: "136.0.0"))
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.

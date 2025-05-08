@@ -44,18 +44,8 @@ final class VideoCapturer: @unchecked Sendable {
         }
     }
     
-    func start() async throws(PreviewVideoCapturerError) {
-        
-        // we do not need a queue here as preview video capturer is sendable
-        if let videoCapturer = videoCapturer as? PreviewVideoCapturer {
-            try await videoCapturer.start()
-        }
-    }
-    
     func stop() async {
-        if let videoCapturer = videoCapturer as? PreviewVideoCapturer {
-            await videoCapturer.stop()
-        } else if videoCapturer is RTCCameraVideoCapturer {
+        if videoCapturer is RTCCameraVideoCapturer {
             await withCheckedContinuation { continuation in
                 queue.async {
                     guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
