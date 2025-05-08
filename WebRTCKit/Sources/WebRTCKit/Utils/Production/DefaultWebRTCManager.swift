@@ -682,6 +682,9 @@ private extension DefaultWebRTCManager {
         // pass video track to the delegate
         delegate?.didAddLocalVideoTrack(localVideoTrack)
         
+        let frameLogger = FrameLogger()
+        localVideoTrack.add(frameLogger)
+        
         log.info("Successfully added video track.")
     }
     
@@ -959,4 +962,14 @@ private extension DefaultWebRTCManager {
             log.error("Negotiation failed - \(error)")
         }
     }
+}
+
+final class FrameLogger: NSObject, RTCVideoRenderer {
+  func setSize(_ size: CGSize) {
+    print("🔍 [FrameLogger] new render size: \(size)")
+  }
+  func renderFrame(_ frame: RTCVideoFrame?) {
+    guard let f = frame else { return }
+    print("🔍 [FrameLogger] got frame \(f.buffer.width)x\(f.buffer.height)")
+  }
 }
