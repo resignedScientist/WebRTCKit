@@ -436,32 +436,6 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd stream: WRKMediaStream) {
-        Task { @WebRTCActor in
-            let audioTrack = stream.audioTracks.first
-            let videoTrack = stream.videoTracks.first
-            let hasAudio = audioTrack != nil
-            let hasVideo = videoTrack != nil
-            
-            log.info("Remote peer did add media stream; audio: \(hasAudio), video: \(hasVideo)")
-            
-            self.remoteAudioTrack = audioTrack
-            self.remoteVideoTrack = videoTrack
-            
-            if let audioTrack {
-                delegate?.didAddRemoteAudioTrack(audioTrack)
-            }
-            
-            if let videoTrack {
-                delegate?.didAddRemoteVideoTrack(videoTrack)
-            }
-        }
-    }
-    
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove stream: WRKMediaStream) {
-        log.info("Remote peer did remove a media stream.")
-    }
-    
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
         log.info("Remote peer did add receiver.")
         Task { @WebRTCActor in
