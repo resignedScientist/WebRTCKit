@@ -27,19 +27,17 @@ final class VideoCapturer: @unchecked Sendable {
         fps: Int
     ) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            DispatchQueue.main.async {
                 guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
-                DispatchQueue.main.async {
-                    videoCapturer.startCapture(
-                        with: device.device,
-                        format: device.activeFormat,
-                        fps: fps
-                    ) { error in
-                        if let error {
-                            continuation.resume(throwing: error)
-                        } else {
-                            continuation.resume()
-                        }
+                videoCapturer.startCapture(
+                    with: device.device,
+                    format: device.activeFormat,
+                    fps: fps
+                ) { error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
                     }
                 }
             }
