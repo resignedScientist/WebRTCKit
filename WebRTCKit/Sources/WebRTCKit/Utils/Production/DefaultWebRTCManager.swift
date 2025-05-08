@@ -110,6 +110,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             return
         }
         
+        guard await AVCaptureDevice.requestAccess(for: .video) else {
+            log.error("Camera access has not been granted! Cannot add video stream.")
+            return
+        }
+        
         guard let videoDevice = CaptureDevice(
             AVCaptureDevice.default(
                 .builtInWideAngleCamera,
