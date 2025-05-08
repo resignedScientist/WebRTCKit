@@ -126,13 +126,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             return
         }
         
-        // add the video track to the peer connection
-        if let localVideoTrack {
-            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
-        } else {
-            await addVideoTrack(to: peerConnection)
-        }
-        
         if let videoCapturer { // use custom input
             videoCapturer.delegate = videoSource
             self.videoCapturer = videoCapturer
@@ -167,6 +160,13 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             )
             
             log.info("Video capturing started using default front camera as input.")
+        }
+        
+        // add the video track to the peer connection
+        if let localVideoTrack {
+            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        } else {
+            await addVideoTrack(to: peerConnection)
         }
         
         // start bitrate adjustor
