@@ -129,6 +129,12 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         // use the existing video source or create a new one
         let videoSource = videoSource ?? factory.videoSource()
         
+        // add the video track to the peer connection
+        await addVideoTrack(to: peerConnection, videoSource: videoSource)
+        
+        // save the video source
+        self.videoSource = videoSource
+        
         if let videoCapturer { // use custom input
             videoCapturer.delegate = videoSource
             self.videoCapturer = videoCapturer
@@ -164,16 +170,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             log.info("Video capturing started using default front camera as input.")
         }
         
-        // save the video source
-        self.videoSource = videoSource
-        
-        // add the video track to the peer connection
-        if let localVideoTrack {
-            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
-        } else {
-            await addVideoTrack(to: peerConnection)
-        }
-        
         // start bitrate adjustor
         bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
     }
@@ -203,7 +199,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func isVideoRecording() -> Bool {
-        peerConnection?.senders.contains(where: { $0.track?.kind == "video" }) == true
+        peerConnection?.senders.contains(where: { $0.track is RTCVideoTrack }) == true
     }
     
     func startVideoCall(to peerID: PeerID) async throws {
@@ -642,9 +638,13 @@ private extension DefaultWebRTCManager {
         log.info("Successfully added audio track.")
     }
     
-    func addVideoTrack(to peerConnection: WRKRTCPeerConnection) async {
+    func addVideoTrack(to peerConnection: WRKRTCPeerConnection, videoSource: RTCVideoSource) async {
         
-        guard let videoSource else { return }
+        // use the existing video track if it exists
+        if let localVideoTrack {
+            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+            return
+        }
         
         // create video track
         let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
