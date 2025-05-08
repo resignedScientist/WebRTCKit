@@ -126,6 +126,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             return
         }
         
+        // use the existing video source or create a new one
+        let videoSource = videoSource ?? factory.videoSource()
+        
         if let videoCapturer { // use custom input
             videoCapturer.delegate = videoSource
             self.videoCapturer = videoCapturer
@@ -138,8 +141,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
                 let format = videoDevice.formats.last(where: { format in
                     let resolution = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
                     return resolution.height <= 480
-                }),
-                let videoSource
+                })
             else { return }
             
             // set resolution
@@ -161,6 +163,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             
             log.info("Video capturing started using default front camera as input.")
         }
+        
+        // save the video source
+        self.videoSource = videoSource
         
         // add the video track to the peer connection
         if let localVideoTrack {
@@ -654,10 +659,10 @@ private extension DefaultWebRTCManager {
     
     func addVideoTrack(to peerConnection: WRKRTCPeerConnection) async {
         
+        guard let videoSource else { return }
+        
         // create video track
-        let videoSource = factory.videoSource()
         let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
-        self.videoSource = videoSource
         
         // add video track to the peer connection
         localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
