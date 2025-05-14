@@ -134,16 +134,21 @@ extension RTCTlsCertPolicy: Codable {
     
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
-        let rawValue = try container.decode(UInt.self)
-        guard let value = RTCTlsCertPolicy(rawValue: rawValue) else {
+        let rawValue = try container.decode(String.self)
+        guard let key = Key(rawValue: rawValue) else {
             throw DecodingError.dataCorrupted(
                 DecodingError.Context(
                     codingPath: decoder.codingPath,
-                    debugDescription: "Invalid raw value for RTCTlsCertPolicy"
+                    debugDescription: "Invalid value for RTCTlsCertPolicy"
                 )
             )
         }
-        self = value
+        switch key {
+        case .secure:
+            self = .secure
+        case .insecureNoCheck:
+            self = .insecureNoCheck
+        }
     }
     
     public func encode(to encoder: any Encoder) throws {
