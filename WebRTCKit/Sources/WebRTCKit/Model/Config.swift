@@ -114,7 +114,43 @@ extension ICEServer {
     }
 }
 
-extension RTCTlsCertPolicy: Codable {}
+extension RTCTlsCertPolicy: Codable {
+    
+    var key: Key {
+        switch self {
+        case .secure:
+            return .secure
+        case .insecureNoCheck:
+            return .insecureNoCheck
+        @unknown default:
+            return .secure
+        }
+    }
+    
+    enum Key: String {
+        case secure
+        case insecureNoCheck
+    }
+    
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(UInt.self)
+        guard let value = RTCTlsCertPolicy(rawValue: rawValue) else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Invalid raw value for RTCTlsCertPolicy"
+                )
+            )
+        }
+        self = value
+    }
+    
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
+}
 
 public extension WebRTCKit.Config {
     
