@@ -47,6 +47,8 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         // prevent receiving two calls from the same UUID
         guard currentCallID != uuid else { return }
         
+        log.info("Incoming call reported from \(handle)")
+        
         let update = CXCallUpdate()
         update.remoteHandle = CXHandle(type: .generic, value: handle)
         update.hasVideo = hasVideo
@@ -79,6 +81,8 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         defer {
             startCallHandler = nil
         }
+        
+        log.info("Starting outgoing call to \(handle)…")
         
         let handle = CXHandle(type: .generic, value: handle)
         let startCallAction = CXStartCallAction(call: uuid, handle: handle)
@@ -133,6 +137,8 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
             answerCallHandler = nil
         }
         
+        log.info("Accepting incoming call…")
+        
         async let asyncAnswerCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
             Task { [weak self] in
                 await self?.setAnswerCallHandler { error in
@@ -177,6 +183,8 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
             log.error("endCall called, but we are already waiting for the call to end.")
             return
         }
+        
+        log.info("Ending call…")
         
         isEndingCall = true
         
@@ -228,6 +236,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, perform action: StartCallAction) async {
+        log.info("Start call action received.")
+        
         let peerID = action.handle.value
         do {
             let localPeerID = try await webRTCManager.setup()
@@ -243,6 +253,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, perform action: AnswerCallAction) async {
+        log.info("Answer call action received.")
+        
         do {
             try await webRTCManager.answerCall()
             action.fulfill()
@@ -273,6 +285,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
             guard isEndingCall else { return }
         }
         
+        log.info("End call action received.")
+        
         do {
             try await webRTCManager.stopVideoCall()
             action.fulfill()
@@ -285,12 +299,12 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
-        log.info("Audio Session Activated")
+        log.info("Activating audio session…")
         await activateAudioSession()
     }
     
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
-        log.info("Audio Session Deactivated")
+        log.info("Deactivating audio session…")
         await deactivateAudioSession()
     }
 }
@@ -341,6 +355,7 @@ private extension DefaultVoIPCallProvider {
                 
                 do {
                     try audioSession.setConfiguration(configuration)
+                    log.info("Successfully configured audio session.")
                 } catch {
                     log.error("Failed to configure audio session: \(error)")
                 }
@@ -359,6 +374,7 @@ private extension DefaultVoIPCallProvider {
                 mode: .default,
                 options: [.mixWithOthers]
             )
+            log.info("Successfully reset audio configuration.")
         } catch {
             log.error("Failed to reset audio configuration: \(error)")
         }
@@ -372,6 +388,11 @@ private extension DefaultVoIPCallProvider {
                 do {
                     try audioSession.setActive(active)
                     audioSession.isAudioEnabled = active
+                    if active {
+                        log.info("Successfully activated audio session.")
+                    } else {
+                        log.info("Successfully deactivated audio session.")
+                    }
                 } catch {
                     log.error("Failed to set audio session active (\(active)): \(error)")
                 }
