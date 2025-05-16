@@ -5,7 +5,6 @@ import WebRTC
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     @Inject(\.webRTCManager) private var webRTCManager
-    @Inject(\.callManager) private var callManager
     
     private let provider: WRKCXProvider
     private let callController: WRKCallController
