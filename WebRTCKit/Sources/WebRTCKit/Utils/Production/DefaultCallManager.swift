@@ -71,6 +71,9 @@ final class DefaultCallManager: CallManager {
         
         // disconnect from the signaling server
         signalingServer.disconnect()
+        
+        // stop connection timeout if still running
+        stopConnectionTimeout()
     }
 }
 
@@ -113,6 +116,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             do {
                 try await stateHolder.changeState(to: .endingCall)
                 try await callProvider.endCall()
+                stopConnectionTimeout()
             } catch {
                 log.error("DidReceiveEndCall failed - \(error)")
             }
@@ -134,6 +138,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                 
                 try await stateHolder.changeState(to: .idle)
                 delegate?.callDidEnd(withError: nil)
+                stopConnectionTimeout()
             } catch {
                 log.fault("callDidEnd did fail - \(error)")
             }
@@ -170,6 +175,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                 try await callProvider.endCall()
                 try await stateHolder.changeState(to: .idle)
                 delegate?.callDidEnd(withError: .webRTCManagerError(error))
+                stopConnectionTimeout()
             } catch {
                 log.error("OnError failed - \(error)")
             }
