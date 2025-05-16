@@ -95,8 +95,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             await addAudioTrack(to: peerConnection)
         }
         
-        bitrateAdjustor.start(for: .audio, peerConnection: peerConnection)
-        
         return peerID
     }
     
@@ -170,8 +168,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             log.info("Video capturing started using default front camera as input.")
         }
         
-        // start bitrate adjustor
-        bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
+        // start bitrate adjustor if we are already connected
+        if peerConnection.connectionState == .connected {
+            bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
+        }
     }
     
     func stopVideoRecording() async {
@@ -515,10 +515,16 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 break
             case .connected:
                 delegate?.callDidStart()
+                bitrateAdjustor.start(for: .audio, peerConnection: peerConnection)
+                bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
             case .disconnected:
                 delegate?.didLosePeerConnection()
+                await bitrateAdjustor.stop(for: .audio)
+                await bitrateAdjustor.stop(for: .video)
             case .closed, .failed:
                 delegate?.callDidEnd()
+                await bitrateAdjustor.stop(for: .audio)
+                await bitrateAdjustor.stop(for: .video)
             @unknown default:
                 break
             }

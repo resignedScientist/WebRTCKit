@@ -49,10 +49,14 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     private var runningTypes: Set<BitrateType> = []
     
     func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection) {
+        guard !runningTypes.contains(type) else { return }
+        
         runningTypes.insert(type)
+        
         if slowTimer == nil || fastTimer == nil {
             registerStatisticObservers(peerConnection: peerConnection)
         }
+        
         log.info("Started for \(type)")
     }
     
@@ -68,6 +72,8 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     }
     
     func stop(for type: BitrateType) async {
+        guard runningTypes.contains(type) else { return }
+        
         runningTypes.remove(type)
         
         // delete cached network data for that type
