@@ -87,35 +87,34 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         let startCallAction = CXStartCallAction(call: uuid, handle: handle)
         startCallAction.isVideo = hasVideo
         
-        async let asyncStartCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
-            Task { [weak self] in
-                await self?.setStartCallHandler { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
-                }
-            }
-        }
-        
         #if targetEnvironment(simulator)
         await provider(
             provider,
             perform: StartCallAction(from: startCallAction)
         )
-        #endif
-        
+        #else
         if doNotDisturbIsEnabled {
             await provider(
                 provider,
                 perform: StartCallAction(from: startCallAction)
             )
         } else {
+            async let asyncStartCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
+                Task { [weak self] in
+                    await self?.setStartCallHandler { error in
+                        if let error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume()
+                        }
+                    }
+                }
+            }
             let transaction = CXTransaction(action: startCallAction)
             try await callController.request(transaction)
             try await asyncStartCall
         }
+        #endif
         
         currentCallID = uuid
     }
@@ -138,18 +137,6 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         
         log.info("Accepting incoming call…")
         
-        async let asyncAnswerCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
-            Task { [weak self] in
-                await self?.setAnswerCallHandler { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
-                }
-            }
-        }
-        
         let answerCallAction = CXAnswerCallAction(call: uuid)
         
         #if targetEnvironment(simulator)
@@ -157,18 +144,29 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
             provider,
             perform: AnswerCallAction(from: answerCallAction)
         )
-        #endif
-        
+        #else
         if doNotDisturbIsEnabled {
             await provider(
                 provider,
                 perform: AnswerCallAction(from: answerCallAction)
             )
         } else {
+            async let asyncAnswerCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
+                Task { [weak self] in
+                    await self?.setAnswerCallHandler { error in
+                        if let error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume()
+                        }
+                    }
+                }
+            }
             let transaction = CXTransaction(action: answerCallAction)
             try await callController.request(transaction)
             try await asyncAnswerCall
         }
+        #endif
     }
     
     func endCall() async throws {
