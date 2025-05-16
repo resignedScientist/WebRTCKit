@@ -148,6 +148,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     func didReceiveOffer(from peerID: PeerID) {
         Task { @WebRTCActor in
             
+            // ignore if current state is already "receivingCallRequest"
+            guard await stateHolder.getState() != .receivingCallRequest else { return }
+            
             log.info("didReceiveOffer()")
             
             do {

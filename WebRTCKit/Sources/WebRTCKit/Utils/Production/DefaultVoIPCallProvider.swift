@@ -2,6 +2,12 @@ import AVKit
 import CallKit
 import WebRTC
 
+enum CallProviderError: Error {
+    
+    /// Thrown if multiple calls are being reported as we only allow one single call at a time.
+    case multipleReportedCalls
+}
+
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     @Inject(\.webRTCManager) private var webRTCManager
@@ -43,8 +49,10 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         hasVideo: Bool
     ) async throws {
         
-        // prevent receiving two calls from the same UUID
-        guard currentCallID != uuid else { return }
+        // prevent receiving another call if a call is already created.
+        guard currentCallID == nil else {
+            throw CallProviderError.multipleReportedCalls
+        }
         
         log.info("Incoming call reported from \(handle)")
         
