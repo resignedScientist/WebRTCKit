@@ -307,7 +307,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             )
         }
         
-        guard [.connected, .completed].contains(peerConnection.iceConnectionState) else {
+        guard peerConnection.connectionState == .connected else {
             throw WebRTCManagerError.critical("⚠️ Tried to start configuration before the call is running.")
         }
         
@@ -323,7 +323,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             )
         }
         
-        guard [.connected, .completed].contains(peerConnection.iceConnectionState) else {
+        guard peerConnection.connectionState == .connected else {
             throw WebRTCManagerError.critical("⚠️ Tried to commit configuration before the call is running.")
         }
         
