@@ -87,6 +87,18 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         let startCallAction = CXStartCallAction(call: uuid, handle: handle)
         startCallAction.isVideo = hasVideo
         
+        async let asyncStartCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
+            Task { [weak self] in
+                await self?.setStartCallHandler { error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            }
+        }
+        
         #if targetEnvironment(simulator)
         await provider(
             provider,
@@ -100,17 +112,6 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
                 perform: StartCallAction(from: startCallAction)
             )
         } else {
-            async let asyncStartCall: Void = try withCheckedThrowingContinuation { [weak self] continuation in
-                Task { [weak self] in
-                    await self?.setStartCallHandler { error in
-                        if let error {
-                            continuation.resume(throwing: error)
-                        } else {
-                            continuation.resume()
-                        }
-                    }
-                }
-            }
             let transaction = CXTransaction(action: startCallAction)
             try await callController.request(transaction)
             try await asyncStartCall
