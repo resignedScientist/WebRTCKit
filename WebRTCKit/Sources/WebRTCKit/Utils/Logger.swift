@@ -1,6 +1,8 @@
 import os
 import Foundation
 
+fileprivate typealias SystemLogger = os.Logger
+
 /// Enumeration representing different categories for logging purposes.
 public enum LoggerCategory: String, Sendable {
     
@@ -48,7 +50,7 @@ final class Logger: Sendable {
         DIContainer.Instance.loggerDelegate
     }
     
-    private let log: OSLog
+    private let log: SystemLogger
     private let caller: String
     private let category: LoggerCategory
     
@@ -58,7 +60,7 @@ final class Logger: Sendable {
     ///   - category: The category for the log messages.
     init(caller: String, category: LoggerCategory = .default) {
         self.caller = caller
-        self.log = OSLog(
+        self.log = SystemLogger(
             subsystem: Bundle.main.bundleIdentifier ?? "unknown",
             category: category.rawValue
         )
@@ -75,7 +77,7 @@ final class Logger: Sendable {
         let caller = self.caller
         
         // print log message in the console
-        os_log(.debug, log: log, "🪲 [\(caller)] \(message)")
+        log.debug("🪲 [\(caller)] \(message)")
         
         // update our delegate if it exists
         delegate?.didLogMessage(
@@ -96,7 +98,7 @@ final class Logger: Sendable {
         let caller = self.caller
         
         // print log message in the console
-        os_log(.info, log: log, "ℹ️ [\(caller)] \(message)")
+        log.info("ℹ️ [\(caller)] \(message)")
         
         // update our delegate if it exists
         delegate?.didLogMessage(
@@ -117,7 +119,7 @@ final class Logger: Sendable {
         let caller = self.caller
         
         // print log message in the console
-        os_log(.error, log: log, "⚠️ [\(caller)] \(message)")
+        log.error("⚠️ [\(caller)] \(message)")
         
         // update our delegate if it exists
         delegate?.didLogMessage(
@@ -138,7 +140,7 @@ final class Logger: Sendable {
         let caller = self.caller
         
         // print log message in the console
-        os_log(.fault, log: log, "❌ [\(caller)] \(message)")
+        log.fault("❌ [\(caller)] \(message)")
         
         // update our delegate if it exists
         delegate?.didLogMessage(
