@@ -360,6 +360,7 @@ private extension DefaultVoIPCallProvider {
                 
                 do {
                     try audioSession.setConfiguration(configuration)
+                    try audioSession.overrideOutputAudioPort(.speaker)
                     log.info("Successfully configured audio session.")
                 } catch {
                     log.error("Failed to configure audio session: \(error)")
@@ -379,6 +380,7 @@ private extension DefaultVoIPCallProvider {
                 mode: .default,
                 options: [.mixWithOthers]
             )
+            try audioSession.overrideOutputAudioPort(.none)
             log.info("Successfully reset audio configuration.")
         } catch {
             log.error("Failed to reset audio configuration: \(error)")
