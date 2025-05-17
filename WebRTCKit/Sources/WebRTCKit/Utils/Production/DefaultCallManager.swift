@@ -39,6 +39,7 @@ final class DefaultCallManager: CallManager {
             handle: peerID,
             hasVideo: true
         )
+        startConnectionTimeout()
     }
     
     func answerCallRequest(accept: Bool) async throws {
@@ -47,6 +48,7 @@ final class DefaultCallManager: CallManager {
         
         if accept {
             try await callProvider.acceptIncomingCall()
+            startConnectionTimeout()
         } else {
             try await endCall()
         }
@@ -261,6 +263,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
 private extension DefaultCallManager {
     
     func startConnectionTimeout() {
+        connectionTimeout?.cancel()
         connectionTimeout = Task { @WebRTCActor [weak self] in
             await self?.onConnectionTimeout()
         }
