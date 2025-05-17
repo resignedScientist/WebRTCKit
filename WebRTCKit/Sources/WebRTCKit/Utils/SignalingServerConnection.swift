@@ -33,9 +33,6 @@ public protocol SignalingServerDelegate: AnyObject, Sendable {
     
     /// The websocket did close.
     func socketDidClose()
-    
-    /// Clear the message queue.
-    func clearMessageQueue()
 }
 
 @WebRTCActor
@@ -74,4 +71,7 @@ public protocol SignalingServerConnection: Sendable {
     
     /// The network connection was lost.
     func onConnectionUnsatisfied()
+    
+    /// Clear the message queue.
+    func clearMessageQueue()
 }
