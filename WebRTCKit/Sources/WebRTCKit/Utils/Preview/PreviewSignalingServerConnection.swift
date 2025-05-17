@@ -35,4 +35,8 @@ final class PreviewSignalingServerConnection: SignalingServerConnection {
     func onConnectionUnsatisfied() {
         
     }
+    
+    func clearMessageQueue() {
+        
+    }
 }
