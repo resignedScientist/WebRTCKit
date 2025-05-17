@@ -220,6 +220,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         log.info("Stopping video call…")
         
+        // clear messages that might be still in the queue
+        signalingServer.clearMessageQueue()
+        
         // send end call message to our peer
         if let remotePeerID {
             do {
