@@ -38,6 +38,9 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         self.callController = callController
         self.rtcAudioSession = rtcAudioSession
         
+        // use manual mode as we activate the audio session by ourselves.
+        rtcAudioSession.useManualAudio = true
+        
         super.init()
         
         provider.setDelegate(self)
@@ -304,13 +307,13 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
-        log.info("Activating audio session…")
-        await activateAudioSession()
+//        log.info("Activating audio session…")
+//        await activateAudioSession()
     }
     
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
-        log.info("Deactivating audio session…")
-        await deactivateAudioSession()
+//        log.info("Deactivating audio session…")
+//        await deactivateAudioSession()
     }
 }
 
