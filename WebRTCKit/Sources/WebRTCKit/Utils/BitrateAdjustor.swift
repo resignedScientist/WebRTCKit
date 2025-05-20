@@ -1,4 +1,5 @@
 import Foundation
+import WebRTC
 
 /// An enumeration representing the type of stream for the bitrate to adjust.
 enum BitrateType: String, Equatable {
@@ -357,30 +358,31 @@ private extension BitrateAdjustorImpl {
     }
     
     func setStartAudioEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
-        if
-            let audioSender = peerConnection.senders.first(where: { $0.track?.kind == BitrateType.audio.rawValue }),
-            let encoding = audioSender.parameters.encodings.first
-        {
-            let parameters = audioSender.parameters
-            encoding.minBitrateBps = NSNumber(value: config.audio.minBitrate)
-            encoding.maxBitrateBps = NSNumber(value: config.audio.startBitrate)
-            parameters.encodings = [encoding]
-            audioSender.parameters = parameters
-        }
+        guard let audioSender = peerConnection.senders
+            .first(where: { $0.track?.kind == BitrateType.audio.rawValue })
+        else { return }
+        
+        let encoding = audioSender.parameters.encodings.first ?? RTCRtpEncodingParameters()
+        let parameters = audioSender.parameters
+        encoding.minBitrateBps = NSNumber(value: config.audio.minBitrate)
+        encoding.maxBitrateBps = NSNumber(value: config.audio.startBitrate)
+        parameters.encodings = [encoding]
+        audioSender.parameters = parameters
     }
     
     func setStartVideoEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
-        if
-            let videoSender = peerConnection.senders.first(where: { $0.track?.kind == BitrateType.video.rawValue }),
-            let encoding = videoSender.parameters.encodings.first
-        {
-            let parameters = videoSender.parameters
-            encoding.minBitrateBps = NSNumber(value: config.video.minBitrate)
-            encoding.maxBitrateBps = NSNumber(value: config.video.startBitrate)
-            encoding.maxFramerate = 30
-            encoding.scaleResolutionDownBy = calculateVideoScaling(for: config.video.startBitrate)
-            parameters.encodings = [encoding]
-            videoSender.parameters = parameters
-        }
+        guard
+            let videoSender = peerConnection.senders
+                .first(where: { $0.track?.kind == BitrateType.video.rawValue })
+        else { return }
+        
+        let encoding = videoSender.parameters.encodings.first ?? RTCRtpEncodingParameters()
+        let parameters = videoSender.parameters
+        encoding.minBitrateBps = NSNumber(value: config.video.minBitrate)
+        encoding.maxBitrateBps = NSNumber(value: config.video.startBitrate)
+        encoding.maxFramerate = 30
+        encoding.scaleResolutionDownBy = calculateVideoScaling(for: config.video.startBitrate)
+        parameters.encodings = [encoding]
+        videoSender.parameters = parameters
     }
 }
