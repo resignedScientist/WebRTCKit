@@ -87,11 +87,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         let peerConnection = try await makePeerConnection()
         self.peerConnection = peerConnection
         
-        // use manual mode to let our delegate handle the configuration,
-        // activation & deactivation of the audio session.
-//        if !config.manualAudioMode {
-            try await startAudioRecording()
-//        }
+        try await startAudioRecording()
         
         return peerID
     }
@@ -101,8 +97,15 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("startAudioRecording failed; Missing peer connection. Did you call setup()?")
         }
         
-        // adding audio tracks requires re-negotiation
-        configurationChanged = true
+        guard !isAudioRecording() else {
+            log.error("Peer connection already contains a video track; we do not add a new one.")
+            return
+        }
+        
+        // adding audio tracks to a running call requires re-negotiation
+        if peerConnection.connectionState != .new {
+            configurationChanged = true
+        }
         
         // add the audio track to the peer connection
         if let localAudioTrack {
@@ -139,8 +142,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             return
         }
         
-        // adding video tracks requires re-negotiation
-        configurationChanged = true
+        // adding video tracks to a running call requires re-negotiation
+        if peerConnection.connectionState != .new {
+            configurationChanged = true
+        }
         
         // use the existing video source or create a new one
         let videoSource = videoSource ?? factory.videoSource()
@@ -214,6 +219,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         await bitrateAdjustor.stop(for: .video)
         
         log.info("Video recording stopped.")
+    }
+    
+    func isAudioRecording() -> Bool {
+        peerConnection?.senders.contains(where: { $0.track is RTCAudioTrack }) == true
     }
     
     func isVideoRecording() -> Bool {
