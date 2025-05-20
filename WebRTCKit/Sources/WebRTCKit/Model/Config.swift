@@ -19,6 +19,9 @@ public extension WebRTCKit {
         /// The bitrate configuration for audio data.
         public let audio: BitrateConfig
         
+        /// When using manual mode, we are telling the delegate the perfect time
+        /// to configure, activate & deactivate the audio session
+        /// instead of configuring it ourselves.
         public let manualAudioMode: Bool
         
         public static var preview: Config {
