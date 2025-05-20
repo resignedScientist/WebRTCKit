@@ -12,12 +12,12 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     @Inject(\.webRTCManager) private var webRTCManager
     @Inject(\.callManager) private var callManager
+    @Inject(\.config.manualAudioMode) private var manualAudioMode
     
     private let provider: WRKCXProvider
     private let callController: WRKCallController
     private let rtcAudioSession: WRKRTCAudioSession
     private let log = Logger(caller: "VoIPCallProvider")
-    private let manualAudioMode: Bool
     
     private var localPeerID: PeerID?
     private var currentCallID: UUID?
@@ -39,14 +39,6 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         self.provider = provider
         self.callController = callController
         self.rtcAudioSession = rtcAudioSession
-        
-        // use manual mode to let our delegate handle the configuration,
-        // activation & deactivation of the audio session.
-        let manualAudioMode = DIContainer.Instance.shared!.config.manualAudioMode
-        if manualAudioMode {
-            rtcAudioSession.useManualAudio = true
-        }
-        self.manualAudioMode = manualAudioMode
         
         super.init()
         

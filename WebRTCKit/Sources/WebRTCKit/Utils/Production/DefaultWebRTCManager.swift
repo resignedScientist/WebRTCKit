@@ -79,6 +79,12 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("⚠️ Setup failed; We already have a peer connection.")
         }
         
+        // use manual mode to let our delegate handle the configuration,
+        // activation & deactivation of the audio session.
+        if config.manualAudioMode {
+            RTCAudioSession.sharedInstance().useManualAudio = true
+        }
+        
         // connect to signaling server
         let peerID = try await connectToSignalingServer()
         self.localPeerID = peerID
