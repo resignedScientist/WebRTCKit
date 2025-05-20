@@ -96,6 +96,9 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     }
     
     func setStartEncodingParameters(for type: BitrateType, peerConnection: any WRKRTCPeerConnection) {
+        
+        log.info("Setting start encoding parameters for \(type)")
+        
         switch type {
         case .audio:
             setStartAudioEncodingParameters(peerConnection)
