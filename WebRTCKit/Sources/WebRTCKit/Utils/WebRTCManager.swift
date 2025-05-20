@@ -84,7 +84,7 @@ protocol WebRTCManager: Sendable {
     /// - Throws: Throws `WebRTCManagerError` on failure.
     func setup() async throws -> PeerID
     
-    /// Manual mode only; Call this after the audio session was configured.
+    /// Manual audio mode only; Call this after the audio session was configured.
     /// Tells the manager that the audio track can be added to the call.
     func startAudioRecording() async throws
     

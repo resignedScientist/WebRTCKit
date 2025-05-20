@@ -121,6 +121,10 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Parameter videoCapturer: A custom video capturer.
     func startVideoRecording(videoCapturer: RTCVideoCapturer) async throws
     
+    /// Manual audio mode only; Call this after the audio session was configured.
+    /// Tells the manager that the audio track can be added to the call.
+    func startAudioRecording() async throws
+    
     /// Start the local recording of audio & video streams using the default video capturer.
     func startVideoRecording() async throws
     
@@ -191,6 +195,10 @@ final class WebRTCControllerImpl: WebRTCController {
         await container.networkMonitor.startMonitoring()
         
         return try await container.webRTCManager.setup()
+    }
+    
+    func startAudioRecording() async throws {
+        try await container.webRTCManager.startAudioRecording()
     }
     
     func startVideoRecording(videoCapturer: RTCVideoCapturer) async throws {
