@@ -17,6 +17,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private let callController: WRKCallController
     private let rtcAudioSession: WRKRTCAudioSession
     private let log = Logger(caller: "VoIPCallProvider")
+    private let manualAudioMode: Bool
     
     private var localPeerID: PeerID?
     private var currentCallID: UUID?
@@ -39,8 +40,13 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         self.callController = callController
         self.rtcAudioSession = rtcAudioSession
         
-        // use manual mode as we activate the audio session by ourselves.
-        rtcAudioSession.useManualAudio = true
+        // use manual mode to let our delegate handle the configuration,
+        // activation & deactivation of the audio session.
+        let manualAudioMode = DIContainer.Instance.shared!.config.manualAudioMode
+        if manualAudioMode {
+            rtcAudioSession.useManualAudio = true
+        }
+        self.manualAudioMode = manualAudioMode
         
         super.init()
         
@@ -308,15 +314,23 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
-        log.info("Should activate audio session")
-        callManager.shouldActivateAudioSession()
-        // TODO: activate it by ourselves if not using manual mode
+        if manualAudioMode {
+            log.info("Should activate audio session")
+            callManager.shouldActivateAudioSession()
+        } else {
+            log.info("Activating audio session…")
+            await activateAudioSession()
+        }
     }
     
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
-        log.info("Should deactivate audio session")
-        callManager.shouldDeactivateAudioSession()
-        // TODO: deactivate it by ourselves if not using manual mode
+        if (manualAudioMode) {
+            log.info("Should deactivate audio session")
+            callManager.shouldDeactivateAudioSession()
+        } else {
+            log.info("Deactivating audio session…")
+            await deactivateAudioSession()
+        }
     }
 }
 
