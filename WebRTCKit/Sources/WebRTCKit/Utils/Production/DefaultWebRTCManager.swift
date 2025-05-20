@@ -81,9 +81,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         // use manual mode to let our delegate handle the configuration,
         // activation & deactivation of the audio session.
-        if !config.manualAudioMode {
+//        if !config.manualAudioMode {
             try await startAudioRecording()
-        }
+//        }
         
         // connect to signaling server
         let peerID = try await connectToSignalingServer()
