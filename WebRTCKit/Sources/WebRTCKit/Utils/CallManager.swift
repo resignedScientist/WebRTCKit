@@ -179,11 +179,11 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     
     /// When using manual mode, this tells the delegate the perfect time
     /// to configure & activate the audio session.
-    func shouldActivateAudioSession()
+    func shouldActivateAudioSession() async
     
     /// When using manual mode, this tells the delegate the perfect time
     /// to deactivate the audio session.
-    func shouldDeactivateAudioSession()
+    func shouldDeactivateAudioSession() async
 }
 
 extension CallManagerDelegate {
@@ -229,9 +229,9 @@ protocol CallManager: Sendable {
     
     /// When using manual mode, this should tell the delegate the perfect time
     /// to configure & activate the audio session.
-    func shouldActivateAudioSession()
+    func shouldActivateAudioSession() async
     
     /// When using manual mode, this should tell the delegate the perfect time
     /// to deactivate the audio session.
-    func shouldDeactivateAudioSession()
+    func shouldDeactivateAudioSession() async
 }

@@ -32,11 +32,11 @@ final class PreviewCallManager: CallManager {
         
     }
     
-    func shouldActivateAudioSession() {
+    func shouldActivateAudioSession() async {
         
     }
     
-    func shouldDeactivateAudioSession() {
+    func shouldDeactivateAudioSession() async {
         
     }
 }

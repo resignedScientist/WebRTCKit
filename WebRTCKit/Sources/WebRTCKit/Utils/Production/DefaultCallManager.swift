@@ -78,12 +78,12 @@ final class DefaultCallManager: CallManager {
         stopConnectionTimeout()
     }
     
-    func shouldActivateAudioSession() {
-        delegate?.shouldActivateAudioSession()
+    func shouldActivateAudioSession() async {
+        await delegate?.shouldActivateAudioSession()
     }
     
-    func shouldDeactivateAudioSession() {
-        delegate?.shouldDeactivateAudioSession()
+    func shouldDeactivateAudioSession() async {
+        await delegate?.shouldDeactivateAudioSession()
     }
 }
 
