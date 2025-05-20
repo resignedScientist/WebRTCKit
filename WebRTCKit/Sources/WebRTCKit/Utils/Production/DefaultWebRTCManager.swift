@@ -81,8 +81,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         // use manual mode to let our delegate handle the configuration,
         // activation & deactivation of the audio session.
-        if config.manualAudioMode {
-            RTCAudioSession.sharedInstance().useManualAudio = true
+        if !config.manualAudioMode {
+            try await startAudioRecording()
         }
         
         // connect to signaling server
@@ -93,6 +93,14 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         let peerConnection = try await makePeerConnection()
         self.peerConnection = peerConnection
         
+        return peerID
+    }
+    
+    func startAudioRecording() async throws {
+        guard let peerConnection else {
+            throw WebRTCManagerError.critical("startAudioRecording failed; Missing peer connection. Did you call setup()?")
+        }
+        
         // add the audio track to the peer connection
         if let localAudioTrack {
             await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
@@ -100,8 +108,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         } else {
             await addAudioTrack(to: peerConnection)
         }
-        
-        return peerID
     }
     
     func startVideoRecording(videoCapturer: VideoCapturer? = nil) async throws {

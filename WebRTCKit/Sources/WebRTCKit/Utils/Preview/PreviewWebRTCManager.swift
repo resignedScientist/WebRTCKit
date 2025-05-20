@@ -12,6 +12,10 @@ final class PreviewWebRTCManager: WebRTCManager {
         "0000"
     }
     
+    func startAudioRecording() async throws {
+        
+    }
+    
     func startVideoRecording(videoCapturer: VideoCapturer?) async throws {
         
     }
