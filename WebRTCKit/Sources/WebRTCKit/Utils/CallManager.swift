@@ -177,8 +177,12 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// Called when we lost the connection to our peer.
     func didLosePeerConnection()
     
+    /// When using manual mode, this tells the delegate the perfect time
+    /// to configure & activate the audio session.
     func shouldActivateAudioSession()
     
+    /// When using manual mode, this tells the delegate the perfect time
+    /// to deactivate the audio session.
     func shouldDeactivateAudioSession()
 }
 
@@ -223,7 +227,11 @@ protocol CallManager: Sendable {
     /// - Throws: An error if disconnecting fails.
     func disconnect() async throws
     
+    /// When using manual mode, this should tell the delegate the perfect time
+    /// to configure & activate the audio session.
     func shouldActivateAudioSession()
     
+    /// When using manual mode, this should tell the delegate the perfect time
+    /// to deactivate the audio session.
     func shouldDeactivateAudioSession()
 }
