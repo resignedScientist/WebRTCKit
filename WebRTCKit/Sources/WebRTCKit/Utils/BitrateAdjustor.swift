@@ -220,7 +220,9 @@ private extension BitrateAdjustorImpl {
             let sender = peerConnection.senders.first(where: { $0.track?.kind == type.rawValue }),
             let encoding = sender.parameters.encodings.first,
             var bitrate = encoding.maxBitrateBps?.intValue
-        else { return }
+        else {
+            return
+        }
         
         let originalBitrate = bitrate
         let bitrateConfig = getConfig(for: type)
