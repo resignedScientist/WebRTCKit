@@ -19,12 +19,15 @@ public extension WebRTCKit {
         /// The bitrate configuration for audio data.
         public let audio: BitrateConfig
         
+        public let manualAudioMode: Bool
+        
         public static var preview: Config {
             Config(
                 iceServers: [],
                 connectionTimeout: 2,
                 video: .defaultForVideo,
-                audio: .defaultForAudio
+                audio: .defaultForAudio,
+                manualAudioMode: false
             )
         }
         
@@ -37,12 +40,14 @@ public extension WebRTCKit {
             iceServers: [ICEServer]? = nil,
             connectionTimeout: UInt64? = nil,
             video: BitrateConfig? = nil,
-            audio: BitrateConfig? = nil
+            audio: BitrateConfig? = nil,
+            manualAudioMode: Bool? = nil
         ) {
             self.iceServers = iceServers ?? []
             self.connectionTimeout = connectionTimeout ?? 30
             self.video = video ?? .defaultForVideo
             self.audio = audio ?? .defaultForAudio
+            self.manualAudioMode = manualAudioMode ?? false
         }
         
         public init(from decoder: any Decoder) throws {
@@ -51,12 +56,14 @@ public extension WebRTCKit {
             let connectionTimeout = try container.decodeIfPresent(UInt64.self, forKey: WebRTCKit.Config.CodingKeys.connectionTimeout)
             let video = try container.decodeIfPresent(BitrateConfig.self, forKey: WebRTCKit.Config.CodingKeys.video)
             let audio = try container.decodeIfPresent(BitrateConfig.self, forKey: WebRTCKit.Config.CodingKeys.audio)
+            let manualAudioMode = try container.decodeIfPresent(Bool.self, forKey: .manualAudioMode)
             
             self.init(
                 iceServers: iceServers,
                 connectionTimeout: connectionTimeout,
                 video: video,
-                audio: audio
+                audio: audio,
+                manualAudioMode: manualAudioMode
             )
         }
     }
