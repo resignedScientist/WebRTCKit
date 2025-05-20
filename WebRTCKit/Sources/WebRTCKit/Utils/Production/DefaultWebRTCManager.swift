@@ -101,6 +101,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("startAudioRecording failed; Missing peer connection. Did you call setup()?")
         }
         
+        // adding audio tracks requires re-negotiation
+        configurationChanged = true
+        
         // add the audio track to the peer connection
         if let localAudioTrack {
             await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
@@ -135,6 +138,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             log.info("Did not find a capturing device. Skipping local video.")
             return
         }
+        
+        // adding video tracks requires re-negotiation
+        configurationChanged = true
         
         // use the existing video source or create a new one
         let videoSource = videoSource ?? factory.videoSource()
