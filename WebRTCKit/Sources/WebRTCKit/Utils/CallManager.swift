@@ -176,6 +176,10 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     
     /// Called when we lost the connection to our peer.
     func didLosePeerConnection()
+    
+    func shouldActivateAudioSession()
+    
+    func shouldDeactivateAudioSession()
 }
 
 extension CallManagerDelegate {
@@ -218,4 +222,8 @@ protocol CallManager: Sendable {
     /// End a call if it is running and disconnect from the signaling server.
     /// - Throws: An error if disconnecting fails.
     func disconnect() async throws
+    
+    func shouldActivateAudioSession()
+    
+    func shouldDeactivateAudioSession()
 }

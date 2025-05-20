@@ -11,6 +11,7 @@ enum CallProviderError: Error {
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     @Inject(\.webRTCManager) private var webRTCManager
+    @Inject(\.callManager) private var callManager
     
     private let provider: WRKCXProvider
     private let callController: WRKCallController
@@ -307,13 +308,15 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
-//        log.info("Activating audio session…")
-//        await activateAudioSession()
+        log.info("Should activate audio session")
+        callManager.shouldActivateAudioSession()
+        // TODO: activate it by ourselves if not using manual mode
     }
     
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
-//        log.info("Deactivating audio session…")
-//        await deactivateAudioSession()
+        log.info("Should deactivate audio session")
+        callManager.shouldDeactivateAudioSession()
+        // TODO: deactivate it by ourselves if not using manual mode
     }
 }
 

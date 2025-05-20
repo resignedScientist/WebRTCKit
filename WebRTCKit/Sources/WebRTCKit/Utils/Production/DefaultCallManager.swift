@@ -77,6 +77,14 @@ final class DefaultCallManager: CallManager {
         // stop connection timeout if still running
         stopConnectionTimeout()
     }
+    
+    func shouldActivateAudioSession() {
+        delegate?.shouldActivateAudioSession()
+    }
+    
+    func shouldDeactivateAudioSession() {
+        delegate?.shouldDeactivateAudioSession()
+    }
 }
 
 // MARK: - WebRTCManagerDelegate
