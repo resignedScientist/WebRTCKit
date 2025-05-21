@@ -13,7 +13,9 @@ enum BitrateType: String, Equatable {
 
 /// A protocol defining methods to adjust and manage bitrate settings for peer connections.
 @WebRTCActor
-protocol BitrateAdjustor {
+protocol BitrateAdjustor: AnyObject {
+    
+    var imageSize: CGSize { get set }
     
     /// Starts adjusting the bitrate for a specific type.
     /// - Parameters:
@@ -48,6 +50,8 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     private var fastTimer: DispatchSourceTimer?
     
     private var runningTypes: Set<BitrateType> = []
+    
+    var imageSize: CGSize = CGSize(width: 540, height: 720)
     
     func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection) {
         guard !runningTypes.contains(type) else { return }
@@ -254,20 +258,28 @@ private extension BitrateAdjustorImpl {
     }
     
     func calculateVideoScaling(for bitrate: Int) -> NSNumber {
-        switch bitrate {
-        case let b where b >= 2_500_000:
-            return NSNumber(value: 1.0)
-        case 1_500_000..<2_500_000:
-            return NSNumber(value: 1.0 + 1/3) // 720p / 1.333 ≈ 540p
-        case 1_000_000..<1_500_000:
-            return NSNumber(value: 1.5) // 720 / 1.5 = 480p
-        case 600_000..<1_000_000:
-            return NSNumber(value: 2.0) // 720 / 2 = 360p
-        case 350_000..<600_000:
-            return NSNumber(value: 3.0) // 720 / 3 = 240p
-        default:
-            return NSNumber(value: 5.0) // 720 / 5 = 144p
-        }
+        
+        let maxImageWidth: CGFloat = 720
+        
+        let targetWidth: CGFloat = {
+            switch bitrate {
+            case let b where b >= 2_500_000:
+                return maxImageWidth
+            case 1_500_000..<2_500_000:
+                return 540
+            case 1_000_000..<1_500_000:
+                return 480
+            case 600_000..<1_000_000:
+                return 360
+            case 350_000..<600_000:
+                return 240
+            default:
+                return 144
+            }
+        }()
+        
+        let scale = max(imageSize.width / targetWidth, 1.0)
+        return NSNumber(value: scale)
     }
     
     func getConfig(for type: BitrateType) -> BitrateConfig {

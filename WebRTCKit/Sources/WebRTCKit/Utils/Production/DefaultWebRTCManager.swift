@@ -116,7 +116,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         }
     }
     
-    func startVideoRecording(videoCapturer: VideoCapturer? = nil) async throws {
+    func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws {
         guard let peerConnection else {
             throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")
         }
@@ -159,6 +159,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         if let videoCapturer { // use custom input
             videoCapturer.delegate = videoSource
             self.videoCapturer = videoCapturer
+            bitrateAdjustor.imageSize = imageSize
             log.info("Using custom video capturer as input.")
         } else {
             
