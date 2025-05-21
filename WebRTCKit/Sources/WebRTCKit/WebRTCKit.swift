@@ -244,7 +244,10 @@ final class WebRTCControllerImpl: WebRTCController {
     }
     
     func createDataChannel(label: String, config: RTCDataChannelConfiguration) async throws -> WRKDataChannel? {
-        try await container.webRTCManager.createDataChannel(label: label, config: config)
+        try await container.webRTCManager.createDataChannel(
+            label: label,
+            config: DataChannelConfiguration(rtcConfig: config)
+        )
     }
     
     func createDataChannel(label: String) async throws -> (any WRKDataChannel)? {
