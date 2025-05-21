@@ -120,18 +120,8 @@ private extension BitrateAdjustorImpl {
         let fastTimer = DispatchSource.makeTimerSource(queue: WebRTCActor.queue)
         fastTimer.setEventHandler { [weak self] in
             Task { @WebRTCActor in
-                await withDiscardingTaskGroup { taskGroup in
-                    
-                    // video
-                    taskGroup.addTask { [weak self] in
-                        await self?.runFastTask(for: .video, peerConnection: peerConnection)
-                    }
-                    
-                    // audio
-                    taskGroup.addTask { [weak self] in
-                        await self?.runFastTask(for: .audio, peerConnection: peerConnection)
-                    }
-                }
+                await self?.runFastTask(for: .video, peerConnection: peerConnection)
+                await self?.runFastTask(for: .audio, peerConnection: peerConnection)
             }
         }
         fastTimer.schedule(deadline: .now(), repeating: .seconds(1))
@@ -142,18 +132,8 @@ private extension BitrateAdjustorImpl {
         let slowTimer = DispatchSource.makeTimerSource(queue: WebRTCActor.queue)
         slowTimer.setEventHandler { [weak self] in
             Task { @WebRTCActor in
-                await withDiscardingTaskGroup { taskGroup in
-                    
-                    // video
-                    taskGroup.addTask { [weak self] in
-                        await self?.runSlowTask(for: .video, peerConnection: peerConnection)
-                    }
-                    
-                    // audio
-                    taskGroup.addTask { [weak self] in
-                        await self?.runSlowTask(for: .audio, peerConnection: peerConnection)
-                    }
-                }
+                await self?.runSlowTask(for: .video, peerConnection: peerConnection)
+                await self?.runSlowTask(for: .audio, peerConnection: peerConnection)
             }
         }
         slowTimer.schedule(deadline: .now(), repeating: .seconds(5))
@@ -164,9 +144,14 @@ private extension BitrateAdjustorImpl {
     }
     
     func fetchStats(peerConnection: WRKRTCPeerConnection, for type: BitrateType) async -> NetworkDataPoint? {
+        log.info("Fetching stats…")
+        
         let report = await peerConnection.statistics()
         
-        guard !report.statistics.isEmpty else { return nil }
+        guard !report.statistics.isEmpty else {
+            log.error("Connection stats are empty!")
+            return nil
+        }
         
         var packetsLost: Int?
         var packetsSent: Int?
@@ -325,7 +310,7 @@ private extension BitrateAdjustorImpl {
             )
         else { return }
         
-        log.info("Running fast task…")
+        log.info("Running fast task for \(type)…")
         
         let networkDataCache = getNetworkDataCache(for: type)
         let config = getConfig(for: type)
@@ -350,7 +335,7 @@ private extension BitrateAdjustorImpl {
         
         guard runningTypes.contains(type) else { return }
         
-        log.info("Running slow task…")
+        log.info("Running slow task for \(type)…")
         
         let adjustmentTracker = getAdjustmentTracker(for: type)
         let networkDataCache = getNetworkDataCache(for: type)
