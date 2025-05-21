@@ -308,7 +308,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
         if manualAudioMode {
             log.info("Should activate audio session")
-            await callManager.shouldActivateAudioSession()
+            callManager.shouldActivateAudioSession()
             rtcAudioSession.isAudioEnabled = true
         } else {
             log.info("Activating audio session…")
@@ -319,7 +319,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
         if (manualAudioMode) {
             log.info("Should deactivate audio session")
-            await callManager.shouldDeactivateAudioSession()
+            callManager.shouldDeactivateAudioSession()
             rtcAudioSession.isAudioEnabled = false
         } else {
             log.info("Deactivating audio session…")
