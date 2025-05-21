@@ -372,6 +372,8 @@ private extension BitrateAdjustorImpl {
         encoding.maxBitrateBps = NSNumber(value: config.audio.startBitrate)
         parameters.encodings = [encoding]
         audioSender.parameters = parameters
+        
+        log.info("Initial audio bitrate set to \(config.audio.startBitrate)")
     }
     
     func setStartVideoEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
@@ -384,12 +386,15 @@ private extension BitrateAdjustorImpl {
             return
         }
         
+        let scalingFactor = calculateVideoScaling(for: config.video.startBitrate)
         let parameters = videoSender.parameters
         encoding.minBitrateBps = NSNumber(value: config.video.minBitrate)
         encoding.maxBitrateBps = NSNumber(value: config.video.startBitrate)
         encoding.maxFramerate = 30
-        encoding.scaleResolutionDownBy = calculateVideoScaling(for: config.video.startBitrate)
+        encoding.scaleResolutionDownBy = scalingFactor
         parameters.encodings = [encoding]
         videoSender.parameters = parameters
+        
+        log.info("Initial video bitrate set to \(config.video.startBitrate) with scaling factor \(scalingFactor)")
     }
 }
