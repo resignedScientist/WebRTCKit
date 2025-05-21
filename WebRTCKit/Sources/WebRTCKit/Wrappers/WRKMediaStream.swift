@@ -17,7 +17,7 @@ final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     
     let mediaStream: RTCMediaStream
     let source: MediaTrackSource
-    private let queue = DispatchQueue(label: "com.webrtckit.WRKMediaStream")
+    private let queue = WebRTCActor.queue
     
     var audioTracks: [WRKRTCAudioTrack] {
         queue.sync {

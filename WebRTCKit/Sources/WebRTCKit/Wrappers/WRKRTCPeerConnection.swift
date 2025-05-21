@@ -72,7 +72,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     private weak var _delegate: WRKRTCPeerConnectionDelegate?
     private let _peerConnection: RTCPeerConnection
-    private let queue = sendableQueue
+    private let queue = WebRTCActor.queue
     
     var peerConnection: RTCPeerConnection {
         queue.sync {

@@ -18,7 +18,7 @@ public protocol WRKRTCVideoTrack: WRKRTCMediaStreamTrack {
 final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
     
     private let _videoTrack: RTCVideoTrack
-    private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCVideoTrack")
+    private let queue = WebRTCActor.queue
     
     public let source: MediaTrackSource
     

@@ -3,7 +3,7 @@ import AVKit
 final class CaptureDevice: @unchecked Sendable {
     
     private let _device: AVCaptureDevice
-    private let queue = DispatchQueue(label: "com.webrtckit.captureDevice")
+    private let queue = WebRTCActor.queue
     
     var device: AVCaptureDevice {
         queue.sync {
