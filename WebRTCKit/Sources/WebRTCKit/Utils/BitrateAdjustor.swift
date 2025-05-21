@@ -259,12 +259,14 @@ private extension BitrateAdjustorImpl {
     
     func calculateVideoScaling(for bitrate: Int) -> NSNumber {
         
-        let maxImageWidth: CGFloat = 720
+        let maxImageWidth: CGFloat = 1080
         
         let targetWidth: CGFloat = {
             switch bitrate {
-            case let b where b >= 2_500_000:
+            case let b where b >= 3_500_000:
                 return maxImageWidth
+            case 2_500_000..<3_500_000:
+                return 720
             case 1_500_000..<2_500_000:
                 return 540
             case 1_000_000..<1_500_000:
