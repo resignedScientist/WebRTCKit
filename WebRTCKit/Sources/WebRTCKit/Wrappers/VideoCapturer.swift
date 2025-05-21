@@ -3,7 +3,7 @@ import WebRTC
 final class VideoCapturer: @unchecked Sendable {
     
     private let videoCapturer: RTCVideoCapturer
-    private let queue = DispatchSerialQueue(label: "VideoCapturerQueue")
+    private let queue = WebRTCActor.queue
     
     var delegate: RTCVideoCapturerDelegate? {
         get {

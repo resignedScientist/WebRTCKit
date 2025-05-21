@@ -17,7 +17,7 @@ public protocol WRKDataChannel: AnyObject, Sendable {
 final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     
     let dataChannel: RTCDataChannel
-    let queue = DispatchSerialQueue(label: "DataChannelQueue")
+    let queue = WebRTCActor.queue
     
     nonisolated let label: String
     
