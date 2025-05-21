@@ -395,6 +395,8 @@ private extension BitrateAdjustorImpl {
         parameters.encodings = [encoding]
         videoSender.parameters = parameters
         
-        log.info("Initial video bitrate set to \(config.video.startBitrate) with scaling factor \(scalingFactor)")
+        let scaledWidth = Int(imageSize.width / scalingFactor.doubleValue)
+        let scaledHeight = Int(imageSize.height / scalingFactor.doubleValue)
+        log.info("Initial video bitrate set to \(config.video.startBitrate) with scaling factor \(scalingFactor) (\(scaledWidth) x \(scaledHeight))")
     }
 }
