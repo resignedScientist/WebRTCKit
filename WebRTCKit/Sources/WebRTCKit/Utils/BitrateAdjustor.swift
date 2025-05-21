@@ -144,8 +144,6 @@ private extension BitrateAdjustorImpl {
     }
     
     func fetchStats(peerConnection: WRKRTCPeerConnection, for type: BitrateType) async -> NetworkDataPoint? {
-        log.info("Fetching stats…")
-        
         let report = await peerConnection.statistics()
         
         guard !report.statistics.isEmpty else {
@@ -174,8 +172,6 @@ private extension BitrateAdjustorImpl {
         }
         
         guard let packetsLost, let packetsSent else { return nil }
-        
-        log.info("Fetched stats")
         
         return NetworkDataPoint(
             packetsSent: packetsSent,
@@ -310,8 +306,6 @@ private extension BitrateAdjustorImpl {
             )
         else { return }
         
-        log.info("Running fast task for \(type)…")
-        
         let networkDataCache = getNetworkDataCache(for: type)
         let config = getConfig(for: type)
         
@@ -334,8 +328,6 @@ private extension BitrateAdjustorImpl {
     func runSlowTask(for type: BitrateType, peerConnection: WRKRTCPeerConnection) async {
         
         guard runningTypes.contains(type) else { return }
-        
-        log.info("Running slow task for \(type)…")
         
         let adjustmentTracker = getAdjustmentTracker(for: type)
         let networkDataCache = getNetworkDataCache(for: type)
