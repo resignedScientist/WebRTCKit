@@ -87,6 +87,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         
         // stop all timers if nothing is running anymore
         if runningTypes.isEmpty {
+            log.info("Stopping timers…")
             fastTimer?.cancel()
             slowTimer?.cancel()
             fastTimer = nil
@@ -158,6 +159,8 @@ private extension BitrateAdjustorImpl {
         slowTimer.schedule(deadline: .now(), repeating: .seconds(5))
         slowTimer.resume()
         self.slowTimer = slowTimer
+        
+        log.info("Timers started")
     }
     
     func fetchStats(peerConnection: WRKRTCPeerConnection, for type: BitrateType) async -> NetworkDataPoint? {
@@ -186,6 +189,8 @@ private extension BitrateAdjustorImpl {
         }
         
         guard let packetsLost, let packetsSent else { return nil }
+        
+        log.info("Fetched stats")
         
         return NetworkDataPoint(
             packetsSent: packetsSent,
@@ -320,6 +325,8 @@ private extension BitrateAdjustorImpl {
             )
         else { return }
         
+        log.info("Running fast task…")
+        
         let networkDataCache = getNetworkDataCache(for: type)
         let config = getConfig(for: type)
         
@@ -342,6 +349,8 @@ private extension BitrateAdjustorImpl {
     func runSlowTask(for type: BitrateType, peerConnection: WRKRTCPeerConnection) async {
         
         guard runningTypes.contains(type) else { return }
+        
+        log.info("Running slow task…")
         
         let adjustmentTracker = getAdjustmentTracker(for: type)
         let networkDataCache = getNetworkDataCache(for: type)
