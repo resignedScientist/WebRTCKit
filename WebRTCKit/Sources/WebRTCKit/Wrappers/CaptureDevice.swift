@@ -6,25 +6,25 @@ final class CaptureDevice: @unchecked Sendable {
     private let queue = WebRTCActor.queue
     
     var device: AVCaptureDevice {
-        queue.sync {
+        WebRTCActor.checkSync {
             _device
         }
     }
     
     var formats: [AVCaptureDevice.Format] {
-        queue.sync {
+        WebRTCActor.checkSync {
             _device.formats
         }
     }
     
     var activeFormat: AVCaptureDevice.Format {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _device.activeFormat
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _device.activeFormat = newValue
             }
         }

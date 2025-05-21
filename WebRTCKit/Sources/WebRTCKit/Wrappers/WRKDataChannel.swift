@@ -22,7 +22,7 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     nonisolated let label: String
     
     var readyState: RTCDataChannelState {
-        queue.sync {
+        WebRTCActor.checkSync {
             dataChannel.readyState
         }
     }
@@ -33,7 +33,7 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     }
     
     func setDelegate(_ delegate: RTCDataChannelDelegate?) {
-        queue.sync {
+        WebRTCActor.checkSync {
             dataChannel.delegate = delegate
         }
     }

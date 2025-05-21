@@ -20,4 +20,22 @@ private let queueLabel = "com.webrtckit.actor"
     public nonisolated static func isRunningOnQueue() -> Bool {
         DispatchQueue.getSpecific(key: queueKey) == queueLabel
     }
+    
+    /// Sync that prevents dead lock by checking the queue first.
+    public static func checkSync<T>(execute work: () throws -> T) rethrows -> T {
+        if isRunningOnQueue() {
+            return try work()
+        } else {
+            return try queue.sync(execute: work)
+        }
+    }
+    
+    /// Sync that prevents dead lock by checking the queue first.
+    public static func checkSync(execute work: DispatchWorkItem) {
+        if isRunningOnQueue() {
+            work.perform()
+        } else {
+            queue.sync(execute: work)
+        }
+    }
 }

@@ -20,7 +20,7 @@ final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     private let queue = WebRTCActor.queue
     
     var audioTracks: [WRKRTCAudioTrack] {
-        queue.sync {
+        WebRTCActor.checkSync {
             mediaStream.audioTracks.map {
                 WRKRTCAudioTrackImpl($0, source: source)
             }
@@ -28,7 +28,7 @@ final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     }
     
     var videoTracks: [WRKRTCVideoTrack] {
-        queue.sync {
+        WebRTCActor.checkSync {
             mediaStream.videoTracks.map {
                 WRKRTCVideoTrackImpl($0, source: source)
             }

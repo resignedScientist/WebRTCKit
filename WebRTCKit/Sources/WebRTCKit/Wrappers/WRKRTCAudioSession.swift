@@ -38,19 +38,19 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     private let queue = WebRTCActor.queue
     
     var audioSession: RTCAudioSession {
-        queue.sync {
+        WebRTCActor.checkSync {
             _audioSession
         }
     }
     
     var isAudioEnabled: Bool {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioSession.isAudioEnabled
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioSession.isAudioEnabled = newValue
             }
         }
@@ -58,12 +58,12 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
     var useManualAudio: Bool {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioSession.useManualAudio
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioSession.useManualAudio = newValue
             }
         }

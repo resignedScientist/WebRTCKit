@@ -23,19 +23,19 @@ final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
     public let source: MediaTrackSource
     
     public var videoTrack: RTCVideoTrack {
-        queue.sync {
+        WebRTCActor.checkSync {
             _videoTrack
         }
     }
     
     public var isEnabled: Bool {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _videoTrack.isEnabled
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _videoTrack.isEnabled = newValue
             }
         }
@@ -47,7 +47,7 @@ final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
     }
     
     func add(_ renderer: RTCVideoRenderer) {
-        queue.sync {
+        WebRTCActor.checkSync {
             _videoTrack.add(renderer)
         }
     }

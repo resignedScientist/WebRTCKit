@@ -6,7 +6,7 @@ final class RtpReceiver: @unchecked Sendable {
     private let queue = WebRTCActor.queue
     
     var track: RTCMediaStreamTrack? {
-        queue.sync {
+        WebRTCActor.checkSync {
             receiver.track
         }
     }

@@ -6,19 +6,19 @@ final class RtpSender: @unchecked Sendable {
     private let queue = WebRTCActor.queue
     
     var track: RTCMediaStreamTrack? {
-        queue.sync {
+        WebRTCActor.checkSync {
             sender.track
         }
     }
     
     var parameters: RTCRtpParameters {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 sender.parameters
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 sender.parameters = newValue
             }
         }

@@ -7,12 +7,12 @@ final class VideoCapturer: @unchecked Sendable {
     
     var delegate: RTCVideoCapturerDelegate? {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 videoCapturer.delegate
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 videoCapturer.delegate = newValue
             }
         }

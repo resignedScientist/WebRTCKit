@@ -75,19 +75,19 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     private let queue = WebRTCActor.queue
     
     var peerConnection: RTCPeerConnection {
-        queue.sync {
+        WebRTCActor.checkSync {
             _peerConnection
         }
     }
     
     var delegate: WRKRTCPeerConnectionDelegate? {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _delegate
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _delegate = newValue
             }
         }
@@ -362,7 +362,7 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
         let dataChannel = WRKDataChannelImpl(dataChannel)
-        queue.sync {
+        WebRTCActor.checkSync {
             _delegate?.peerConnection(self, didOpen: dataChannel)
         }
     }
