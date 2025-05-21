@@ -563,8 +563,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 await bitrateAdjustor.stop(for: .video)
             case .closed, .failed:
                 delegate?.callDidEnd()
-                await bitrateAdjustor.stop(for: .audio)
-                await bitrateAdjustor.stop(for: .video)
+                await disconnect()
             @unknown default:
                 break
             }
