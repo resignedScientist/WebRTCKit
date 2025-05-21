@@ -255,9 +255,9 @@ private extension BitrateAdjustorImpl {
     
     func calculateVideoScaling(for bitrate: Int) -> NSNumber {
         switch bitrate {
-        case let b where b >= 2_500_000:
+        case let b where b >= 5_000_000:
             return NSNumber(value: 1.0)
-        case 1_500_000..<2_500_000:
+        case 1_500_000..<5_000_000:
             return NSNumber(value: 1.0 + 1/3) // 720p / 1.333 ≈ 540p
         case 1_000_000..<1_500_000:
             return NSNumber(value: 1.5) // 720 / 1.5 = 480p
