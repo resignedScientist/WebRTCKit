@@ -293,10 +293,24 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         peerConnection = nil
         remoteAudioTrack = nil
         remoteVideoTrack = nil
+        localAudioTrack = nil
+        localVideoTrack = nil
         remotePeerID = nil
         receivedOfferSDP = nil
+        videoSource = nil
+        localVideoSender = nil
+        localPeerID = nil
+        remotePeerID = nil
+        receivedOfferSDP = nil
+        isPreparingOffer = false
+        isConfigurating = false
+        isCommitConfigurationPostponed = false
+        isProcessingCandidates = false
+        configurationChanged = false
         await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
+        await videoCapturer?.stop()
+        videoCapturer = nil
     }
     
     func createDataChannel(label: String, config: RTCDataChannelConfiguration?) async throws -> WRKDataChannel? {
@@ -562,8 +576,8 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 await bitrateAdjustor.stop(for: .audio)
                 await bitrateAdjustor.stop(for: .video)
             case .closed, .failed:
-                delegate?.callDidEnd()
                 await disconnect()
+                delegate?.callDidEnd()
             @unknown default:
                 break
             }
