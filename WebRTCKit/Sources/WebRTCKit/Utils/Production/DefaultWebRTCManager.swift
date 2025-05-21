@@ -346,6 +346,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("⚠️ Tried to start configuration before the call is running.")
         }
         
+        log.info("startConfiguration()")
+        
         isConfigurating = true
         isCommitConfigurationPostponed = false
     }
@@ -371,6 +373,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             isCommitConfigurationPostponed = true
             return
         }
+        
+        log.info("commitConfiguration()")
         
         // stop configurating
         isConfigurating = false
