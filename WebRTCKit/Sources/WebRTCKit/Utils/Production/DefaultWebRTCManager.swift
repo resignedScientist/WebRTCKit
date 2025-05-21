@@ -111,6 +111,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         if let localAudioTrack {
             await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
             delegate?.didAddLocalAudioTrack(localAudioTrack)
+            bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
         } else {
             await addAudioTrack(to: peerConnection)
         }
