@@ -147,6 +147,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             configurationChanged = true
         }
         
+        // set image size
+        if videoCapturer != nil {
+            bitrateAdjustor.imageSize = imageSize
+        }
+        
         // use the existing video source or create a new one
         let videoSource = videoSource ?? factory.videoSource()
         
@@ -159,7 +164,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         if let videoCapturer { // use custom input
             videoCapturer.delegate = videoSource
             self.videoCapturer = videoCapturer
-            bitrateAdjustor.imageSize = imageSize
             log.info("Using custom video capturer as input.")
         } else {
             
