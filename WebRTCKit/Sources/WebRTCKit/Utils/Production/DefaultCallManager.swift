@@ -79,11 +79,15 @@ final class DefaultCallManager: CallManager {
     }
     
     func shouldActivateAudioSession() {
-        delegate?.shouldActivateAudioSession()
+        Task.detached { [delegate] in
+            delegate?.shouldActivateAudioSession()
+        }
     }
     
     func shouldDeactivateAudioSession() {
-        delegate?.shouldDeactivateAudioSession()
+        Task.detached { [delegate] in
+            delegate?.shouldDeactivateAudioSession()
+        }
     }
 }
 
@@ -92,27 +96,39 @@ final class DefaultCallManager: CallManager {
 extension DefaultCallManager: WebRTCManagerDelegate {
     
     func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack) {
-        delegate?.didAddLocalVideoTrack(videoTrack)
+        Task.detached { [delegate] in
+            delegate?.didAddLocalVideoTrack(videoTrack)
+        }
     }
     
     func didAddRemoteVideoTrack(_ videoTrack: any WRKRTCVideoTrack) {
-        delegate?.didAddRemoteVideoTrack(videoTrack)
+        Task.detached { [delegate] in
+            delegate?.didAddRemoteVideoTrack(videoTrack)
+        }
     }
     
     func didRemoveRemoteVideoTrack(_ videoTrack: any WRKRTCVideoTrack) {
-        delegate?.remoteVideoTrackWasRemoved(videoTrack)
+        Task.detached { [delegate] in
+            delegate?.remoteVideoTrackWasRemoved(videoTrack)
+        }
     }
     
     func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack) {
-        delegate?.didAddLocalAudioTrack(audioTrack)
+        Task.detached { [delegate] in
+            delegate?.didAddLocalAudioTrack(audioTrack)
+        }
     }
     
     func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack) {
-        delegate?.didAddRemoteAudioTrack(audioTrack)
+        Task.detached { [delegate] in
+            delegate?.didAddRemoteAudioTrack(audioTrack)
+        }
     }
     
     func didRemoveRemoteAudioTrack(_ audioTrack: any WRKRTCAudioTrack) {
-        delegate?.remoteAudioTrackWasRemoved(audioTrack)
+        Task.detached { [delegate] in
+            delegate?.remoteAudioTrackWasRemoved(audioTrack)
+        }
     }
     
     func didReceiveEndCall() {
@@ -147,7 +163,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                 }
                 
                 try await stateHolder.changeState(to: .idle)
-                delegate?.callDidEnd(withError: nil)
+                Task.detached { [delegate] in
+                    delegate?.callDidEnd(withError: nil)
+                }
                 stopConnectionTimeout()
             } catch {
                 log.fault("callDidEnd did fail - \(error)")
@@ -170,7 +188,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                     handle: peerID,
                     hasVideo: true
                 )
-                delegate?.didReceiveIncomingCall(from: peerID)
+                Task.detached { [delegate] in
+                    delegate?.didReceiveIncomingCall(from: peerID)
+                }
             } catch let error as CXErrorCodeIncomingCallError {
                 log.error("DidReceiveOffer failed - \(error.code)")
             } catch {
@@ -187,7 +207,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             do {
                 try await callProvider.endCall()
                 try await stateHolder.changeState(to: .idle)
-                delegate?.callDidEnd(withError: .webRTCManagerError(error))
+                Task.detached { [delegate] in
+                    delegate?.callDidEnd(withError: .webRTCManagerError(error))
+                }
                 stopConnectionTimeout()
             } catch {
                 log.error("OnError failed - \(error)")
@@ -205,7 +227,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             
             do {
                 try await stateHolder.changeState(to: .callIsRunning)
-                delegate?.callDidStart()
+                Task.detached { [delegate] in
+                    delegate?.callDidStart()
+                }
                 stopConnectionTimeout()
             } catch {
                 log.fault("Failed to change state to 'callIsRunning' - \(error)")
@@ -247,7 +271,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     }
     
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel) {
-        delegate?.didReceiveDataChannel(dataChannel)
+        Task.detached { [delegate] in
+            delegate?.didReceiveDataChannel(dataChannel)
+        }
     }
     
     func didLosePeerConnection() {
@@ -258,7 +284,9 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             do {
                 try await stateHolder.changeState(to: .connecting)
                 startConnectionTimeout()
-                delegate?.didLosePeerConnection()
+                Task.detached { [delegate] in
+                    delegate?.didLosePeerConnection()
+                }
             } catch {
                 log.fault("Failed to change state to 'connecting' - \(error)")
             }
@@ -295,7 +323,9 @@ private extension DefaultCallManager {
                 
                 // If state is idle, the peers connection timeout was triggered first.
                 if await stateHolder.getState() != .idle {
-                    delegate?.callDidEnd(withError: CallManagerError.connectionTimeout)
+                    Task.detached { [delegate] in
+                        delegate?.callDidEnd(withError: CallManagerError.connectionTimeout)
+                    }
                     try await endCall()
                 }
             }
