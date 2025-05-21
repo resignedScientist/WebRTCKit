@@ -346,11 +346,15 @@ private extension BitrateAdjustorImpl {
     }
     
     func setStartAudioEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
-        guard let audioSender = peerConnection.senders
-            .first(where: { $0.track?.kind == BitrateType.audio.rawValue })
-        else { return }
+        guard
+            let audioSender = peerConnection.senders
+                .first(where: { $0.track is RTCAudioTrack }),
+            let encoding = audioSender.parameters.encodings.first
+        else {
+            log.error("Failed to set start audio encoding parameters.")
+            return
+        }
         
-        let encoding = audioSender.parameters.encodings.first ?? RTCRtpEncodingParameters()
         let parameters = audioSender.parameters
         encoding.minBitrateBps = NSNumber(value: config.audio.minBitrate)
         encoding.maxBitrateBps = NSNumber(value: config.audio.startBitrate)
@@ -361,10 +365,13 @@ private extension BitrateAdjustorImpl {
     func setStartVideoEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
         guard
             let videoSender = peerConnection.senders
-                .first(where: { $0.track?.kind == BitrateType.video.rawValue })
-        else { return }
+                .first(where: { $0.track is RTCVideoTrack }),
+            let encoding = videoSender.parameters.encodings.first
+        else {
+            log.error("Failed to set start video encoding parameters.")
+            return
+        }
         
-        let encoding = videoSender.parameters.encodings.first ?? RTCRtpEncodingParameters()
         let parameters = videoSender.parameters
         encoding.minBitrateBps = NSNumber(value: config.video.minBitrate)
         encoding.maxBitrateBps = NSNumber(value: config.video.startBitrate)
