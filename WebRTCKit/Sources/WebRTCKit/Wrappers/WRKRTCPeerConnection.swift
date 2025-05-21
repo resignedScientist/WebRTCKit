@@ -136,7 +136,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender? {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 if let audioTrack = (track as? WRKRTCAudioTrackImpl)?.audioTrack {
                     if let sender = self._peerConnection.add(audioTrack, streamIds: streamIds) {
                         let rtpSender = RtpSender(sender: sender)
@@ -160,7 +160,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func removeTrack(_ sender: RtpSender) async -> Bool {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 let result = self._peerConnection.removeTrack(sender.unwrapUnsafely())
                 continuation.resume(returning: result)
             }
@@ -169,7 +169,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func add(_ candidate: ICECandidate) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 self._peerConnection.add(candidate.toRTCIceCandidate()) { error in
                     if let error {
                         continuation.resume(throwing: error)
@@ -183,7 +183,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     nonisolated func offer(for constraints: MediaConstraints) async throws -> SessionDescription {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 self._peerConnection.offer(for: RTCMediaConstraints(
                     mandatoryConstraints: constraints.mandatoryConstraints,
                     optionalConstraints: constraints.optionalConstraints
@@ -201,7 +201,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func setLocalDescription() async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 self._peerConnection.setLocalDescriptionWithCompletionHandler { error in
                     if let error {
                         continuation.resume(throwing: error)
@@ -215,7 +215,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func setLocalDescription(_ sdp: SessionDescription) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 self._peerConnection.setLocalDescription(sdp.toRTCSessionDescription()) { error in
                     if let error {
                         continuation.resume(throwing: error)
@@ -229,7 +229,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func setRemoteDescription(_ sdp: SessionDescription) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 self._peerConnection.setRemoteDescription(sdp.toRTCSessionDescription()) { error in
                     if let error {
                         continuation.resume(throwing: error)
@@ -243,7 +243,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func answer(for constraints: MediaConstraints) async throws -> SessionDescription {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 self._peerConnection.answer(for: RTCMediaConstraints(
                     mandatoryConstraints: constraints.mandatoryConstraints,
                     optionalConstraints: constraints.optionalConstraints
@@ -267,20 +267,20 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     }
     
     func close() {
-        queue.async {
+        WebRTCActor.checkAsync {
             self._peerConnection.close()
         }
     }
     
     func restartIce() {
-        queue.async {
+        WebRTCActor.checkAsync {
             self._peerConnection.restartIce()
         }
     }
     
     nonisolated func statistics() async -> StatisticsReport {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 self._peerConnection.statistics { statistics in
                     let report = StatisticsReport(statistics: statistics.statistics)
                     continuation.resume(returning: report)
@@ -295,7 +295,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
 extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnection(self, didChange: stateChanged)
         }
     }
@@ -308,45 +308,45 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
         let receiver = RtpReceiver(rtpReceiver)
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnection(self, didAdd: receiver)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
         let receiver = RtpReceiver(rtpReceiver)
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnection(self, didRemove: receiver)
         }
     }
     
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnectionShouldNegotiate(self)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnection(self, didChange: newState)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnection(self, didChange: newState)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnection(self, didChange: newState)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         let candidate = ICECandidate(from: candidate)
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnection(self, didGenerate: candidate)
         }
     }
@@ -355,7 +355,7 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
         let candidates = candidates.map {
             ICECandidate(from: $0)
         }
-        queue.async {
+        WebRTCActor.checkAsync {
             self._delegate?.peerConnection(self, didRemove: candidates)
         }
     }

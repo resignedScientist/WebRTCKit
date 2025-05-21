@@ -38,4 +38,12 @@ private let queueLabel = "com.webrtckit.actor"
             queue.sync(execute: work)
         }
     }
+    
+    public static func checkAsync(execute work: @escaping @Sendable () -> Void) {
+        if isRunningOnQueue() {
+            work()
+        } else {
+            queue.async(execute: work)
+        }
+    }
 }

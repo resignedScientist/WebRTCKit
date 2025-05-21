@@ -75,7 +75,7 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
     func audioSessionDidActivate(_ session: any WRKAVAudioSession) async {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
                     self._audioSession.audioSessionDidActivate(session)
                 }
@@ -86,7 +86,7 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
     func audioSessionDidDeactivate(_ session: any WRKAVAudioSession) async {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
                     self._audioSession.audioSessionDidDeactivate(session)
                 }
@@ -96,7 +96,7 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     }
     
     func perform(_ action: @escaping @Sendable (_ audioSession: RTCAudioSession) -> Void) {
-        queue.async {
+        WebRTCActor.checkAsync {
             action(self._audioSession)
         }
     }

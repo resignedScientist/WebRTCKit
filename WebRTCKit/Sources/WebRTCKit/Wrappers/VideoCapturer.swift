@@ -27,7 +27,7 @@ final class VideoCapturer: @unchecked Sendable {
         fps: Int
     ) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
                 videoCapturer.startCapture(
                     with: device.device,
@@ -47,7 +47,7 @@ final class VideoCapturer: @unchecked Sendable {
     func stop() async {
         if videoCapturer is RTCCameraVideoCapturer {
             await withCheckedContinuation { continuation in
-                queue.async {
+                WebRTCActor.checkAsync {
                     guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
                     videoCapturer.stopCapture {
                         continuation.resume()

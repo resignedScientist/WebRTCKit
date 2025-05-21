@@ -40,7 +40,7 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     
     func sendData(_ data: Data) async -> Bool {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 let buffer = RTCDataBuffer(data: data, isBinary: true)
                 let success = self.dataChannel.sendData(buffer)
                 continuation.resume(returning: success)
@@ -49,7 +49,7 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     }
     
     func close() {
-        queue.async {
+        WebRTCActor.checkAsync {
             self.dataChannel.close()
         }
     }
