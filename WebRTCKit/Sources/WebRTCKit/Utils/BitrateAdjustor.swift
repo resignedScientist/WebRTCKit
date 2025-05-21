@@ -245,6 +245,14 @@ private extension BitrateAdjustorImpl {
         parameters.encodings = [encoding]
         sender.parameters = parameters
         
+        // re-enable track when decreasing the bitrate
+        if bitrate < originalBitrate {
+            if let track = sender.track {
+                track.isEnabled = false
+                track.isEnabled = true
+            }
+        }
+        
         switch type {
         case .audio:
             await audioAdjustmentTracker.trackAdjustment()
