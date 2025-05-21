@@ -35,7 +35,7 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
 final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
     private let _audioSession: RTCAudioSession
-    private let queue = WebRTCActor.queue
+    private let queue = DispatchSerialQueue(label: "AudioSessionQueue")
     
     var audioSession: RTCAudioSession {
         queue.sync {

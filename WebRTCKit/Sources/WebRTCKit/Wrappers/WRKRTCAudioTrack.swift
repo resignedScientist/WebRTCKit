@@ -7,7 +7,7 @@ public protocol WRKRTCAudioTrack: AnyObject, WRKRTCMediaStreamTrack {
 final class WRKRTCAudioTrackImpl: WRKRTCAudioTrack, @unchecked Sendable {
     
     private let _audioTrack: RTCAudioTrack
-    private let queue = WebRTCActor.queue
+    private let queue = DispatchSerialQueue(label: "AudioTrackQueue")
     
     public let source: MediaTrackSource
     

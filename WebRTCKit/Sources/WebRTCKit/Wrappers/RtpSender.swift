@@ -3,7 +3,7 @@ import WebRTC
 final class RtpSender: @unchecked Sendable {
     
     private let sender: RTCRtpSender
-    private let queue = WebRTCActor.queue
+    private let queue = DispatchSerialQueue(label: "RtpSenderQueue")
     
     var track: RTCMediaStreamTrack? {
         queue.sync {
