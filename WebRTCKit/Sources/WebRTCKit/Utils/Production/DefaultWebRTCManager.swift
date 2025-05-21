@@ -298,7 +298,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         await cachedICECandidates.clear()
     }
     
-    func createDataChannel(label: String, config: DataChannelConfiguration?) async throws -> WRKDataChannel? {
+    func createDataChannel(label: String, config: RTCDataChannelConfiguration?) async throws -> WRKDataChannel? {
         guard let peerConnection else {
             throw WebRTCManagerError.critical(
                 "⚠️ called createDataChannel, but peerConnection is nil; Did you call setup()?"
@@ -322,7 +322,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         let dataChannel = peerConnection.dataChannel(
             forLabel: label,
-            configuration: config?.toRTCConfig() ?? RTCDataChannelConfiguration()
+            configuration: config ?? RTCDataChannelConfiguration()
         )
         
         if dataChannel == nil {

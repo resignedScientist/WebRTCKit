@@ -123,7 +123,7 @@ protocol WebRTCManager: Sendable {
     ///   - config: Optional configuration for the data channel.
     /// - Returns: An optional `WRKDataChannel` if successful.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func createDataChannel(label: String, config: DataChannelConfiguration?) async throws -> WRKDataChannel?
+    func createDataChannel(label: String, config: RTCDataChannelConfiguration?) async throws -> WRKDataChannel?
     
     /// Begins configuration of data channels and other parameters.
     /// - Throws: Throws `WebRTCManagerError` on failure.
