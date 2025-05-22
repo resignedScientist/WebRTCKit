@@ -35,7 +35,7 @@ private extension CXCallController {
     
     func altRequest(_ transaction: CXTransaction, completion: @escaping @Sendable (Error?) -> Void) {
         request(transaction) { error in
-            WebRTCActor.queue.async {
+            WebRTCActor.checkAsync {
                 completion(error)
             }
         }

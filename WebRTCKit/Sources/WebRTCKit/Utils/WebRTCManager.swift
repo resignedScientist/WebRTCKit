@@ -90,8 +90,9 @@ protocol WebRTCManager: Sendable {
     
     /// Starts video recording using a specified video capturer.
     /// - Parameter videoCapturer: An optional video capturer to use.
+    /// - Parameter imageSize: The size of the image that will be captured.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func startVideoRecording(videoCapturer: VideoCapturer?) async throws
+    func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws
     
     /// Stops video recording.
     func stopVideoRecording() async

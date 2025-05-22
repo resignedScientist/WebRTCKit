@@ -16,7 +16,7 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
-    func startVideoRecording(videoCapturer: VideoCapturer?) async throws {
+    func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws {
         
     }
     

@@ -5,7 +5,7 @@ final class DefaultNetworkMonitor: NetworkMonitor {
     @Inject(\.signalingServer) private var signalingServer
     
     private let monitor: WRKNetworkPathMonitor
-    private let queue = DispatchQueue(label: "NetworkMonitorQueue")
+    private let queue = WebRTCActor.queue
     private let log = Logger(caller: "NetworkMonitor")
     
     private var currentStatus: NWPath.Status = .satisfied

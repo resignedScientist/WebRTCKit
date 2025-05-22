@@ -35,22 +35,22 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
 final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
     private let _audioSession: RTCAudioSession
-    private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCAudioSession")
+    private let queue = WebRTCActor.queue
     
     var audioSession: RTCAudioSession {
-        queue.sync {
+        WebRTCActor.checkSync {
             _audioSession
         }
     }
     
     var isAudioEnabled: Bool {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioSession.isAudioEnabled
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioSession.isAudioEnabled = newValue
             }
         }
@@ -58,12 +58,12 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
     var useManualAudio: Bool {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioSession.useManualAudio
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioSession.useManualAudio = newValue
             }
         }
@@ -75,7 +75,7 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
     func audioSessionDidActivate(_ session: any WRKAVAudioSession) async {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
                     self._audioSession.audioSessionDidActivate(session)
                 }
@@ -86,7 +86,7 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     
     func audioSessionDidDeactivate(_ session: any WRKAVAudioSession) async {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
                     self._audioSession.audioSessionDidDeactivate(session)
                 }
@@ -96,7 +96,7 @@ final class WRKRTCAudioSessionImpl: WRKRTCAudioSession, @unchecked Sendable {
     }
     
     func perform(_ action: @escaping @Sendable (_ audioSession: RTCAudioSession) -> Void) {
-        queue.async {
+        WebRTCActor.checkAsync {
             action(self._audioSession)
         }
     }

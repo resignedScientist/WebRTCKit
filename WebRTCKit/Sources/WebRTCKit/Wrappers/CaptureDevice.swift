@@ -3,28 +3,28 @@ import AVKit
 final class CaptureDevice: @unchecked Sendable {
     
     private let _device: AVCaptureDevice
-    private let queue = DispatchQueue(label: "com.webrtckit.captureDevice")
+    private let queue = WebRTCActor.queue
     
     var device: AVCaptureDevice {
-        queue.sync {
+        WebRTCActor.checkSync {
             _device
         }
     }
     
     var formats: [AVCaptureDevice.Format] {
-        queue.sync {
+        WebRTCActor.checkSync {
             _device.formats
         }
     }
     
     var activeFormat: AVCaptureDevice.Format {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _device.activeFormat
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _device.activeFormat = newValue
             }
         }
@@ -35,25 +35,13 @@ final class CaptureDevice: @unchecked Sendable {
         self._device = device
     }
     
-    func lockForConfiguration() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
-                do {
-                    try self._device.lockForConfiguration()
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
+    @WebRTCActor
+    func lockForConfiguration() throws {
+        try _device.lockForConfiguration()
     }
     
-    func unlockForConfiguration() async {
-        return await withCheckedContinuation { continuation in
-            queue.async {
-                self._device.unlockForConfiguration()
-                continuation.resume()
-            }
-        }
+    @WebRTCActor
+    func unlockForConfiguration() {
+        _device.unlockForConfiguration()
     }
 }

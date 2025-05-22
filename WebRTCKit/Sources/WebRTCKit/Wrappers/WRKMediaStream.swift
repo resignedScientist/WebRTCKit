@@ -17,10 +17,10 @@ final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     
     let mediaStream: RTCMediaStream
     let source: MediaTrackSource
-    private let queue = DispatchQueue(label: "com.webrtckit.WRKMediaStream")
+    private let queue = WebRTCActor.queue
     
     var audioTracks: [WRKRTCAudioTrack] {
-        queue.sync {
+        WebRTCActor.checkSync {
             mediaStream.audioTracks.map {
                 WRKRTCAudioTrackImpl($0, source: source)
             }
@@ -28,7 +28,7 @@ final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     }
     
     var videoTracks: [WRKRTCVideoTrack] {
-        queue.sync {
+        WebRTCActor.checkSync {
             mediaStream.videoTracks.map {
                 WRKRTCVideoTrackImpl($0, source: source)
             }
@@ -42,7 +42,7 @@ final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     
     func addAudioTrack(_ audioTrack: WRKRTCAudioTrack) async {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 if let audioTrack = (audioTrack as? WRKRTCAudioTrackImpl)?.audioTrack {
                     self.mediaStream.addAudioTrack(audioTrack)
                 }
@@ -53,7 +53,7 @@ final class WRKMediaStreamImpl: WRKMediaStream, @unchecked Sendable {
     
     func addVideoTrack(_ videoTrack: WRKRTCVideoTrack) async {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 if let videoTrack = (videoTrack as? WRKRTCVideoTrackImpl)?.videoTrack {
                     self.mediaStream.addVideoTrack(videoTrack)
                 }

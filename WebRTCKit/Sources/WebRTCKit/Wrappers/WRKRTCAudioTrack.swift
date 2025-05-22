@@ -7,24 +7,24 @@ public protocol WRKRTCAudioTrack: AnyObject, WRKRTCMediaStreamTrack {
 final class WRKRTCAudioTrackImpl: WRKRTCAudioTrack, @unchecked Sendable {
     
     private let _audioTrack: RTCAudioTrack
-    private let queue = DispatchQueue(label: "com.webrtckit.WRKRTCAudioTrack")
+    private let queue = WebRTCActor.queue
     
     public let source: MediaTrackSource
     
     var audioTrack: RTCAudioTrack {
-        queue.sync {
+        WebRTCActor.checkSync {
             _audioTrack
         }
     }
     
     public var isEnabled: Bool {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioTrack.isEnabled
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 _audioTrack.isEnabled = newValue
             }
         }

@@ -3,16 +3,16 @@ import WebRTC
 final class VideoCapturer: @unchecked Sendable {
     
     private let videoCapturer: RTCVideoCapturer
-    private let queue = DispatchQueue(label: "com.webrtckit.VideoCapturer")
+    private let queue = WebRTCActor.queue
     
     var delegate: RTCVideoCapturerDelegate? {
         get {
-            queue.sync {
+            WebRTCActor.checkSync {
                 videoCapturer.delegate
             }
         }
         set {
-            queue.sync {
+            WebRTCActor.checkSync {
                 videoCapturer.delegate = newValue
             }
         }
@@ -27,7 +27,7 @@ final class VideoCapturer: @unchecked Sendable {
         fps: Int
     ) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
                 videoCapturer.startCapture(
                     with: device.device,
@@ -47,7 +47,7 @@ final class VideoCapturer: @unchecked Sendable {
     func stop() async {
         if videoCapturer is RTCCameraVideoCapturer {
             await withCheckedContinuation { continuation in
-                queue.async {
+                WebRTCActor.checkAsync {
                     guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
                     videoCapturer.stopCapture {
                         continuation.resume()

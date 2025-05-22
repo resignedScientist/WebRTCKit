@@ -111,12 +111,13 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         if let localAudioTrack {
             await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
             delegate?.didAddLocalAudioTrack(localAudioTrack)
+            bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
         } else {
             await addAudioTrack(to: peerConnection)
         }
     }
     
-    func startVideoRecording(videoCapturer: VideoCapturer? = nil) async throws {
+    func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws {
         guard let peerConnection else {
             throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")
         }
@@ -147,6 +148,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             configurationChanged = true
         }
         
+        // set image size
+        if videoCapturer != nil {
+            bitrateAdjustor.imageSize = imageSize
+        }
+        
         // use the existing video source or create a new one
         let videoSource = videoSource ?? factory.videoSource()
         
@@ -172,9 +178,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             else { return }
             
             // set resolution
-            try await videoDevice.lockForConfiguration()
+            try videoDevice.lockForConfiguration()
             videoDevice.activeFormat = format
-            await videoDevice.unlockForConfiguration()
+            videoDevice.unlockForConfiguration()
             
             // setup video capturer
             let videoCapturer = VideoCapturer(
@@ -287,10 +293,24 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         peerConnection = nil
         remoteAudioTrack = nil
         remoteVideoTrack = nil
+        localAudioTrack = nil
+        localVideoTrack = nil
         remotePeerID = nil
         receivedOfferSDP = nil
+        videoSource = nil
+        localVideoSender = nil
+        localPeerID = nil
+        remotePeerID = nil
+        receivedOfferSDP = nil
+        isPreparingOffer = false
+        isConfigurating = false
+        isCommitConfigurationPostponed = false
+        isProcessingCandidates = false
+        configurationChanged = false
         await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
+        await videoCapturer?.stop()
+        videoCapturer = nil
     }
     
     func createDataChannel(label: String, config: RTCDataChannelConfiguration?) async throws -> WRKDataChannel? {
@@ -341,6 +361,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("⚠️ Tried to start configuration before the call is running.")
         }
         
+        log.info("startConfiguration()")
+        
         isConfigurating = true
         isCommitConfigurationPostponed = false
     }
@@ -366,6 +388,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             isCommitConfigurationPostponed = true
             return
         }
+        
+        log.info("commitConfiguration()")
         
         // stop configurating
         isConfigurating = false
@@ -552,9 +576,8 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 await bitrateAdjustor.stop(for: .audio)
                 await bitrateAdjustor.stop(for: .video)
             case .closed, .failed:
+                await disconnect()
                 delegate?.callDidEnd()
-                await bitrateAdjustor.stop(for: .audio)
-                await bitrateAdjustor.stop(for: .video)
             @unknown default:
                 break
             }

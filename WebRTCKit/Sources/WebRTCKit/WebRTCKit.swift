@@ -117,9 +117,10 @@ public protocol WebRTCController: AnyObject, Sendable {
     func setupConnection() async throws -> PeerID
     
     /// Start the local recording of video.
-    ///
+    /// 
     /// - Parameter videoCapturer: A custom video capturer.
-    func startVideoRecording(videoCapturer: RTCVideoCapturer) async throws
+    /// - Parameter imageSize: The size of the image that will be captured.
+    func startVideoRecording(videoCapturer: RTCVideoCapturer, imageSize: CGSize) async throws
     
     /// Manual audio mode only; Call this after the audio session was configured.
     /// Tells the manager that the audio track can be added to the call.
@@ -201,14 +202,21 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.webRTCManager.startAudioRecording()
     }
     
-    func startVideoRecording(videoCapturer: RTCVideoCapturer) async throws {
+    func startVideoRecording(videoCapturer: RTCVideoCapturer, imageSize: CGSize) async throws {
         try await container.webRTCManager.startVideoRecording(
-            videoCapturer: VideoCapturer(videoCapturer)
+            videoCapturer: VideoCapturer(videoCapturer),
+            imageSize: imageSize
         )
     }
     
     func startVideoRecording() async throws {
-        try await container.webRTCManager.startVideoRecording(videoCapturer: nil)
+        try await container.webRTCManager.startVideoRecording(
+            videoCapturer: nil,
+            imageSize: CGSize(
+                width: 640,
+                height: 480
+            )
+        )
     }
     
     func stopVideoRecording() async {
@@ -236,7 +244,10 @@ final class WebRTCControllerImpl: WebRTCController {
     }
     
     func createDataChannel(label: String, config: RTCDataChannelConfiguration) async throws -> WRKDataChannel? {
-        try await container.webRTCManager.createDataChannel(label: label, config: config)
+        try await container.webRTCManager.createDataChannel(
+            label: label,
+            config: config
+        )
     }
     
     func createDataChannel(label: String) async throws -> (any WRKDataChannel)? {

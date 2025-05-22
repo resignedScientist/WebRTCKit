@@ -17,12 +17,12 @@ public protocol WRKDataChannel: AnyObject, Sendable {
 final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     
     let dataChannel: RTCDataChannel
-    let queue = DispatchQueue(label: "com.webrtckit.WRKDataChannel")
+    let queue = WebRTCActor.queue
     
     nonisolated let label: String
     
     var readyState: RTCDataChannelState {
-        queue.sync {
+        WebRTCActor.checkSync {
             dataChannel.readyState
         }
     }
@@ -33,14 +33,14 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     }
     
     func setDelegate(_ delegate: RTCDataChannelDelegate?) {
-        queue.sync {
+        WebRTCActor.checkSync {
             dataChannel.delegate = delegate
         }
     }
     
     func sendData(_ data: Data) async -> Bool {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            WebRTCActor.checkAsync {
                 let buffer = RTCDataBuffer(data: data, isBinary: true)
                 let success = self.dataChannel.sendData(buffer)
                 continuation.resume(returning: success)
@@ -49,7 +49,7 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     }
     
     func close() {
-        queue.async {
+        WebRTCActor.checkAsync {
             self.dataChannel.close()
         }
     }

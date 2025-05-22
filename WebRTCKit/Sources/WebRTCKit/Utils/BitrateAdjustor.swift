@@ -13,7 +13,9 @@ enum BitrateType: String, Equatable {
 
 /// A protocol defining methods to adjust and manage bitrate settings for peer connections.
 @WebRTCActor
-protocol BitrateAdjustor {
+protocol BitrateAdjustor: AnyObject {
+    
+    var imageSize: CGSize { get set }
     
     /// Starts adjusting the bitrate for a specific type.
     /// - Parameters:
@@ -48,6 +50,8 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     private var fastTimer: DispatchSourceTimer?
     
     private var runningTypes: Set<BitrateType> = []
+    
+    var imageSize: CGSize = CGSize(width: 540, height: 720)
     
     func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection) {
         guard !runningTypes.contains(type) else { return }
@@ -254,20 +258,30 @@ private extension BitrateAdjustorImpl {
     }
     
     func calculateVideoScaling(for bitrate: Int) -> NSNumber {
-        switch bitrate {
-        case let b where b >= 2_500_000:
-            return NSNumber(value: 1.0)
-        case 1_500_000..<2_500_000:
-            return NSNumber(value: 1 + 1/3) // 720p / 1.333 ≈ 540p
-        case 1_000_000..<1_500_000:
-            return NSNumber(value: 1.5) // 720 / 1.5 = 480p
-        case 600_000..<1_000_000:
-            return NSNumber(value: 2.0) // 720 / 2 = 360p
-        case 350_000..<600_000:
-            return NSNumber(value: 3.0) // 720 / 3 = 240p
-        default:
-            return NSNumber(value: 5.0) // 720 / 5 = 144p
-        }
+        
+        let maxImageWidth: CGFloat = 1080
+        
+        let targetWidth: CGFloat = {
+            switch bitrate {
+            case let b where b >= 3_500_000:
+                return maxImageWidth
+            case 2_500_000..<3_500_000:
+                return 720
+            case 1_500_000..<2_500_000:
+                return 540
+            case 1_000_000..<1_500_000:
+                return 480
+            case 600_000..<1_000_000:
+                return 360
+            case 350_000..<600_000:
+                return 240
+            default:
+                return 144
+            }
+        }()
+        
+        let scale = max(imageSize.width / targetWidth, 1.0)
+        return NSNumber(value: scale)
     }
     
     func getConfig(for type: BitrateType) -> BitrateConfig {
@@ -346,31 +360,45 @@ private extension BitrateAdjustorImpl {
     }
     
     func setStartAudioEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
-        guard let audioSender = peerConnection.senders
-            .first(where: { $0.track?.kind == BitrateType.audio.rawValue })
-        else { return }
+        guard
+            let audioSender = peerConnection.senders
+                .first(where: { $0.track is RTCAudioTrack }),
+            let encoding = audioSender.parameters.encodings.first
+        else {
+            log.error("Failed to set start audio encoding parameters.")
+            return
+        }
         
-        let encoding = audioSender.parameters.encodings.first ?? RTCRtpEncodingParameters()
         let parameters = audioSender.parameters
         encoding.minBitrateBps = NSNumber(value: config.audio.minBitrate)
         encoding.maxBitrateBps = NSNumber(value: config.audio.startBitrate)
         parameters.encodings = [encoding]
         audioSender.parameters = parameters
+        
+        log.info("Initial audio bitrate set to \(config.audio.startBitrate)")
     }
     
     func setStartVideoEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
         guard
             let videoSender = peerConnection.senders
-                .first(where: { $0.track?.kind == BitrateType.video.rawValue })
-        else { return }
+                .first(where: { $0.track is RTCVideoTrack }),
+            let encoding = videoSender.parameters.encodings.first
+        else {
+            log.error("Failed to set start video encoding parameters.")
+            return
+        }
         
-        let encoding = videoSender.parameters.encodings.first ?? RTCRtpEncodingParameters()
+        let scalingFactor = calculateVideoScaling(for: config.video.startBitrate)
         let parameters = videoSender.parameters
         encoding.minBitrateBps = NSNumber(value: config.video.minBitrate)
         encoding.maxBitrateBps = NSNumber(value: config.video.startBitrate)
         encoding.maxFramerate = 30
-        encoding.scaleResolutionDownBy = calculateVideoScaling(for: config.video.startBitrate)
+        encoding.scaleResolutionDownBy = scalingFactor
         parameters.encodings = [encoding]
         videoSender.parameters = parameters
+        
+        let scaledWidth = Int(imageSize.width / scalingFactor.doubleValue)
+        let scaledHeight = Int(imageSize.height / scalingFactor.doubleValue)
+        log.info("Initial video bitrate set to \(config.video.startBitrate) with scaling factor \(scalingFactor) (\(scaledWidth) x \(scaledHeight))")
     }
 }
