@@ -189,10 +189,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             self.videoCapturer = videoCapturer
             
             // start capturing video
-            try await videoCapturer.startCapture(
-                with: videoDevice,
-                fps: 30
-            )
+//            try await videoCapturer.startCapture(
+//                with: videoDevice,
+//                fps: 30
+//            )
             
             log.info("Video capturing started using default front camera as input.")
         }
