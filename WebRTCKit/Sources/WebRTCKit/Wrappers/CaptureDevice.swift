@@ -35,25 +35,13 @@ final class CaptureDevice: @unchecked Sendable {
         self._device = device
     }
     
-    func lockForConfiguration() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            WebRTCActor.checkAsync {
-                do {
-                    try self._device.lockForConfiguration()
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
+    @WebRTCActor
+    func lockForConfiguration() throws {
+        try _device.lockForConfiguration()
     }
     
-    func unlockForConfiguration() async {
-        return await withCheckedContinuation { continuation in
-            WebRTCActor.checkAsync {
-                self._device.unlockForConfiguration()
-                continuation.resume()
-            }
-        }
+    @WebRTCActor
+    func unlockForConfiguration() {
+        _device.unlockForConfiguration()
     }
 }
