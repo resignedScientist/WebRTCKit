@@ -334,12 +334,16 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
 extension DefaultVoIPCallProvider: WRKRTCAudioSessionDelegate {
     
     func audioSessionDidStartPlayOrRecord(_ session: WRKRTCAudioSession) {
+        session.lockForConfiguration()
+        
         do {
             try session.overrideOutputAudioPort(.speaker)
             log.info("Overwritten audio port to speaker.")
         } catch {
             log.error("Failed to override output audio port to speaker - \(error)")
         }
+        
+        session.unlockForConfiguration()
     }
 }
 
