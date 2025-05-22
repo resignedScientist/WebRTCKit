@@ -178,9 +178,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             else { return }
             
             // set resolution
-            try await videoDevice.lockForConfiguration()
+            try videoDevice.lockForConfiguration()
             videoDevice.activeFormat = format
-            await videoDevice.unlockForConfiguration()
+            videoDevice.unlockForConfiguration()
             
             // setup video capturer
             let videoCapturer = VideoCapturer(
