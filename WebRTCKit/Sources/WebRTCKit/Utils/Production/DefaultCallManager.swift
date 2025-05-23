@@ -72,7 +72,7 @@ final class DefaultCallManager: CallManager {
         }
         
         // disconnect from the signaling server
-        signalingServer.disconnect()
+        await signalingServer.disconnect()
         
         // stop connection timeout if still running
         stopConnectionTimeout()

@@ -48,7 +48,7 @@ public protocol SignalingServerConnection: Sendable {
     func connect() async throws -> PeerID
     
     /// Disconnect from the signaling server.
-    func disconnect()
+    func disconnect() async
     
     /// Send a signal to the other peer through the signaling server.
     /// - Parameters:
