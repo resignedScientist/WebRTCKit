@@ -158,7 +158,7 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             
             do {
                 // If in the connecting or receivingCallRequest state, go to endingCall first
-                if state == .connecting || state == .receivingCallRequest {
+                if state == .connecting || state == .receivingCallRequest || state == .sendingCallRequest {
                     try await stateHolder.changeState(to: .endingCall)
                 }
                 
