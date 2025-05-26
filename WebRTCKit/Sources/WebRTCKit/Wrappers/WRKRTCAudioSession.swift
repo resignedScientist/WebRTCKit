@@ -127,6 +127,12 @@ extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
         }
     }
     
+    nonisolated func audioSession(_ audioSession: RTCAudioSession, willSetActive active: Bool) {
+        Task { @WebRTCActor in
+            delegate?.audioSessionWillSetActive(self, active: active)
+        }
+    }
+    
     nonisolated func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
         Task { @WebRTCActor in
             delegate?.audioSessionDidSetActive(self, active: active)
