@@ -334,16 +334,17 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
 extension DefaultVoIPCallProvider: WRKRTCAudioSessionDelegate {
     
     func audioSessionDidStartPlayOrRecord(_ session: WRKRTCAudioSession) {
-        session.lockForConfiguration()
-        
-        do {
-            try session.overrideOutputAudioPort(.speaker)
-            log.info("Overwritten audio port to speaker.")
-        } catch {
-            log.error("Failed to override output audio port to speaker - \(error)")
-        }
-        
-        session.unlockForConfiguration()
+        overrideAudioToSpeaker(session)
+    }
+    
+    func audioSessionWillSetActive(_ session: any WRKRTCAudioSession, active: Bool) {
+        guard active else { return }
+        overrideAudioToSpeaker(session)
+    }
+    
+    func audioSessionDidSetActive(_ session: any WRKRTCAudioSession, active: Bool) {
+        guard active else { return }
+        overrideAudioToSpeaker(session)
     }
 }
 
@@ -365,6 +366,19 @@ private extension DefaultVoIPCallProvider {
     
     func setLocalPeerID(_ localPeerID: PeerID) {
         self.localPeerID = localPeerID
+    }
+    
+    func overrideAudioToSpeaker(_ session: WRKRTCAudioSession) {
+        session.lockForConfiguration()
+        
+        do {
+            try session.overrideOutputAudioPort(.speaker)
+            log.info("Overwritten audio port to speaker.")
+        } catch {
+            log.error("Failed to override output audio port to speaker - \(error)")
+        }
+        
+        session.unlockForConfiguration()
     }
     
     func activateAudioSession() async {
