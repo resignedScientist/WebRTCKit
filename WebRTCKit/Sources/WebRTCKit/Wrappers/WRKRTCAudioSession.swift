@@ -1,17 +1,6 @@
 import WebRTC
 
-@globalActor public actor RTCAudioSessionActor {
-    public static let shared = RTCAudioSessionActor()
-    
-    /// The queue that acts as the executor of the actor.
-    /// So everything running in the queue belongs to this actor and vice versa.
-    public static let queue = DispatchSerialQueue(label: "RTCAudioSessionActor")
-    
-    nonisolated public var unownedExecutor: UnownedSerialExecutor { RTCAudioSessionActor.queue.asUnownedSerialExecutor() }
-    
-}
-
-@RTCAudioSessionActor
+@WebRTCActor
 protocol WRKRTCAudioSession: AnyObject, Sendable {
     
     /// This property is only effective if useManualAudio is YES.
@@ -32,10 +21,6 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     /// call setIsAudioEnabled. If NO, WebRTC will initialize the audio unit
     /// as soon as an audio track is ready for playout or recording.
     var useManualAudio: Bool { get set }
-    
-    func setAudioEnabled(_ enabled: Bool)
-    
-    func setUseManualAudio(_ useManualAudio: Bool)
     
     /// Called when the audio session is activated outside of the app by iOS.
     func audioSessionDidActivate(_ session: WRKAVAudioSession)
@@ -64,17 +49,6 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     func add(_ delegate: WRKRTCAudioSessionDelegate)
     
     func overrideOutputAudioPort(_ portOverride: AVAudioSession.PortOverride) throws
-}
-
-extension WRKRTCAudioSession {
-    
-    func setAudioEnabled(_ enabled: Bool) {
-        isAudioEnabled = enabled
-    }
-    
-    func setUseManualAudio(_ useManualAudio: Bool) {
-        self.useManualAudio = useManualAudio
-    }
 }
 
 final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
@@ -151,7 +125,7 @@ extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
     
     nonisolated func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
         Task { @WebRTCActor in
-            await delegate?.audioSessionDidSetActive(self, active: active)
+            delegate?.audioSessionDidSetActive(self, active: active)
         }
     }
 }
