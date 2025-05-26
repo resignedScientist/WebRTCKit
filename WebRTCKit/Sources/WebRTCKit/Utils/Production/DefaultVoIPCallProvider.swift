@@ -334,8 +334,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
 extension DefaultVoIPCallProvider: WRKRTCAudioSessionDelegate {
     
     func audioSessionDidSetActive(_ session: any WRKRTCAudioSession, active: Bool) {
-        guard active else { return }
-        overrideAudioToSpeaker(session)
+//        guard active else { return }
+//        overrideAudioToSpeaker(session)
     }
 }
 
