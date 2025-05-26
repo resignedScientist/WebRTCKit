@@ -43,6 +43,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         super.init()
         
         provider.setDelegate(self)
+        rtcAudioSession.add(self)
     }
     
     func reportIncomingCall(
@@ -328,6 +329,24 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
 }
 
+// MARK: - RTCAudioSessionDelegate
+
+extension DefaultVoIPCallProvider: WRKRTCAudioSessionDelegate {
+    
+    func audioSessionDidStartPlayOrRecord(_ session: WRKRTCAudioSession) {
+        session.lockForConfiguration()
+        
+        do {
+            try session.overrideOutputAudioPort(.speaker)
+            log.info("Overwritten audio port to speaker.")
+        } catch {
+            log.error("Failed to override output audio port to speaker - \(error)")
+        }
+        
+        session.unlockForConfiguration()
+    }
+}
+
 // MARK: - Private functions
 
 private extension DefaultVoIPCallProvider {
@@ -348,45 +367,39 @@ private extension DefaultVoIPCallProvider {
         self.localPeerID = localPeerID
     }
     
-    nonisolated func activateAudioSession() async {
+    func activateAudioSession() async {
         await setupAudioConfiguration()
         await setAudioSessionActive(true)
     }
     
-    nonisolated func deactivateAudioSession() async {
+    func deactivateAudioSession() async {
         resetAudioConfiguration()
         await setAudioSessionActive(false)
     }
     
-    nonisolated func setupAudioConfiguration() async {
-        return await withCheckedContinuation { [log] continuation in
-            rtcAudioSession.perform { audioSession in
-                audioSession.lockForConfiguration()
-                
-                let configuration = RTCAudioSessionConfiguration.webRTC()
-                configuration.categoryOptions = [
-                    .allowBluetooth,
-                    .allowBluetoothA2DP,
-                    .allowAirPlay,
-                    .defaultToSpeaker,
-                    .duckOthers
-                ]
-                
-                do {
-                    try audioSession.setConfiguration(configuration)
-                    try audioSession.overrideOutputAudioPort(.speaker)
-                    log.info("Successfully configured audio session.")
-                } catch {
-                    log.error("Failed to configure audio session: \(error)")
-                }
-                
-                audioSession.unlockForConfiguration()
-                continuation.resume()
-            }
+    func setupAudioConfiguration() async {
+        rtcAudioSession.lockForConfiguration()
+        
+        let configuration = RTCAudioSessionConfiguration.webRTC()
+        configuration.categoryOptions = [
+            .allowBluetooth,
+            .allowBluetoothA2DP,
+            .allowAirPlay,
+            .defaultToSpeaker,
+            .duckOthers
+        ]
+        
+        do {
+            try rtcAudioSession.setConfiguration(configuration)
+            log.info("Successfully configured audio session.")
+        } catch {
+            log.error("Failed to configure audio session: \(error)")
         }
+        
+        rtcAudioSession.unlockForConfiguration()
     }
     
-    nonisolated func resetAudioConfiguration() {
+    func resetAudioConfiguration() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(
@@ -401,26 +414,21 @@ private extension DefaultVoIPCallProvider {
         }
     }
     
-    nonisolated func setAudioSessionActive(_ active: Bool) async {
-        return await withCheckedContinuation { [log, active] continuation in
-            rtcAudioSession.perform { audioSession in
-                audioSession.lockForConfiguration()
-                
-                do {
-                    try audioSession.setActive(active)
-                    audioSession.isAudioEnabled = active
-                    if active {
-                        log.info("Successfully activated audio session.")
-                    } else {
-                        log.info("Successfully deactivated audio session.")
-                    }
-                } catch {
-                    log.error("Failed to set audio session active (\(active)): \(error)")
-                }
-                
-                audioSession.unlockForConfiguration()
-                continuation.resume()
+    func setAudioSessionActive(_ active: Bool) async {
+        rtcAudioSession.lockForConfiguration()
+        
+        do {
+            try rtcAudioSession.setActive(active)
+            rtcAudioSession.isAudioEnabled = active
+            if active {
+                log.info("Successfully activated audio session.")
+            } else {
+                log.info("Successfully deactivated audio session.")
             }
+        } catch {
+            log.error("Failed to set audio session active (\(active)): \(error)")
         }
+        
+        rtcAudioSession.unlockForConfiguration()
     }
 }

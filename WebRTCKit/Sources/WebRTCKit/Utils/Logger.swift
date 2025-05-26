@@ -91,7 +91,7 @@ final class Logger: Sendable {
     func info(_ message: String) {
         
         // do not log if log level does not match
-        guard logLevel >= .debug else { return }
+        guard logLevel >= .info else { return }
         
         let caller = self.caller
         
@@ -132,8 +132,7 @@ final class Logger: Sendable {
     /// - Parameter message: The message to log as a fault.
     func fault(_ message: String) {
         
-        // do not log if log level does not match
-        guard logLevel >= .error else { return }
+        // we always log fault log level
         
         let caller = self.caller
         
