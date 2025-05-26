@@ -1,6 +1,17 @@
 import WebRTC
 
-@WebRTCActor
+@globalActor public actor RTCAudioSessionActor {
+    public static let shared = RTCAudioSessionActor()
+    
+    /// The queue that acts as the executor of the actor.
+    /// So everything running in the queue belongs to this actor and vice versa.
+    public static let queue = DispatchSerialQueue(label: "RTCAudioSessionActor")
+    
+    nonisolated public var unownedExecutor: UnownedSerialExecutor { RTCAudioSessionActor.queue.asUnownedSerialExecutor() }
+    
+}
+
+@RTCAudioSessionActor
 protocol WRKRTCAudioSession: AnyObject, Sendable {
     
     /// This property is only effective if useManualAudio is YES.
@@ -21,6 +32,10 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     /// call setIsAudioEnabled. If NO, WebRTC will initialize the audio unit
     /// as soon as an audio track is ready for playout or recording.
     var useManualAudio: Bool { get set }
+    
+    func setAudioEnabled(_ enabled: Bool)
+    
+    func setUseManualAudio(_ useManualAudio: Bool)
     
     /// Called when the audio session is activated outside of the app by iOS.
     func audioSessionDidActivate(_ session: WRKAVAudioSession)
@@ -51,7 +66,20 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     func overrideOutputAudioPort(_ portOverride: AVAudioSession.PortOverride) throws
 }
 
+extension WRKRTCAudioSession {
+    
+    func setAudioEnabled(_ enabled: Bool) {
+        isAudioEnabled = enabled
+    }
+    
+    func setUseManualAudio(_ useManualAudio: Bool) {
+        self.useManualAudio = useManualAudio
+    }
+}
+
 final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
+    
+    static let sharedInstance: WRKRTCAudioSession = WRKRTCAudioSessionImpl(.sharedInstance())
     
     private let _audioSession: RTCAudioSession
     private weak var delegate: WRKRTCAudioSessionDelegate?
@@ -74,7 +102,7 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
         }
     }
     
-    init(_ audioSession: RTCAudioSession) {
+    private init(_ audioSession: RTCAudioSession) {
         _audioSession = audioSession
         super.init()
         audioSession.add(self)
@@ -123,7 +151,7 @@ extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
     
     nonisolated func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
         Task { @WebRTCActor in
-            delegate?.audioSessionDidSetActive(self, active: active)
+            await delegate?.audioSessionDidSetActive(self, active: active)
         }
     }
 }
