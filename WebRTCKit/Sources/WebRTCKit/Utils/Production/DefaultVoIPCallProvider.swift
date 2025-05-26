@@ -52,6 +52,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
                 return await WRKRTCAudioSessionImpl.sharedInstance
             }()
             await audioSession.add(self)
+            await audioSession.setUseManualAudio(true)
             self.rtcAudioSession = audioSession
         }
     }

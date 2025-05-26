@@ -9,7 +9,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     @Inject(\.config) private var config
     
     private let factory: WRKRTCPeerConnectionFactory
-    private var rtcAudioSession: WRKRTCAudioSession!
     private let bitrateAdjustor: BitrateAdjustor = BitrateAdjustorImpl()
     private let log = Logger(caller: "WebRTCManager")
     
@@ -48,25 +47,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     /// Did we make changes that require a re-negotiation?
     private var configurationChanged = false
     
-    init(
-        factory: WRKRTCPeerConnectionFactory,
-        rtcAudioSession: WRKRTCAudioSession? = nil
-    ) {
+    init(factory: WRKRTCPeerConnectionFactory) {
         self.factory = factory
-        
         super.init()
-        
-        // configure audio session
-        Task {
-            let audioSession = await {
-                if let rtcAudioSession {
-                    return rtcAudioSession
-                }
-                return await WRKRTCAudioSessionImpl.sharedInstance
-            }()
-            await audioSession.setUseManualAudio(true)
-            self.rtcAudioSession = audioSession
-        }
     }
     
     func setDelegate(_ delegate: WebRTCManagerDelegate?) {
