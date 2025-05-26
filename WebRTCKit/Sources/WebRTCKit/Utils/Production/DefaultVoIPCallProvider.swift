@@ -333,10 +333,6 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
 
 extension DefaultVoIPCallProvider: WRKRTCAudioSessionDelegate {
     
-    func audioSessionDidStartPlayOrRecord(_ session: WRKRTCAudioSession) {
-        overrideAudioToSpeaker(session)
-    }
-    
     func audioSessionWillSetActive(_ session: any WRKRTCAudioSession, active: Bool) {
         guard active else { return }
         overrideAudioToSpeaker(session)

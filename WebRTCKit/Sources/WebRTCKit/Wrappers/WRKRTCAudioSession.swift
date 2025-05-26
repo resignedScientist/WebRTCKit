@@ -121,12 +121,6 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
 
 extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
     
-    nonisolated func audioSessionDidStartPlayOrRecord(_ session: RTCAudioSession) {
-        Task { @WebRTCActor in
-            delegate?.audioSessionDidStartPlayOrRecord(self)
-        }
-    }
-    
     nonisolated func audioSession(_ audioSession: RTCAudioSession, willSetActive active: Bool) {
         Task { @WebRTCActor in
             delegate?.audioSessionWillSetActive(self, active: active)
