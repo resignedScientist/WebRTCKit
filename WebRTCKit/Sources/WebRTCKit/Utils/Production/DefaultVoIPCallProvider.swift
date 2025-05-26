@@ -52,7 +52,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
                 return await WRKRTCAudioSessionImpl.sharedInstance
             }()
             await audioSession.add(self)
-            await audioSession.setUseManualAudio(true)
+//            await audioSession.setUseManualAudio(true)
             self.rtcAudioSession = audioSession
         }
     }
@@ -329,14 +329,14 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
-        if (manualAudioMode) {
-            log.info("Should deactivate audio session")
-            callManager.shouldDeactivateAudioSession()
-            await rtcAudioSession.setAudioEnabled(false)
-        } else {
-            log.info("Deactivating audio session…")
-            await deactivateAudioSession()
-        }
+//        if (manualAudioMode) {
+//            log.info("Should deactivate audio session")
+//            callManager.shouldDeactivateAudioSession()
+//            await rtcAudioSession.setAudioEnabled(false)
+//        } else {
+//            log.info("Deactivating audio session…")
+//            await deactivateAudioSession()
+//        }
     }
 }
 
