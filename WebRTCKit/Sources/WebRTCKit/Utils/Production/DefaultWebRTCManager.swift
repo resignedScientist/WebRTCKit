@@ -9,7 +9,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     @Inject(\.config) private var config
     
     private let factory: WRKRTCPeerConnectionFactory
-    private let rtcAudioSession: WRKRTCAudioSession
     private let bitrateAdjustor: BitrateAdjustor = BitrateAdjustorImpl()
     private let log = Logger(caller: "WebRTCManager")
     
@@ -48,17 +47,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     /// Did we make changes that require a re-negotiation?
     private var configurationChanged = false
     
-    init(
-        factory: WRKRTCPeerConnectionFactory,
-        rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl(.sharedInstance())
-    ) {
+    init(factory: WRKRTCPeerConnectionFactory) {
         self.factory = factory
-        self.rtcAudioSession = rtcAudioSession
-        
         super.init()
-        
-        // configure audio session
-        rtcAudioSession.useManualAudio = true
     }
     
     func setDelegate(_ delegate: WebRTCManagerDelegate?) {
@@ -673,11 +664,17 @@ private extension DefaultWebRTCManager {
         let audioSource = factory.audioSource(
             with: RTCMediaConstraints(
                 mandatoryConstraints: [
+                    "echoCancellation": kRTCMediaConstraintsValueTrue,
+                    "noiseSuppression": kRTCMediaConstraintsValueTrue,
+                    "autoGainControl": kRTCMediaConstraintsValueTrue
+                ],
+                optionalConstraints: [
                     "googEchoCancellation": kRTCMediaConstraintsValueTrue,
                     "googNoiseSuppression": kRTCMediaConstraintsValueTrue,
-                    "googAutoGainControl": kRTCMediaConstraintsValueTrue
-                ],
-                optionalConstraints: nil
+                    "googAutoGainControl": kRTCMediaConstraintsValueTrue,
+                    "googTypingNoiseDetection": kRTCMediaConstraintsValueTrue,
+                    "googHighpassFilter": kRTCMediaConstraintsValueTrue
+                ]
             )
         )
         let localAudioTrack = factory.audioTrack(with: audioSource, trackId: "localAudioTrack")

@@ -16,7 +16,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
     private let provider: WRKCXProvider
     private let callController: WRKCallController
-    private let rtcAudioSession: WRKRTCAudioSession
+    private var rtcAudioSession: WRKRTCAudioSession!
     private let log = Logger(caller: "VoIPCallProvider")
     
     private var localPeerID: PeerID?
@@ -34,7 +34,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
             return WRKCXProvider(configuration: configuration)
         }(),
         callController: WRKCallController = WRKCallControllerImpl(CXCallController()),
-        rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl(.sharedInstance())
+        rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl.sharedInstance
     ) {
         self.provider = provider
         self.callController = callController
@@ -44,6 +44,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         
         provider.setDelegate(self)
         rtcAudioSession.add(self)
+        rtcAudioSession.useManualAudio = true
     }
     
     func reportIncomingCall(
@@ -333,17 +334,11 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
 
 extension DefaultVoIPCallProvider: WRKRTCAudioSessionDelegate {
     
-    func audioSessionDidStartPlayOrRecord(_ session: WRKRTCAudioSession) {
-        session.lockForConfiguration()
-        
-        do {
-            try session.overrideOutputAudioPort(.speaker)
-            log.info("Overwritten audio port to speaker.")
-        } catch {
-            log.error("Failed to override output audio port to speaker - \(error)")
+    nonisolated func audioSessionDidSetActive(_ session: any WRKRTCAudioSession, active: Bool) {
+        guard active else { return }
+        Task {
+            await overrideAudioToSpeaker(session)
         }
-        
-        session.unlockForConfiguration()
     }
 }
 
@@ -365,6 +360,19 @@ private extension DefaultVoIPCallProvider {
     
     func setLocalPeerID(_ localPeerID: PeerID) {
         self.localPeerID = localPeerID
+    }
+    
+    func overrideAudioToSpeaker(_ session: WRKRTCAudioSession) {
+        session.lockForConfiguration()
+        
+        do {
+            try session.overrideOutputAudioPort(.speaker)
+            log.info("Overwritten audio port to speaker.")
+        } catch {
+            log.error("Failed to override output audio port to speaker - \(error)")
+        }
+        
+        session.unlockForConfiguration()
     }
     
     func activateAudioSession() async {

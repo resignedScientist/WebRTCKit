@@ -53,6 +53,8 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
 
 final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
     
+    static let sharedInstance: WRKRTCAudioSession = WRKRTCAudioSessionImpl(.sharedInstance())
+    
     private let _audioSession: RTCAudioSession
     private weak var delegate: WRKRTCAudioSessionDelegate?
     
@@ -74,7 +76,7 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
         }
     }
     
-    init(_ audioSession: RTCAudioSession) {
+    private init(_ audioSession: RTCAudioSession) {
         _audioSession = audioSession
         super.init()
         audioSession.add(self)
@@ -121,9 +123,9 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
 
 extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
     
-    nonisolated func audioSessionDidStartPlayOrRecord(_ session: RTCAudioSession) {
+    nonisolated func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
         Task { @WebRTCActor in
-            delegate?.audioSessionDidStartPlayOrRecord(self)
+            delegate?.audioSessionDidSetActive(self, active: active)
         }
     }
 }
