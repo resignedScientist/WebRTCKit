@@ -44,9 +44,9 @@ final class DefaultCallManager: CallManager {
     
     func answerCallRequest(accept: Bool) async throws {
         log.info("Answering call request (accept = \(accept))…")
-        try await stateHolder.changeState(to: .connecting)
         
         if accept {
+            try await stateHolder.changeState(to: .connecting)
             try await callProvider.acceptIncomingCall()
             startConnectionTimeout()
         } else {

@@ -390,7 +390,7 @@ private extension DefaultVoIPCallProvider {
         
         let configuration = RTCAudioSessionConfiguration.webRTC()
         configuration.categoryOptions = [
-            .allowBluetooth,
+            .allowBluetoothHFP,
             .allowBluetoothA2DP,
             .allowAirPlay,
             .defaultToSpeaker,
