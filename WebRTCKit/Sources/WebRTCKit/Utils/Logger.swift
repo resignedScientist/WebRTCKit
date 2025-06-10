@@ -40,11 +40,14 @@ public protocol LoggerDelegate: AnyObject, Sendable {
 /// This logger uses Apple's unified logging system.
 final class Logger: Sendable {
     
-    @WebRTCActor
-    private var logLevel: LogLevel { DIContainer.shared!.logLevel }
+    @WebRTCActor private var logLevel: LogLevel {
+        // Log everything before initialization of DIContainer was finished.
+        DIContainer.shared?.logLevel ?? .verbose
+    }
     
-    @WebRTCActor
-    private var delegate: LoggerDelegate? { DIContainer.shared!.loggerDelegate }
+    @WebRTCActor private var delegate: LoggerDelegate? {
+        DIContainer.shared?.loggerDelegate
+    }
     
     private let log: OSLog
     private let caller: String
