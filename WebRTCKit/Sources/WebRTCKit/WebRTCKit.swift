@@ -23,10 +23,7 @@ public struct WebRTCKit {
         loggerDelegate: LoggerDelegate? = nil
     ) async -> WebRTCController {
         
-        DIContainer.Instance.logLevel = logLevel
-        DIContainer.Instance.loggerDelegate = loggerDelegate
-        
-        let container = DIContainer(
+        let container = DIContainer.create(
             config: config,
             webRTCManager: DefaultWebRTCManager(
                 factory: WRKRTCPeerConnectionFactoryImpl(
@@ -37,10 +34,10 @@ public struct WebRTCKit {
             pushHandler: DefaultVoIPPushHandler(),
             signalingServer: signalingServer,
             callManager: DefaultCallManager(),
-            networkMonitor: DefaultNetworkMonitor()
+            networkMonitor: DefaultNetworkMonitor(),
+            logLevel: logLevel,
+            loggerDelegate: loggerDelegate
         )
-        
-        DIContainer.Instance.shared = container
         
         if logLevel == .verbose {
             RTCSetMinDebugLogLevel(.verbose)
@@ -54,19 +51,17 @@ public struct WebRTCKit {
     /// Initialize the framework for testing or previews using mock classes.
     public static func initializeForTesting() -> WebRTCController {
         
-        DIContainer.Instance.logLevel = .debug
-        
-        let container = DIContainer(
+        let container = DIContainer.create(
             config: .preview,
             webRTCManager: PreviewWebRTCManager(),
             callProvider: PreviewVoIPCallProvider(),
             pushHandler: PreviewVoIPPushHandler(),
             signalingServer: PreviewSignalingServerConnection(),
             callManager: PreviewCallManager(),
-            networkMonitor: PreviewNetworkMonitor()
+            networkMonitor: PreviewNetworkMonitor(),
+            logLevel: .debug,
+            loggerDelegate: nil
         )
-        
-        DIContainer.Instance.shared = container
         
         return WebRTCControllerImpl(container: container)
     }
@@ -82,19 +77,17 @@ public struct WebRTCKit {
         networkMonitor: NetworkMonitor
     ) async -> WebRTCController {
         
-        DIContainer.Instance.logLevel = .debug
-        
-        let container = DIContainer(
+        let container = DIContainer.create(
             config: config,
             webRTCManager: webRTCManager,
             callProvider: callProvider,
             pushHandler: pushHandler,
             signalingServer: signalingServer,
             callManager: callManager,
-            networkMonitor: networkMonitor
+            networkMonitor: networkMonitor,
+            logLevel: .debug,
+            loggerDelegate: nil
         )
-        
-        DIContainer.Instance.shared = container
         
         await container.setup()
         
