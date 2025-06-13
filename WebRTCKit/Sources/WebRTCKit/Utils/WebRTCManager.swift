@@ -80,10 +80,9 @@ protocol WebRTCManager: Sendable {
     func setDelegate(_ delegate: WebRTCManagerDelegate?)
     
     /// Sets up the WebRTC connection and returns a `PeerID`.
-    /// - Parameter dataChannels: The data channels that should be created before the first negotiation.
     /// - Returns: A `PeerID` representing the local peer.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func setup(dataChannels: [DataChannelSetup]) async throws -> PeerID
+    func setup() async throws -> PeerID
     
     /// Manual audio mode only; Call this after the audio session was configured.
     /// Tells the manager that the audio track can be added to the call.

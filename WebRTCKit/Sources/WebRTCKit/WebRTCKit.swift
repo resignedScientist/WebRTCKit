@@ -20,7 +20,8 @@ public struct WebRTCKit {
         config: Config,
         audioDevice: RTCAudioDevice? = nil,
         logLevel: LogLevel = .error,
-        loggerDelegate: LoggerDelegate? = nil
+        loggerDelegate: LoggerDelegate? = nil,
+        initialDataChannels: [DataChannelSetup] = []
     ) async -> WebRTCController {
         
         let container = DIContainer.create(
@@ -36,7 +37,8 @@ public struct WebRTCKit {
             callManager: DefaultCallManager(),
             networkMonitor: DefaultNetworkMonitor(),
             logLevel: logLevel,
-            loggerDelegate: loggerDelegate
+            loggerDelegate: loggerDelegate,
+            initialDataChannels: initialDataChannels
         )
         
         if logLevel == .verbose {
@@ -60,7 +62,8 @@ public struct WebRTCKit {
             callManager: PreviewCallManager(),
             networkMonitor: PreviewNetworkMonitor(),
             logLevel: .debug,
-            loggerDelegate: nil
+            loggerDelegate: nil,
+            initialDataChannels: []
         )
         
         return WebRTCControllerImpl(container: container)
@@ -86,7 +89,8 @@ public struct WebRTCKit {
             callManager: callManager,
             networkMonitor: networkMonitor,
             logLevel: .debug,
-            loggerDelegate: nil
+            loggerDelegate: nil,
+            initialDataChannels: []
         )
         
         await container.setup()
@@ -105,9 +109,8 @@ public protocol WebRTCController: AnyObject, Sendable {
     func setCallManagerDelegate(_ delegate: CallManagerDelegate)
     
     /// Connect to the signaling server and prepares the peer connection.
-    /// - Parameter dataChannels: The data channels that should be created before the first negotiation.
     /// - Returns: The ID of the local peer.
-    func setupConnection(dataChannels: [DataChannelSetup]) async throws -> PeerID
+    func setupConnection() async throws -> PeerID
     
     /// Start the local recording of video.
     /// 
@@ -171,13 +174,6 @@ public protocol WebRTCController: AnyObject, Sendable {
     func commitConfiguration() async throws
 }
 
-public extension WebRTCController {
-    
-    func setupConnection() async throws -> PeerID {
-        try await setupConnection(dataChannels: [])
-    }
-}
-
 final class WebRTCControllerImpl: WebRTCController {
     
     private let container: DIContainer
@@ -190,12 +186,12 @@ final class WebRTCControllerImpl: WebRTCController {
         container.callManager.setDelegate(delegate)
     }
     
-    func setupConnection(dataChannels: [DataChannelSetup]) async throws -> PeerID {
+    func setupConnection() async throws -> PeerID {
         
         // Start the network monitor to properly handle re-connections to the network.
         await container.networkMonitor.startMonitoring()
         
-        return try await container.webRTCManager.setup(dataChannels: dataChannels)
+        return try await container.webRTCManager.setup()
     }
     
     func startAudioRecording() async throws {

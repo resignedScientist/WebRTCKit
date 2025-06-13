@@ -7,6 +7,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     @Inject(\.callProvider) private var callProvider
     @Inject(\.signalingServer) private var signalingServer
     @Inject(\.config) private var config
+    @Inject(\.initialDataChannels) private var initialDataChannels
     
     private let factory: WRKRTCPeerConnectionFactory
     private let bitrateAdjustor: BitrateAdjustor = BitrateAdjustorImpl()
@@ -23,7 +24,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var localPeerID: PeerID?
     private var remotePeerID: PeerID?
     private var isInitiator = false
-    private var initialDataChannels: [DataChannelSetup] = []
     
     /// Cache of received ICE candidates that are processed when our peerConnection is ready.
     private var cachedICECandidates = ICECandidateCache()
@@ -59,7 +59,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     @discardableResult
-    func setup(dataChannels: [DataChannelSetup]) async throws -> PeerID {
+    func setup() async throws -> PeerID {
         
         guard peerConnection == nil else {
             
@@ -75,9 +75,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         // connect to signaling server
         let peerID = try await connectToSignalingServer()
         self.localPeerID = peerID
-        
-        // save initial data channels for later setup (makePeerConnection)
-        self.initialDataChannels = dataChannels
         
         return peerID
     }

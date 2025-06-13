@@ -249,8 +249,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         
         let peerID = action.handle.value
         do {
-            #warning("TODO: pass predifined data channels somewhere else or find a way to not need setup here")
-            let localPeerID = try await webRTCManager.setup(dataChannels: [])
+            let localPeerID = try await webRTCManager.setup()
             setLocalPeerID(localPeerID)
             try await webRTCManager.startVideoCall(to: peerID)
             action.fulfill()
