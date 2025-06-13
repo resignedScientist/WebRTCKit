@@ -171,6 +171,13 @@ public protocol WebRTCController: AnyObject, Sendable {
     func commitConfiguration() async throws
 }
 
+public extension WebRTCController {
+    
+    func setupConnection() async throws -> PeerID {
+        try await setupConnection(dataChannels: [])
+    }
+}
+
 final class WebRTCControllerImpl: WebRTCController {
     
     private let container: DIContainer
