@@ -98,13 +98,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         }
         
         // add the audio track to the peer connection
-        if let localAudioTrack {
-            await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
-            delegate?.didAddLocalAudioTrack(localAudioTrack)
-            bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
-        } else {
-            await addAudioTrack(to: peerConnection)
-        }
+        await addAudioTrack(to: peerConnection)
     }
     
     func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws {
@@ -676,8 +670,8 @@ private extension DefaultWebRTCManager {
             }
         }
         
-        // setup audio
-        try await startAudioRecording()
+        // add the audio track to the peer connection
+        await addAudioTrack(to: peerConnection)
         
         // save isInitiator for later use
         self.isInitiator = isInitiator
@@ -686,6 +680,14 @@ private extension DefaultWebRTCManager {
     }
     
     func addAudioTrack(to peerConnection: WRKRTCPeerConnection) async {
+        
+        // add the audio track to the peer connection
+        if let localAudioTrack {
+            await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
+            delegate?.didAddLocalAudioTrack(localAudioTrack)
+            bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
+            return
+        }
         
         // create audio track
         let audioSource = factory.audioSource(
