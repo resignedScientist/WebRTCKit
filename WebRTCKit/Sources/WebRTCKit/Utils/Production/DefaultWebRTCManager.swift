@@ -22,6 +22,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var localVideoSender: RtpSender?
     private var localPeerID: PeerID?
     private var remotePeerID: PeerID?
+    private var isInitiator = false
+    private var initialDataChannels: [DataChannelSetup] = []
     
     /// Cache of received ICE candidates that are processed when our peerConnection is ready.
     private var cachedICECandidates = ICECandidateCache()
@@ -67,18 +69,15 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             }
             
             // something went seriously wrong
-            throw WebRTCManagerError.critical("⚠️ Setup failed; We already have a peer connection.")
+            throw WebRTCManagerError.critical("Setup failed; We already have a peer connection.")
         }
         
         // connect to signaling server
         let peerID = try await connectToSignalingServer()
         self.localPeerID = peerID
         
-        // create peer connection
-        let peerConnection = try await makePeerConnection(dataChannels: dataChannels)
-        self.peerConnection = peerConnection
-        
-        try await startAudioRecording()
+        // save initial data channels for later setup (makePeerConnection)
+        self.initialDataChannels = dataChannels
         
         return peerID
     }
@@ -227,11 +226,14 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func startVideoCall(to peerID: PeerID) async throws {
-        guard let peerConnection else {
-            throw WebRTCManagerError.critical("⚠️ startVideoCall failed; Missing peer connection. Did you call setup()?")
+        guard peerConnection == nil else {
+            throw WebRTCManagerError.critical("⚠️ startVideoCall failed; PeerConnection is not nil; Are you already in a call?")
         }
         
+        let peerConnection = try await makePeerConnection(isInitiator: true)
+        
         self.remotePeerID = peerID
+        self.peerConnection = peerConnection
         
         try await sendOffer(
             to: peerID,
@@ -261,7 +263,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
 
     func answerCall() async throws {
-        guard let peerConnection, let remotePeerID, let receivedOfferSDP else { return }
+        guard peerConnection == nil, let remotePeerID, let receivedOfferSDP else { return }
+        
+        let peerConnection = try await makePeerConnection(isInitiator: false)
+        self.peerConnection = peerConnection
         
         try await peerConnection.setRemoteDescription(receivedOfferSDP)
         
@@ -269,11 +274,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         try await sendAnswer(to: remotePeerID, peerConnection: peerConnection)
         
         delegate?.didAcceptCallRequest()
-        
-        // check if we are already connected
-        if peerConnection.connectionState == .connected {
-            delegate?.callDidStart()
-        }
         
         // process ICE candidates
         await processCachedCandidates()
@@ -298,6 +298,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         isCommitConfigurationPostponed = false
         isProcessingCandidates = false
         configurationChanged = false
+        isInitiator = false
         await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
         await videoCapturer?.stop()
@@ -321,6 +322,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         guard isConfigurating else {
             throw WebRTCManagerError.critical("⚠️ Call startConfiguration() first before adding data channels!")
+        }
+        
+        guard isInitiator else {
+            log.info("createDataChannel: did not open data channel, because we are not the initiator of the call.")
+            return nil
         }
         
         // we need to send a negotiation sdp in the case of channel opening while calling
@@ -615,7 +621,7 @@ private extension DefaultWebRTCManager {
         return try await signalingServer.connect()
     }
     
-    func makePeerConnection(dataChannels: [DataChannelSetup]) async throws -> WRKRTCPeerConnection {
+    func makePeerConnection(isInitiator: Bool) async throws -> WRKRTCPeerConnection {
         
         // if there is already a peer connection, just return that one
         if let peerConnection {
@@ -656,13 +662,21 @@ private extension DefaultWebRTCManager {
         }
         
         // open initial data channels
-        for setup in dataChannels {
-            guard let channel = peerConnection.dataChannel(
-                forLabel: setup.label,
-                configuration: setup.configuration
-            ) else { continue }
-            delegate?.didReceiveDataChannel(channel)
+        if isInitiator {
+            for setup in initialDataChannels {
+                guard let channel = peerConnection.dataChannel(
+                    forLabel: setup.label,
+                    configuration: setup.configuration
+                ) else { continue }
+                delegate?.didReceiveDataChannel(channel)
+            }
         }
+        
+        // setup audio
+        try await startAudioRecording()
+        
+        // save isInitiator for later use
+        self.isInitiator = isInitiator
         
         return peerConnection
     }
@@ -837,21 +851,26 @@ private extension DefaultWebRTCManager {
         log.info("Processing of cached candidate finished.")
     }
     
-    func didReceiveOffer(
-        _ sdp: RTCSessionDescription,
-        peerConnection: WRKRTCPeerConnection,
-        isPolite: Bool
-    ) async throws {
+    func didReceiveOffer(_ sdp: RTCSessionDescription, isPolite: Bool) async throws {
         
         guard let remotePeerID else { return }
+        
+        let sdp = SessionDescription(from: sdp)
+        
+        guard let peerConnection else {
+            
+            // we received an incoming call
+            self.receivedOfferSDP = sdp
+            delegate?.didReceiveOffer(from: remotePeerID)
+            
+            return
+        }
         
         isPreparingOffer = true
         
         defer {
             isPreparingOffer = false
         }
-        
-        let sdp = SessionDescription(from: sdp)
         
         // We did already generate a local offer while receiving an offer from our peer.
         if peerConnection.signalingState != .stable {
@@ -879,18 +898,15 @@ private extension DefaultWebRTCManager {
             return
         }
         
-        if peerConnection.connectionState != .connected {
-            // incoming call
-            self.receivedOfferSDP = sdp
-            delegate?.didReceiveOffer(from: remotePeerID)
-        } else {
-            // ICE-restart or re-negotiation
+        // ICE-restart or re-negotiation
+        if peerConnection.connectionState == .connected {
             try await peerConnection.setRemoteDescription(sdp)
             try await sendAnswer(to: remotePeerID, peerConnection: peerConnection)
         }
     }
     
-    func didReceiveAnswer(_ sdp: RTCSessionDescription, peerConnection: WRKRTCPeerConnection) async throws {
+    func didReceiveAnswer(_ sdp: RTCSessionDescription) async throws {
+        guard let peerConnection else { return }
         
         let sdp = SessionDescription(from: sdp)
         
@@ -924,8 +940,6 @@ private extension DefaultWebRTCManager {
             return // signal is from another peer which we do not expect
         }
         
-        guard let peerConnection else { return }
-        
         self.isPolite = isPolite
         
         do {
@@ -939,16 +953,12 @@ private extension DefaultWebRTCManager {
             case .offer:
                 try await didReceiveOffer(
                     sdp,
-                    peerConnection: peerConnection,
                     isPolite: isPolite
                 )
             case .prAnswer:
                 return // we do not send provisional offers/answers
             case .answer:
-                try await didReceiveAnswer(
-                    sdp,
-                    peerConnection: peerConnection
-                )
+                try await didReceiveAnswer(sdp)
             case .rollback:
                 return // we do not send rollbacks
             @unknown default:
