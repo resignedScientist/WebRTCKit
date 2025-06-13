@@ -28,6 +28,9 @@ protocol WRKRTCPeerConnection: Sendable {
     /// Use isEqual: instead of == to compare RTCRtpReceiver instances.
     var receivers: [RTCRtpReceiver] { get }
     
+    /// The labels of the data channels that exist on this peer connection.
+    var existingDataChannels: Set<String> { get }
+    
     @discardableResult
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender?
     
@@ -73,6 +76,8 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     private weak var _delegate: WRKRTCPeerConnectionDelegate?
     private let _peerConnection: RTCPeerConnection
     private let queue = WebRTCActor.queue
+    
+    var existingDataChannels: Set<String> = []
     
     var peerConnection: RTCPeerConnection {
         WebRTCActor.checkSync {
@@ -261,6 +266,9 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> WRKDataChannel? {
         if let dataChannel = _peerConnection.dataChannel(forLabel: label, configuration: configuration) {
+            WebRTCActor.checkAsync {
+                _ = self.existingDataChannels.insert(label)
+            }
             return WRKDataChannelImpl(dataChannel)
         }
         return nil
@@ -363,6 +371,7 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
         let dataChannel = WRKDataChannelImpl(dataChannel)
         WebRTCActor.checkSync {
+            existingDataChannels.insert(dataChannel.label)
             _delegate?.peerConnection(self, didOpen: dataChannel)
         }
     }

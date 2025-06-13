@@ -308,25 +308,29 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     func createDataChannel(label: String, config: RTCDataChannelConfiguration?) async throws -> WRKDataChannel? {
         guard let peerConnection else {
             throw WebRTCManagerError.critical(
-                "⚠️ called createDataChannel, but peerConnection is nil; Did you call setup()?"
+                "called createDataChannel, but peerConnection is nil; Did you call setup()?"
             )
         }
         
         guard [.connected, .completed].contains(peerConnection.iceConnectionState) else {
-            throw WebRTCManagerError.critical("⚠️ Tried to create a data channel before the call is running.")
+            throw WebRTCManagerError.critical("Tried to create a data channel before the call is running.")
         }
         
         guard peerConnection.signalingState == .stable else {
-            throw WebRTCManagerError.critical("⚠️ Tried to create a data channel, but the signaling state is not stable.")
+            throw WebRTCManagerError.critical("Tried to create a data channel, but the signaling state is not stable.")
         }
         
         guard isConfigurating else {
-            throw WebRTCManagerError.critical("⚠️ Call startConfiguration() first before adding data channels!")
+            throw WebRTCManagerError.critical("Call startConfiguration() first before adding data channels!")
         }
         
         guard isInitiator else {
             log.info("createDataChannel: did not open data channel, because we are not the initiator of the call.")
             return nil
+        }
+        
+        guard !peerConnection.existingDataChannels.contains(label) else {
+            throw WebRTCManagerError.critical("Tried to create a data channel, but one with this label already exists.")
         }
         
         // we need to send a negotiation sdp in the case of channel opening while calling
