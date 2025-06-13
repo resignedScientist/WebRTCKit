@@ -20,8 +20,7 @@ public struct WebRTCKit {
         config: Config,
         audioDevice: RTCAudioDevice? = nil,
         logLevel: LogLevel = .error,
-        loggerDelegate: LoggerDelegate? = nil,
-        initialDataChannels: [DataChannelSetup] = []
+        loggerDelegate: LoggerDelegate? = nil
     ) async -> WebRTCController {
         
         let container = DIContainer.create(
@@ -37,8 +36,7 @@ public struct WebRTCKit {
             callManager: DefaultCallManager(),
             networkMonitor: DefaultNetworkMonitor(),
             logLevel: logLevel,
-            loggerDelegate: loggerDelegate,
-            initialDataChannels: initialDataChannels
+            loggerDelegate: loggerDelegate
         )
         
         if logLevel == .verbose {
@@ -62,8 +60,7 @@ public struct WebRTCKit {
             callManager: PreviewCallManager(),
             networkMonitor: PreviewNetworkMonitor(),
             logLevel: .debug,
-            loggerDelegate: nil,
-            initialDataChannels: []
+            loggerDelegate: nil
         )
         
         return WebRTCControllerImpl(container: container)
@@ -89,8 +86,7 @@ public struct WebRTCKit {
             callManager: callManager,
             networkMonitor: networkMonitor,
             logLevel: .debug,
-            loggerDelegate: nil,
-            initialDataChannels: []
+            loggerDelegate: nil
         )
         
         await container.setup()
@@ -107,6 +103,12 @@ public protocol WebRTCController: AnyObject, Sendable {
     ///
     /// - Parameter delegate: The delegate to handle calls and receive audio & video streams.
     func setCallManagerDelegate(_ delegate: CallManagerDelegate)
+    
+    /// Set the initial data channels that will be added before first negotiation.
+    ///
+    /// They will only be added if we are the initiator of the call.
+    /// - Parameter dataChannels: The initial data channels.
+    func setInitialDataChannels(_ dataChannels: [DataChannelSetup])
     
     /// Connect to the signaling server and prepares the peer connection.
     /// - Returns: The ID of the local peer.
@@ -184,6 +186,10 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func setCallManagerDelegate(_ delegate: CallManagerDelegate) {
         container.callManager.setDelegate(delegate)
+    }
+    
+    func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
+        container.webRTCManager.setInitialDataChannels(dataChannels)
     }
     
     func setupConnection() async throws -> PeerID {

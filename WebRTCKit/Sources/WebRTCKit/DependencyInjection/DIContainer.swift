@@ -13,7 +13,6 @@ struct DIContainer: Sendable {
     let networkMonitor: NetworkMonitor
     let logLevel: LogLevel
     let loggerDelegate: LoggerDelegate?
-    let initialDataChannels: [DataChannelSetup]
     
     private init(
         config: WebRTCKitConfig,
@@ -24,8 +23,7 @@ struct DIContainer: Sendable {
         callManager: CallManager,
         networkMonitor: NetworkMonitor,
         logLevel: LogLevel,
-        loggerDelegate: LoggerDelegate?,
-        initialDataChannels: [DataChannelSetup]
+        loggerDelegate: LoggerDelegate?
     ) {
         self.config = config
         self.webRTCManager = webRTCManager
@@ -36,7 +34,6 @@ struct DIContainer: Sendable {
         self.networkMonitor = networkMonitor
         self.logLevel = logLevel
         self.loggerDelegate = loggerDelegate
-        self.initialDataChannels = initialDataChannels
     }
     
     static func create(
@@ -48,8 +45,7 @@ struct DIContainer: Sendable {
         callManager: CallManager,
         networkMonitor: NetworkMonitor,
         logLevel: LogLevel,
-        loggerDelegate: LoggerDelegate?,
-        initialDataChannels: [DataChannelSetup]
+        loggerDelegate: LoggerDelegate?
     ) -> DIContainer {
         let container = DIContainer(
             config: config,
@@ -60,8 +56,7 @@ struct DIContainer: Sendable {
             callManager: callManager,
             networkMonitor: networkMonitor,
             logLevel: logLevel,
-            loggerDelegate: loggerDelegate,
-            initialDataChannels: initialDataChannels
+            loggerDelegate: loggerDelegate
         )
         DIContainer.shared = container
         return container

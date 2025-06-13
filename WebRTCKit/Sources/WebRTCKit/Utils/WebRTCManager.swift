@@ -79,6 +79,12 @@ protocol WebRTCManager: Sendable {
     /// - Parameter delegate: A delegate conforming to `WebRTCManagerDelegate`.
     func setDelegate(_ delegate: WebRTCManagerDelegate?)
     
+    /// Set the initial data channels that will be added before first negotiation.
+    ///
+    /// They will only be added if we are the initiator of the call.
+    /// - Parameter dataChannels: The initial data channels.
+    func setInitialDataChannels(_ dataChannels: [DataChannelSetup])
+    
     /// Sets up the WebRTC connection and returns a `PeerID`.
     /// - Returns: A `PeerID` representing the local peer.
     /// - Throws: Throws `WebRTCManagerError` on failure.
