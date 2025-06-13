@@ -664,7 +664,7 @@ private extension DefaultWebRTCManager {
             for setup in initialDataChannels {
                 guard let channel = peerConnection.dataChannel(
                     forLabel: setup.label,
-                    configuration: setup.configuration
+                    configuration: setup.rtcConfig
                 ) else { continue }
                 delegate?.didReceiveDataChannel(channel)
             }

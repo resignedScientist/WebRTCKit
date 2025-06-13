@@ -152,7 +152,7 @@ public protocol WebRTCController: AnyObject, Sendable {
     ///   - config: The configuration of the channel or nil to use the default one.
     ///
     /// - Returns: The created data channel.
-    func createDataChannel(label: String, config: RTCDataChannelConfiguration) async throws -> WRKDataChannel?
+    func createDataChannel(label: String, config: DataChannelConfiguration) async throws -> WRKDataChannel?
     
     /// Create a peer-to-peer data channel to the other peer.
     /// To receive data, just set the channels delegate.
@@ -243,10 +243,10 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.callManager.disconnect()
     }
     
-    func createDataChannel(label: String, config: RTCDataChannelConfiguration) async throws -> WRKDataChannel? {
+    func createDataChannel(label: String, config: DataChannelConfiguration) async throws -> WRKDataChannel? {
         try await container.webRTCManager.createDataChannel(
             label: label,
-            config: config
+            config: config.toRTCConfiguration()
         )
     }
     
