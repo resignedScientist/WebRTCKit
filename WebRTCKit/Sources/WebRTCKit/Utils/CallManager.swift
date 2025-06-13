@@ -170,7 +170,7 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// - Parameter error: Error if the call ended with an error.
     func callDidEnd(withError error: CallManagerError?)
     
-    /// Called when the peer created a new data channel.
+    /// Called when a new data channel is created by the peer or by us before first negotiation.
     /// - Parameter dataChannel: The new data channel.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
     

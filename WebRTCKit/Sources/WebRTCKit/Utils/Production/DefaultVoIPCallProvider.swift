@@ -249,7 +249,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         
         let peerID = action.handle.value
         do {
-            let localPeerID = try await webRTCManager.setup()
+            #warning("TODO: pass predifined data channels somewhere else or find a way to not need setup here")
+            let localPeerID = try await webRTCManager.setup(dataChannels: [])
             setLocalPeerID(localPeerID)
             try await webRTCManager.startVideoCall(to: peerID)
             action.fulfill()
@@ -390,7 +391,7 @@ private extension DefaultVoIPCallProvider {
         
         let configuration = RTCAudioSessionConfiguration.webRTC()
         configuration.categoryOptions = [
-            .allowBluetoothHFP,
+            .allowBluetooth,
             .allowBluetoothA2DP,
             .allowAirPlay,
             .defaultToSpeaker,

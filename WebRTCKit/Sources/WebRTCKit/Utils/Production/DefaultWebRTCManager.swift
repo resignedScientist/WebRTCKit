@@ -57,7 +57,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     @discardableResult
-    func setup() async throws -> PeerID {
+    func setup(dataChannels: [DataChannelSetup]) async throws -> PeerID {
         
         guard peerConnection == nil else {
             
@@ -75,7 +75,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         self.localPeerID = peerID
         
         // create peer connection
-        let peerConnection = try await makePeerConnection()
+        let peerConnection = try await makePeerConnection(dataChannels: dataChannels)
         self.peerConnection = peerConnection
         
         try await startAudioRecording()
@@ -615,7 +615,7 @@ private extension DefaultWebRTCManager {
         return try await signalingServer.connect()
     }
     
-    func makePeerConnection() async throws -> WRKRTCPeerConnection {
+    func makePeerConnection(dataChannels: [DataChannelSetup]) async throws -> WRKRTCPeerConnection {
         
         // if there is already a peer connection, just return that one
         if let peerConnection {
@@ -653,6 +653,15 @@ private extension DefaultWebRTCManager {
             delegate: self
         ) else {
             throw WebRTCManagerError.critical("Failed to create peer connection.")
+        }
+        
+        // open initial data channels
+        for setup in dataChannels {
+            guard let channel = peerConnection.dataChannel(
+                forLabel: setup.label,
+                configuration: setup.configuration
+            ) else { continue }
+            delegate?.didReceiveDataChannel(channel)
         }
         
         return peerConnection

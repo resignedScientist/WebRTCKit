@@ -8,7 +8,7 @@ final class PreviewWebRTCManager: WebRTCManager {
         self.delegate = delegate
     }
     
-    func setup() async throws -> PeerID {
+    func setup(dataChannels: [DataChannelSetup]) async throws -> PeerID {
         "0000"
     }
     

@@ -65,7 +65,7 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     /// Triggered whenever there is an error.
     func onError(_ error: WebRTCManagerError)
     
-    /// Called when a new data channel is created by the peer.
+    /// Called when a new data channel is created by the peer or by us before first negotiation.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
     
     /// Called when we lost the connection to our peer.
@@ -80,9 +80,10 @@ protocol WebRTCManager: Sendable {
     func setDelegate(_ delegate: WebRTCManagerDelegate?)
     
     /// Sets up the WebRTC connection and returns a `PeerID`.
+    /// - Parameter dataChannels: The data channels that should be created before the first negotiation.
     /// - Returns: A `PeerID` representing the local peer.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func setup() async throws -> PeerID
+    func setup(dataChannels: [DataChannelSetup]) async throws -> PeerID
     
     /// Manual audio mode only; Call this after the audio session was configured.
     /// Tells the manager that the audio track can be added to the call.

@@ -105,9 +105,9 @@ public protocol WebRTCController: AnyObject, Sendable {
     func setCallManagerDelegate(_ delegate: CallManagerDelegate)
     
     /// Connect to the signaling server and prepares the peer connection.
-    ///
+    /// - Parameter dataChannels: The data channels that should be created before the first negotiation.
     /// - Returns: The ID of the local peer.
-    func setupConnection() async throws -> PeerID
+    func setupConnection(dataChannels: [DataChannelSetup]) async throws -> PeerID
     
     /// Start the local recording of video.
     /// 
@@ -183,12 +183,12 @@ final class WebRTCControllerImpl: WebRTCController {
         container.callManager.setDelegate(delegate)
     }
     
-    func setupConnection() async throws -> PeerID {
+    func setupConnection(dataChannels: [DataChannelSetup]) async throws -> PeerID {
         
         // Start the network monitor to properly handle re-connections to the network.
         await container.networkMonitor.startMonitoring()
         
-        return try await container.webRTCManager.setup()
+        return try await container.webRTCManager.setup(dataChannels: dataChannels)
     }
     
     func startAudioRecording() async throws {
