@@ -6,6 +6,8 @@ public protocol WRKDataChannel: AnyObject, Sendable {
     
     var readyState: RTCDataChannelState { get }
     
+    var channelId: Int32 { get }
+    
     func setDelegate(_ delegate: RTCDataChannelDelegate?)
     
     @discardableResult
@@ -24,6 +26,12 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     var readyState: RTCDataChannelState {
         WebRTCActor.checkSync {
             dataChannel.readyState
+        }
+    }
+    
+    var channelId: Int32 {
+        WebRTCActor.checkSync {
+            dataChannel.channelId
         }
     }
     
