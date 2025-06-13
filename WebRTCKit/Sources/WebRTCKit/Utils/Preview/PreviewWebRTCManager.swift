@@ -48,8 +48,8 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
-    func createDataChannel(label: String, config: RTCDataChannelConfiguration?) throws -> WRKDataChannel? {
-        nil
+    func createDataChannel(setup: DataChannelSetup) async throws {
+        
     }
     
     func startConfiguration() throws {

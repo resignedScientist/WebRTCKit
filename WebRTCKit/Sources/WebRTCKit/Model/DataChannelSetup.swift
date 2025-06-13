@@ -59,6 +59,15 @@ public struct DataChannelConfiguration: Sendable {
         self.protocol = `protocol`
     }
     
+    public init(rtcConfig: RTCDataChannelConfiguration) {
+        self.isOrdered = rtcConfig.isOrdered
+        self.maxPacketLifeTime = rtcConfig.maxPacketLifeTime
+        self.maxRetransmits = rtcConfig.maxRetransmits
+        self.isNegotiated = rtcConfig.isNegotiated
+        self.channelId = rtcConfig.channelId
+        self.protocol = rtcConfig.protocol
+    }
+    
     func toRTCConfiguration() -> RTCDataChannelConfiguration {
         let rtcConfig = RTCDataChannelConfiguration()
         rtcConfig.isOrdered = isOrdered

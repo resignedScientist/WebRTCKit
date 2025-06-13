@@ -123,13 +123,11 @@ protocol WebRTCManager: Sendable {
     /// Disconnects the peer connection while keeping the signaling server connection open.
     func disconnect() async
     
-    /// Creates a data channel with the given label and configuration.
+    /// Creates a data channel with the given configuration.
     /// - Parameters:
-    ///   - label: A label for the data channel.
-    ///   - config: Optional configuration for the data channel.
-    /// - Returns: An optional `WRKDataChannel` if successful.
+    ///   - setup: The configuration of the data channel.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func createDataChannel(label: String, config: RTCDataChannelConfiguration?) async throws -> WRKDataChannel?
+    func createDataChannel(setup: DataChannelSetup) async throws
     
     /// Begins configuration of data channels and other parameters.
     /// - Throws: Throws `WebRTCManagerError` on failure.

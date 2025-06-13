@@ -24,6 +24,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var remotePeerID: PeerID?
     private var isInitiator = false
     private var initialDataChannels: [DataChannelSetup] = []
+    private var postponedDataChannels: [DataChannelSetup] = []
     
     /// Cache of received ICE candidates that are processed when our peerConnection is ready.
     private var cachedICECandidates = ICECandidateCache()
@@ -294,13 +295,14 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         isProcessingCandidates = false
         configurationChanged = false
         isInitiator = false
+        postponedDataChannels.removeAll()
         await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
         await videoCapturer?.stop()
         videoCapturer = nil
     }
     
-    func createDataChannel(label: String, config: RTCDataChannelConfiguration?) async throws -> WRKDataChannel? {
+    func createDataChannel(setup: DataChannelSetup) async throws {
         guard let peerConnection else {
             throw WebRTCManagerError.critical(
                 "called createDataChannel, but peerConnection is nil; Did you call setup()?"
@@ -311,38 +313,38 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("Tried to create a data channel before the call is running.")
         }
         
-        guard peerConnection.signalingState == .stable else {
-            throw WebRTCManagerError.critical("Tried to create a data channel, but the signaling state is not stable.")
-        }
-        
         guard isConfigurating else {
             throw WebRTCManagerError.critical("Call startConfiguration() first before adding data channels!")
         }
         
         guard isInitiator else {
             log.info("createDataChannel: did not open data channel, because we are not the initiator of the call.")
-            return nil
+            return
         }
         
-        guard !peerConnection.existingDataChannels.contains(label) else {
+        guard !peerConnection.existingDataChannels.contains(setup.label) else {
             throw WebRTCManagerError.critical("Tried to create a data channel, but one with this label already exists.")
+        }
+        
+        guard peerConnection.signalingState == .stable else {
+            postponedDataChannels.append(setup)
+            return
         }
         
         // we need to send a negotiation sdp in the case of channel opening while calling
         configurationChanged = true
         
         let dataChannel = peerConnection.dataChannel(
-            forLabel: label,
-            configuration: config ?? RTCDataChannelConfiguration()
+            forLabel: setup.label,
+            configuration: setup.rtcConfig
         )
         
-        if dataChannel == nil {
-            log.error("Failed to create a new data channel.")
+        if let dataChannel {
+            log.info("New data channel created. Label: \(dataChannel.label)")
+            delegate?.didReceiveDataChannel(dataChannel)
         } else {
-            log.info("New data channel created. Label: \(label)")
+            log.error("Failed to create a new data channel.")
         }
-        
-        return dataChannel
     }
     
     func startConfiguration() async throws {
@@ -467,16 +469,32 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange stateChanged: RTCSignalingState) {
         log.info("Signaling state: \(stateChanged)")
         Task { @WebRTCActor in
-            if stateChanged == .stable, isCommitConfigurationPostponed {
-                isConfigurating = true
-                defer {
-                    isConfigurating = false
-                    isCommitConfigurationPostponed = false
+            if stateChanged == .stable {
+                
+                // process postponed data channels
+                if !postponedDataChannels.isEmpty {
+                    do {
+                        try await startConfiguration()
+                        for setup in postponedDataChannels {
+                            try await createDataChannel(setup: setup)
+                        }
+                        postponedDataChannels.removeAll()
+                        try await commitConfiguration()
+                    } catch {
+                        log.error("Failed to process postponed data channels - \(error)")
+                        try? await commitConfiguration()
+                    }
                 }
-                do {
-                    try await commitConfiguration()
-                } catch {
-                    log.fault("Failed to run postponed commit configuration: \(error)")
+                
+                // handle postponed configuration
+                if isCommitConfigurationPostponed {
+                    
+                    isConfigurating = true
+                    defer {
+                        isConfigurating = false
+                        isCommitConfigurationPostponed = false
+                    }
+                    try? await commitConfiguration()
                 }
             }
         }

@@ -149,24 +149,11 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// End the call and disconnect from the signaling server.
     func disconnect() async throws
     
-    /// Create a peer-to-peer data channel to the other peer.
-    /// To receive data, just set the channels delegate.
-    /// 
+    /// Creates a data channel with the given configuration.
     /// - Parameters:
-    ///   - label: The identifier of the channel.
-    ///   - config: The configuration of the channel or nil to use the default one.
-    ///
-    /// - Returns: The created data channel.
-    func createDataChannel(label: String, config: DataChannelConfiguration) async throws -> WRKDataChannel?
-    
-    /// Create a peer-to-peer data channel to the other peer.
-    /// To receive data, just set the channels delegate.
-    ///
-    /// - Parameters:
-    ///   - label: The identifier of the channel.
-    ///
-    /// - Returns: The created data channel using the default configuration.
-    func createDataChannel(label: String) async throws -> WRKDataChannel?
+    ///   - setup: The configuration of the data channel.
+    /// - Throws: Throws `WebRTCManagerError` on failure.
+    func createDataChannel(setup: DataChannelSetup) async throws
     
     /// Start the configuration of things like data channels and other parameters.
     /// While doing the configuration, there is no re-negotiation happening.
@@ -245,15 +232,8 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.callManager.disconnect()
     }
     
-    func createDataChannel(label: String, config: DataChannelConfiguration) async throws -> WRKDataChannel? {
-        try await container.webRTCManager.createDataChannel(
-            label: label,
-            config: config.toRTCConfiguration()
-        )
-    }
-    
-    func createDataChannel(label: String) async throws -> (any WRKDataChannel)? {
-        try await container.webRTCManager.createDataChannel(label: label, config: nil)
+    func createDataChannel(setup: DataChannelSetup) async throws {
+        try await container.webRTCManager.createDataChannel(setup: setup)
     }
     
     func startConfiguration() async throws {
