@@ -116,7 +116,7 @@ public protocol WebRTCController: AnyObject, Sendable {
     ///   - enabled: Should video be enabled initially?
     ///   - imageSize: The image size of the local video.
     ///   - videoCapturer: An optional capturer to use, or null for default.
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?)
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?) async
     
     /// Connect to the signaling server and prepares the peer connection.
     /// - Returns: The ID of the local peer.
@@ -173,8 +173,8 @@ public protocol WebRTCController: AnyObject, Sendable {
 
 public extension WebRTCController {
     
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize) {
-        setInitialVideoEnabled(
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize) async {
+        await setInitialVideoEnabled(
             enabled: enabled,
             imageSize: imageSize,
             videoCapturer: nil
@@ -198,8 +198,12 @@ final class WebRTCControllerImpl: WebRTCController {
         container.webRTCManager.setInitialDataChannels(dataChannels)
     }
     
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?) {
-        container.webRTCManager.setInitialVideoEnabled(
+    func setInitialVideoEnabled(
+        enabled: Bool,
+        imageSize: CGSize,
+        videoCapturer: RTCVideoCapturer?
+    ) async {
+        await container.webRTCManager.setInitialVideoEnabled(
             enabled: enabled,
             imageSize: imageSize,
             videoCapturer: {

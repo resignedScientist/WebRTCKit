@@ -91,7 +91,7 @@ protocol WebRTCManager: Sendable {
     ///   - enabled: Should video be enabled initially?
     ///   - imageSize: The image size of the local video.
     ///   - videoCapturer: An optional capturer to use, or null for default.
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?)
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) async
     
     /// Sets up the WebRTC connection and returns a `PeerID`.
     /// - Returns: A `PeerID` representing the local peer.

@@ -26,7 +26,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var initialDataChannels: [DataChannelSetup] = []
     private var postponedDataChannels: [DataChannelSetup] = []
     private var isInitialVideoEnabled = false
-    private var initialVideoCapturer: VideoCapturer?
     private var initialImageSize: CGSize?
     
     /// Cache of received ICE candidates that are processed when our peerConnection is ready.
@@ -66,10 +65,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         self.initialDataChannels = dataChannels
     }
     
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) {
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) async {
         self.isInitialVideoEnabled = enabled
         self.initialImageSize = imageSize
-        self.initialVideoCapturer = videoCapturer
+        self.localVideoTrack = try? await makeVideoTrack(videoCapturer: videoCapturer)
     }
     
     @discardableResult
@@ -231,6 +230,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         configurationChanged = false
         isInitiator = false
         postponedDataChannels.removeAll()
+        isInitialVideoEnabled = false
+        initialImageSize = nil
         await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
         await videoCapturer?.stop()
@@ -631,7 +632,7 @@ private extension DefaultWebRTCManager {
         if isInitialVideoEnabled, let initialImageSize {
             try await startVideoRecording(
                 peerConnection: peerConnection,
-                videoCapturer: initialVideoCapturer,
+                videoCapturer: videoCapturer,
                 imageSize: initialImageSize
             )
         }
@@ -639,7 +640,90 @@ private extension DefaultWebRTCManager {
         // save isInitiator for later use
         self.isInitiator = isInitiator
         
+        // encoding parameters
+        bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection)
+        bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
+        
         return peerConnection
+    }
+    
+    func makeVideoTrack(videoCapturer: VideoCapturer?) async throws -> WRKRTCVideoTrack {
+        
+        // return existing video track if it exists
+        if let localVideoTrack {
+            return localVideoTrack
+        }
+        
+        guard await AVCaptureDevice.requestAccess(for: .video) else {
+            throw WebRTCManagerError.critical("Camera access has not been granted! Cannot add video stream.")
+        }
+        
+        guard let videoDevice = CaptureDevice(
+            AVCaptureDevice.default(
+                .builtInWideAngleCamera,
+                for: .video,
+                position: .front
+            )
+        ) else {
+            throw WebRTCManagerError.critical("Did not find a capturing device. Skipping local video.")
+        }
+        
+        // create the video source
+        let videoSource = makeVideoSource()
+        
+        if let videoCapturer { // use custom input
+            videoCapturer.delegate = videoSource
+            self.videoCapturer = videoCapturer
+            log.info("Using custom video capturer as input.")
+        } else {
+            
+            // use default front camera as input
+            
+            guard
+                let format = videoDevice.formats.last(where: { format in
+                    let resolution = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                    return resolution.height <= 480
+                })
+            else {
+                throw WebRTCManagerError.critical("Did not find a suitable video format. Skipping local video.")
+            }
+            
+            // set resolution
+            try videoDevice.lockForConfiguration()
+            videoDevice.activeFormat = format
+            videoDevice.unlockForConfiguration()
+            
+            // setup video capturer
+            let videoCapturer = VideoCapturer(
+                RTCCameraVideoCapturer(delegate: videoSource)
+            )
+            self.videoCapturer = videoCapturer
+            
+            // start capturing video
+            try await videoCapturer.startCapture(
+                with: videoDevice,
+                fps: 30
+            )
+            
+            log.info("Video capturing started using default front camera as input.")
+        }
+        
+        // save the video source
+        self.videoSource = videoSource
+        
+        // create video track
+        let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
+        
+        // pass video track to the delegate
+        delegate?.didAddLocalVideoTrack(localVideoTrack)
+        
+        log.info("Successfully created local video track.")
+        
+        return localVideoTrack
+    }
+    
+    func makeVideoSource() -> RTCVideoSource {
+        videoSource ?? factory.videoSource()
     }
     
     func addAudioTrack(to peerConnection: WRKRTCPeerConnection) async {
@@ -648,7 +732,6 @@ private extension DefaultWebRTCManager {
         if let localAudioTrack {
             await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
             delegate?.didAddLocalAudioTrack(localAudioTrack)
-            bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
             return
         }
         
@@ -674,9 +757,6 @@ private extension DefaultWebRTCManager {
         // add audio track to the peer connection
         await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
         
-        // set audio encoding parameters
-        bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
-        
         // save audio track
         self.localAudioTrack = localAudioTrack
         
@@ -684,32 +764,6 @@ private extension DefaultWebRTCManager {
         delegate?.didAddLocalAudioTrack(localAudioTrack)
         
         log.info("Successfully added audio track.")
-    }
-    
-    func addVideoTrack(to peerConnection: WRKRTCPeerConnection, videoSource: RTCVideoSource) async {
-        
-        // use the existing video track if it exists
-        if let localVideoTrack {
-            localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
-            return
-        }
-        
-        // create video track
-        let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
-        
-        // add video track to the peer connection
-        localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
-        
-        // set video encoding parameters
-        bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection)
-        
-        // save video track
-        self.localVideoTrack = localVideoTrack
-        
-        // pass video track to the delegate
-        delegate?.didAddLocalVideoTrack(localVideoTrack)
-        
-        log.info("Successfully added video track.")
     }
     
     func sendOffer(to peerID: PeerID, peerConnection: WRKRTCPeerConnection, iceRestart: Bool = false) async throws {
@@ -999,17 +1053,6 @@ private extension DefaultWebRTCManager {
             return
         }
         
-        guard let videoDevice = CaptureDevice(
-            AVCaptureDevice.default(
-                .builtInWideAngleCamera,
-                for: .video,
-                position: .front
-            )
-        ) else {
-            log.info("Did not find a capturing device. Skipping local video.")
-            return
-        }
-        
         // adding video tracks to a running call requires re-negotiation
         if peerConnection.connectionState != .new {
             configurationChanged = true
@@ -1020,49 +1063,12 @@ private extension DefaultWebRTCManager {
             bitrateAdjustor.imageSize = imageSize
         }
         
-        // use the existing video source or create a new one
-        let videoSource = videoSource ?? factory.videoSource()
+        // create the video track
+        let localVideoTrack = try await makeVideoTrack(videoCapturer: videoCapturer)
         
         // add the video track to the peer connection
-        await addVideoTrack(to: peerConnection, videoSource: videoSource)
-        
-        // save the video source
-        self.videoSource = videoSource
-        
-        if let videoCapturer { // use custom input
-            videoCapturer.delegate = videoSource
-            self.videoCapturer = videoCapturer
-            log.info("Using custom video capturer as input.")
-        } else {
-            
-            // use default front camera as input
-            
-            guard
-                let format = videoDevice.formats.last(where: { format in
-                    let resolution = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-                    return resolution.height <= 480
-                })
-            else { return }
-            
-            // set resolution
-            try videoDevice.lockForConfiguration()
-            videoDevice.activeFormat = format
-            videoDevice.unlockForConfiguration()
-            
-            // setup video capturer
-            let videoCapturer = VideoCapturer(
-                RTCCameraVideoCapturer(delegate: videoSource)
-            )
-            self.videoCapturer = videoCapturer
-            
-            // start capturing video
-            try await videoCapturer.startCapture(
-                with: videoDevice,
-                fps: 30
-            )
-            
-            log.info("Video capturing started using default front camera as input.")
-        }
+        localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        log.info("Successfully added video track.")
         
         // start bitrate adjustor if we are already connected
         if peerConnection.connectionState == .connected {
