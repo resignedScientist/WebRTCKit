@@ -115,8 +115,14 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Parameters:
     ///   - enabled: Should video be enabled initially?
     ///   - imageSize: The image size of the local video.
-    ///   - videoCapturer: An optional capturer to use, or null for default.
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?) async
+    ///   - videoCapturer: An optional capturer to use.
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer) async
+    
+    /// Enables video initially before first negotiation,
+    /// so that no re-negotiation is necessary to enable it.
+    /// - Parameters:
+    ///   - enabled: Should video be enabled initially?
+    func setInitialVideoEnabled(enabled: Bool) async
     
     /// Connect to the signaling server and prepares the peer connection.
     /// - Returns: The ID of the local peer.
@@ -171,17 +177,6 @@ public protocol WebRTCController: AnyObject, Sendable {
     func commitConfiguration() async throws
 }
 
-public extension WebRTCController {
-    
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize) async {
-        await setInitialVideoEnabled(
-            enabled: enabled,
-            imageSize: imageSize,
-            videoCapturer: nil
-        )
-    }
-}
-
 final class WebRTCControllerImpl: WebRTCController {
     
     private let container: DIContainer
@@ -198,20 +193,23 @@ final class WebRTCControllerImpl: WebRTCController {
         container.webRTCManager.setInitialDataChannels(dataChannels)
     }
     
+    func setInitialVideoEnabled(enabled: Bool) async {
+        await container.webRTCManager.setInitialVideoEnabled(
+            enabled: enabled,
+            imageSize: .zero, // not needed when using default video capturer
+            videoCapturer: nil
+        )
+    }
+    
     func setInitialVideoEnabled(
         enabled: Bool,
         imageSize: CGSize,
-        videoCapturer: RTCVideoCapturer?
+        videoCapturer: RTCVideoCapturer
     ) async {
         await container.webRTCManager.setInitialVideoEnabled(
             enabled: enabled,
             imageSize: imageSize,
-            videoCapturer: {
-                if let videoCapturer {
-                    return VideoCapturer(videoCapturer)
-                }
-                return nil
-            }()
+            videoCapturer: VideoCapturer(videoCapturer)
         )
     }
     

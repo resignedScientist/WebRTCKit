@@ -688,6 +688,13 @@ private extension DefaultWebRTCManager {
                 throw WebRTCManagerError.critical("Did not find a suitable video format. Skipping local video.")
             }
             
+            // update bitrate adjustor image size
+            let dimensions = format.formatDescription.dimensions
+            bitrateAdjustor.imageSize = CGSize(
+                width: Int(dimensions.width),
+                height: Int(dimensions.height)
+            )
+            
             // set resolution
             try videoDevice.lockForConfiguration()
             videoDevice.activeFormat = format
@@ -1059,7 +1066,7 @@ private extension DefaultWebRTCManager {
         }
         
         // set image size
-        if videoCapturer != nil {
+        if imageSize != .zero {
             bitrateAdjustor.imageSize = imageSize
         }
         
