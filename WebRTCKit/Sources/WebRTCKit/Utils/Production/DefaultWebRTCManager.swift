@@ -189,7 +189,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         }
 
         await disconnect()
-        delegate?.callDidEnd()
     }
 
     func answerCall() async throws {
@@ -210,6 +209,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func disconnect() async {
+        
+        // skip if already disconnected
+        guard peerConnection != nil else { return }
+        
         peerConnection?.close()
         peerConnection = nil
         remoteAudioTrack = nil
@@ -236,6 +239,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         await cachedICECandidates.clear()
         await videoCapturer?.stop()
         videoCapturer = nil
+        delegate?.callDidEnd()
     }
     
     func createDataChannel(setup: DataChannelSetup) async throws {
@@ -527,7 +531,6 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 await bitrateAdjustor.stop(for: .video)
             case .closed, .failed:
                 await disconnect()
-                delegate?.callDidEnd()
             @unknown default:
                 break
             }
