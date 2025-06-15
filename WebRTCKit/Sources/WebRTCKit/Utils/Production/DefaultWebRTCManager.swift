@@ -797,6 +797,10 @@ private extension DefaultWebRTCManager {
         let encoder = JSONEncoder()
         let offerData = try encoder.encode(sdp)
         
+        if let offerStr = String(data: offerData, encoding: .utf8) {
+            log.debug("Sending offer: \(offerStr)")
+        }
+        
         // send the offer
         try await signalingServer.sendSignal(offerData, to: peerID)
     }
@@ -817,6 +821,10 @@ private extension DefaultWebRTCManager {
         
         let encoder = JSONEncoder()
         let answerData = try encoder.encode(answer)
+        
+        if let answerStr = String(data: answerData, encoding: .utf8) {
+            log.info("Sending answer: \(answerStr)")
+        }
         
         try await signalingServer.sendSignal(answerData, to: peerID)
         
