@@ -25,6 +25,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var isInitiator = false
     private var initialDataChannels: [DataChannelSetup] = []
     private var postponedDataChannels: [DataChannelSetup] = []
+    private var isInitialVideoEnabled = false
+    private var initialVideoCapturer: VideoCapturer?
+    private var initialImageSize: CGSize?
     
     /// Cache of received ICE candidates that are processed when our peerConnection is ready.
     private var cachedICECandidates = ICECandidateCache()
@@ -61,6 +64,12 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
         self.initialDataChannels = dataChannels
+    }
+    
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) {
+        self.isInitialVideoEnabled = enabled
+        self.initialImageSize = imageSize
+        self.initialVideoCapturer = videoCapturer
     }
     
     @discardableResult
@@ -108,85 +117,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")
         }
         
-        guard !isVideoRecording() else {
-            log.error("Peer connection already contains a video track; we do not add a new one.")
-            return
-        }
-        
-        guard await AVCaptureDevice.requestAccess(for: .video) else {
-            log.error("Camera access has not been granted! Cannot add video stream.")
-            return
-        }
-        
-        guard let videoDevice = CaptureDevice(
-            AVCaptureDevice.default(
-                .builtInWideAngleCamera,
-                for: .video,
-                position: .front
-            )
-        ) else {
-            log.info("Did not find a capturing device. Skipping local video.")
-            return
-        }
-        
-        // adding video tracks to a running call requires re-negotiation
-        if peerConnection.connectionState != .new {
-            configurationChanged = true
-        }
-        
-        // set image size
-        if videoCapturer != nil {
-            bitrateAdjustor.imageSize = imageSize
-        }
-        
-        // use the existing video source or create a new one
-        let videoSource = videoSource ?? factory.videoSource()
-        
-        // add the video track to the peer connection
-        await addVideoTrack(to: peerConnection, videoSource: videoSource)
-        
-        // save the video source
-        self.videoSource = videoSource
-        
-        if let videoCapturer { // use custom input
-            videoCapturer.delegate = videoSource
-            self.videoCapturer = videoCapturer
-            log.info("Using custom video capturer as input.")
-        } else {
-            
-            // use default front camera as input
-            
-            guard
-                let format = videoDevice.formats.last(where: { format in
-                    let resolution = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-                    return resolution.height <= 480
-                })
-            else { return }
-            
-            // set resolution
-            try videoDevice.lockForConfiguration()
-            videoDevice.activeFormat = format
-            videoDevice.unlockForConfiguration()
-            
-            // setup video capturer
-            let videoCapturer = VideoCapturer(
-                RTCCameraVideoCapturer(delegate: videoSource)
-            )
-            self.videoCapturer = videoCapturer
-            
-            // start capturing video
-            try await videoCapturer.startCapture(
-                with: videoDevice,
-                fps: 30
-            )
-            
-            log.info("Video capturing started using default front camera as input.")
-        }
-        
-        // start bitrate adjustor if we are already connected
-        if peerConnection.connectionState == .connected {
-            bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
-        }
+        try await startVideoRecording(
+            peerConnection: peerConnection,
+            videoCapturer: videoCapturer,
+            imageSize: imageSize
+        )
     }
     
     func stopVideoRecording() async {
@@ -692,6 +627,15 @@ private extension DefaultWebRTCManager {
         // add the audio track to the peer connection
         await addAudioTrack(to: peerConnection)
         
+        // start video recording if enabled
+        if isInitialVideoEnabled, let initialImageSize {
+            try await startVideoRecording(
+                peerConnection: peerConnection,
+                videoCapturer: initialVideoCapturer,
+                imageSize: initialImageSize
+            )
+        }
+        
         // save isInitiator for later use
         self.isInitiator = isInitiator
         
@@ -1036,6 +980,93 @@ private extension DefaultWebRTCManager {
             log.info("Negotiation sdp sent.")
         } catch {
             log.error("Negotiation failed - \(error)")
+        }
+    }
+    
+    func startVideoRecording(
+        peerConnection: WRKRTCPeerConnection,
+        videoCapturer: VideoCapturer?,
+        imageSize: CGSize
+    ) async throws {
+        
+        guard !isVideoRecording() else {
+            log.error("Peer connection already contains a video track; we do not add a new one.")
+            return
+        }
+        
+        guard await AVCaptureDevice.requestAccess(for: .video) else {
+            log.error("Camera access has not been granted! Cannot add video stream.")
+            return
+        }
+        
+        guard let videoDevice = CaptureDevice(
+            AVCaptureDevice.default(
+                .builtInWideAngleCamera,
+                for: .video,
+                position: .front
+            )
+        ) else {
+            log.info("Did not find a capturing device. Skipping local video.")
+            return
+        }
+        
+        // adding video tracks to a running call requires re-negotiation
+        if peerConnection.connectionState != .new {
+            configurationChanged = true
+        }
+        
+        // set image size
+        if videoCapturer != nil {
+            bitrateAdjustor.imageSize = imageSize
+        }
+        
+        // use the existing video source or create a new one
+        let videoSource = videoSource ?? factory.videoSource()
+        
+        // add the video track to the peer connection
+        await addVideoTrack(to: peerConnection, videoSource: videoSource)
+        
+        // save the video source
+        self.videoSource = videoSource
+        
+        if let videoCapturer { // use custom input
+            videoCapturer.delegate = videoSource
+            self.videoCapturer = videoCapturer
+            log.info("Using custom video capturer as input.")
+        } else {
+            
+            // use default front camera as input
+            
+            guard
+                let format = videoDevice.formats.last(where: { format in
+                    let resolution = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                    return resolution.height <= 480
+                })
+            else { return }
+            
+            // set resolution
+            try videoDevice.lockForConfiguration()
+            videoDevice.activeFormat = format
+            videoDevice.unlockForConfiguration()
+            
+            // setup video capturer
+            let videoCapturer = VideoCapturer(
+                RTCCameraVideoCapturer(delegate: videoSource)
+            )
+            self.videoCapturer = videoCapturer
+            
+            // start capturing video
+            try await videoCapturer.startCapture(
+                with: videoDevice,
+                fps: 30
+            )
+            
+            log.info("Video capturing started using default front camera as input.")
+        }
+        
+        // start bitrate adjustor if we are already connected
+        if peerConnection.connectionState == .connected {
+            bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
         }
     }
 }

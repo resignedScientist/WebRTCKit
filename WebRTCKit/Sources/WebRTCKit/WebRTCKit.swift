@@ -110,6 +110,14 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Parameter dataChannels: The initial data channels.
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup])
     
+    /// Enables video initially before first negotiation,
+    /// so that no re-negotiation is necessary to enable it.
+    /// - Parameters:
+    ///   - enabled: Should video be enabled initially?
+    ///   - imageSize: The image size of the local video.
+    ///   - videoCapturer: An optional capturer to use, or null for default.
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?)
+    
     /// Connect to the signaling server and prepares the peer connection.
     /// - Returns: The ID of the local peer.
     func setupConnection() async throws -> PeerID
@@ -163,6 +171,17 @@ public protocol WebRTCController: AnyObject, Sendable {
     func commitConfiguration() async throws
 }
 
+public extension WebRTCController {
+    
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize) {
+        setInitialVideoEnabled(
+            enabled: enabled,
+            imageSize: imageSize,
+            videoCapturer: nil
+        )
+    }
+}
+
 final class WebRTCControllerImpl: WebRTCController {
     
     private let container: DIContainer
@@ -177,6 +196,19 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
         container.webRTCManager.setInitialDataChannels(dataChannels)
+    }
+    
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?) {
+        container.webRTCManager.setInitialVideoEnabled(
+            enabled: enabled,
+            imageSize: imageSize,
+            videoCapturer: {
+                if let videoCapturer {
+                    return VideoCapturer(videoCapturer)
+                }
+                return nil
+            }()
+        )
     }
     
     func setupConnection() async throws -> PeerID {

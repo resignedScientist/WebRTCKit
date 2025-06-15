@@ -85,6 +85,14 @@ protocol WebRTCManager: Sendable {
     /// - Parameter dataChannels: The initial data channels.
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup])
     
+    /// Enables video initially before first negotiation,
+    /// so that no re-negotiation is necessary to enable it.
+    /// - Parameters:
+    ///   - enabled: Should video be enabled initially?
+    ///   - imageSize: The image size of the local video.
+    ///   - videoCapturer: An optional capturer to use, or null for default.
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?)
+    
     /// Sets up the WebRTC connection and returns a `PeerID`.
     /// - Returns: A `PeerID` representing the local peer.
     /// - Throws: Throws `WebRTCManagerError` on failure.

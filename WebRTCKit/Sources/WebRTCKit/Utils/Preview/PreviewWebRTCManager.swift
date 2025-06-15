@@ -12,6 +12,10 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) {
+        
+    }
+    
     func setup() async throws -> PeerID {
         "0000"
     }
