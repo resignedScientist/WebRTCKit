@@ -370,9 +370,9 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
         let dataChannel = WRKDataChannelImpl(dataChannel)
-        WebRTCActor.checkSync {
-            existingDataChannels.insert(dataChannel.label)
-            _delegate?.peerConnection(self, didOpen: dataChannel)
+        WebRTCActor.checkAsync {
+            self.existingDataChannels.insert(dataChannel.label)
+            self._delegate?.peerConnection(self, didOpen: dataChannel)
         }
     }
 }
