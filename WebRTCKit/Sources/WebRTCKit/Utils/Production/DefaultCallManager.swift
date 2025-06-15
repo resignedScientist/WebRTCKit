@@ -54,6 +54,10 @@ final class DefaultCallManager: CallManager {
         }
     }
     
+    func didAcceptCallRequest() async {
+        await delegate?.didAcceptCallRequest()
+    }
+    
     func endCall() async throws {
         log.info("Ending call…")
         try await stateHolder.changeState(to: .endingCall)

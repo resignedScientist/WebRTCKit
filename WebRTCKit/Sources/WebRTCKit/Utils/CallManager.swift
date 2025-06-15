@@ -163,6 +163,9 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// - Parameter audioTrack: The remote audio track.
     func remoteAudioTrackWasRemoved(_ audioTrack: WRKRTCAudioTrack)
     
+    /// Called when an incoming call request has been accepted using CallKit system handles.
+    func didAcceptCallRequest() async
+    
     /// The call did start.
     func callDidStart()
     
@@ -218,6 +221,9 @@ protocol CallManager: Sendable {
     /// - Parameter accept: True if we accept it, false if we decline it.
     /// - Throws: An error if answering the call request fails.
     func answerCallRequest(accept: Bool) async throws
+    
+    /// Called when an incoming call request has been accepted using CallKit system handles.
+    func didAcceptCallRequest() async
     
     /// End a running call.
     /// - Throws: An error if ending the call fails.

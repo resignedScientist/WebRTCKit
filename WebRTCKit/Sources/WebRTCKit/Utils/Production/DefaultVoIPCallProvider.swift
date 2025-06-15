@@ -265,6 +265,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("Answer call action received.")
         
         do {
+            await callManager.didAcceptCallRequest()
             try await webRTCManager.answerCall()
             action.fulfill()
             answerCallHandler?(nil)
