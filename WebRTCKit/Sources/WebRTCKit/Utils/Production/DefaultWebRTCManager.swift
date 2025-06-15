@@ -1022,10 +1022,10 @@ private extension DefaultWebRTCManager {
             return
         }
         
-        guard configurationChanged else {
-            log.info("Negotiation skipped, because the configuration did not change.")
-            return
-        }
+//        guard configurationChanged else {
+//            log.info("Negotiation skipped, because the configuration did not change.")
+//            return
+//        }
         
         isPreparingOffer = true
         
