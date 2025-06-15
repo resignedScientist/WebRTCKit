@@ -617,17 +617,6 @@ private extension DefaultWebRTCManager {
             throw WebRTCManagerError.critical("Failed to create peer connection.")
         }
         
-        // open initial data channels
-        if isInitiator {
-            for setup in initialDataChannels {
-                guard let channel = peerConnection.dataChannel(
-                    forLabel: setup.label,
-                    configuration: setup.rtcConfig
-                ) else { continue }
-                delegate?.didReceiveDataChannel(channel)
-            }
-        }
-        
         // add the audio track to the peer connection
         await addAudioTrack(to: peerConnection)
         
@@ -638,6 +627,17 @@ private extension DefaultWebRTCManager {
                 videoCapturer: videoCapturer,
                 imageSize: initialImageSize
             )
+        }
+        
+        // open initial data channels
+        if isInitiator {
+            for setup in initialDataChannels {
+                guard let channel = peerConnection.dataChannel(
+                    forLabel: setup.label,
+                    configuration: setup.rtcConfig
+                ) else { continue }
+                delegate?.didReceiveDataChannel(channel)
+            }
         }
         
         // save isInitiator for later use
