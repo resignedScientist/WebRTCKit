@@ -11,6 +11,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private let factory: WRKRTCPeerConnectionFactory
     private let bitrateAdjustor: BitrateAdjustor = BitrateAdjustorImpl()
     private let log = Logger(caller: "WebRTCManager")
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
     
     private var peerConnection: WRKRTCPeerConnection?
     private var videoCapturer: VideoCapturer?
@@ -543,7 +545,6 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             guard let remotePeerID else { return }
             
             do {
-                let encoder = JSONEncoder()
                 let candidateData = try encoder.encode(candidate)
                 
                 try await signalingServer.sendICECandidate(candidateData, to: remotePeerID)
@@ -797,7 +798,6 @@ private extension DefaultWebRTCManager {
         try await peerConnection.setLocalDescription(sdp)
         
         // encode the offer
-        let encoder = JSONEncoder()
         let offerData = try encoder.encode(sdp)
         
         if let offerStr = String(data: offerData, encoding: .utf8) {
@@ -822,7 +822,6 @@ private extension DefaultWebRTCManager {
         
         try await peerConnection.setLocalDescription(answer)
         
-        let encoder = JSONEncoder()
         let answerData = try encoder.encode(answer)
         
         if let answerStr = String(data: answerData, encoding: .utf8) {
@@ -848,7 +847,6 @@ private extension DefaultWebRTCManager {
         }
         
         do {
-            let decoder = JSONDecoder()
             let candidate = try decoder.decode(ICECandidate.self, from: candidateData)
             
             try await peerConnection.add(candidate)
@@ -900,6 +898,10 @@ private extension DefaultWebRTCManager {
         guard let remotePeerID else { return }
         
         let sdp = SessionDescription(from: sdp)
+        
+        if let offerData = try? encoder.encode(sdp), let offerStr = String(data: offerData, encoding: .utf8) {
+            log.debug("Did receive offer: \(offerStr)")
+        }
         
         guard let peerConnection else {
             
@@ -987,7 +989,6 @@ private extension DefaultWebRTCManager {
         self.isPolite = isPolite
         
         do {
-            let decoder = JSONDecoder()
             let sessionDescription = try decoder.decode(SessionDescription.self, from: signalData)
             let sdp = sessionDescription.toRTCSessionDescription()
             
@@ -1047,7 +1048,6 @@ private extension DefaultWebRTCManager {
         do {
             try await peerConnection.setLocalDescription()
             guard let sdp = peerConnection.localDescription else { return }
-            let encoder = JSONEncoder()
             let signal = try encoder.encode(SessionDescription(from: sdp))
             try await signalingServer.sendSignal(signal, to: remotePeerID)
             configurationChanged = false
