@@ -559,7 +559,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: WRKDataChannel) {
         Task { @WebRTCActor in
-            log.info("Peer did open data channel - label: \(dataChannel.label); id: \(dataChannel.channelId)")
+            log.info("Peer did open data channel - label: \(dataChannel.label); id: \(dataChannel.channelId); state: \(dataChannel.readyState)")
             delegate?.didReceiveDataChannel(dataChannel)
         }
     }
