@@ -69,6 +69,8 @@ protocol WRKRTCPeerConnection: Sendable {
     
     /// Gather statistic through the v2 statistics API.
     func statistics() async -> StatisticsReport
+    
+    func addTransceiver(of mediaType: RTCRtpMediaType)
 }
 
 final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked Sendable {
@@ -294,6 +296,14 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
                     continuation.resume(returning: report)
                 }
             }
+        }
+    }
+    
+    func addTransceiver(of mediaType: RTCRtpMediaType) {
+        WebRTCActor.checkAsync {
+            let transceiverInit = RTCRtpTransceiverInit()
+            transceiverInit.direction = .sendRecv
+            self._peerConnection.addTransceiver(of: mediaType)
         }
     }
 }
