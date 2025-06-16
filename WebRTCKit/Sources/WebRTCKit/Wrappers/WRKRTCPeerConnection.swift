@@ -303,6 +303,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
         WebRTCActor.checkAsync {
             let transceiverInit = RTCRtpTransceiverInit()
             transceiverInit.direction = .sendRecv
+            transceiverInit.streamIds = ["localStream"]
             self._peerConnection.addTransceiver(of: mediaType)
         }
     }
