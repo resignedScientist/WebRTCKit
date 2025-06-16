@@ -587,7 +587,7 @@ private extension DefaultWebRTCManager {
         let constraints = RTCMediaConstraints(
             mandatoryConstraints: [
                 kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueTrue,
-                kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueFalse
+                kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueTrue
             ],
             optionalConstraints: nil
         )
