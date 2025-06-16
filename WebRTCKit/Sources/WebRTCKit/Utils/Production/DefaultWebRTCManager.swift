@@ -628,9 +628,6 @@ private extension DefaultWebRTCManager {
                 videoCapturer: videoCapturer,
                 imageSize: initialImageSize
             )
-        } else {
-            // we have to always add a transceiver to be able to receive video
-            peerConnection.addTransceiver(of: .video)
         }
         
         // open initial data channels
