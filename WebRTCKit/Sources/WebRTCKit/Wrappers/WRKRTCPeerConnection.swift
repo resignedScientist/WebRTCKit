@@ -304,7 +304,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
             let transceiverInit = RTCRtpTransceiverInit()
             transceiverInit.direction = .sendRecv
             transceiverInit.streamIds = ["localStream"]
-            self._peerConnection.addTransceiver(of: mediaType)
+            self._peerConnection.addTransceiver(of: mediaType, init: transceiverInit)
         }
     }
 }
