@@ -65,7 +65,7 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     /// Triggered whenever there is an error.
     func onError(_ error: WebRTCManagerError)
     
-    /// Called when a new data channel is created by the peer.
+    /// Called when a new data channel is created by the peer or by us before first negotiation.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
     
     /// Called when we lost the connection to our peer.
@@ -78,6 +78,20 @@ protocol WebRTCManager: Sendable {
     /// Sets the delegate to handle WebRTC events.
     /// - Parameter delegate: A delegate conforming to `WebRTCManagerDelegate`.
     func setDelegate(_ delegate: WebRTCManagerDelegate?)
+    
+    /// Set the initial data channels that will be added before first negotiation.
+    ///
+    /// They will only be added if we are the initiator of the call.
+    /// - Parameter dataChannels: The initial data channels.
+    func setInitialDataChannels(_ dataChannels: [DataChannelSetup])
+    
+    /// Enables video initially before first negotiation,
+    /// so that no re-negotiation is necessary to enable it.
+    /// - Parameters:
+    ///   - enabled: Should video be enabled initially?
+    ///   - imageSize: The image size of the local video.
+    ///   - videoCapturer: An optional capturer to use, or null for default.
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) async
     
     /// Sets up the WebRTC connection and returns a `PeerID`.
     /// - Returns: A `PeerID` representing the local peer.
@@ -117,13 +131,11 @@ protocol WebRTCManager: Sendable {
     /// Disconnects the peer connection while keeping the signaling server connection open.
     func disconnect() async
     
-    /// Creates a data channel with the given label and configuration.
+    /// Creates a data channel with the given configuration.
     /// - Parameters:
-    ///   - label: A label for the data channel.
-    ///   - config: Optional configuration for the data channel.
-    /// - Returns: An optional `WRKDataChannel` if successful.
+    ///   - setup: The configuration of the data channel.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func createDataChannel(label: String, config: RTCDataChannelConfiguration?) async throws -> WRKDataChannel?
+    func createDataChannel(setup: DataChannelSetup) async throws
     
     /// Begins configuration of data channels and other parameters.
     /// - Throws: Throws `WebRTCManagerError` on failure.

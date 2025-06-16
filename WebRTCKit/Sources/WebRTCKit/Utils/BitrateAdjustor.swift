@@ -51,7 +51,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     
     private var runningTypes: Set<BitrateType> = []
     
-    var imageSize: CGSize = CGSize(width: 540, height: 720)
+    var imageSize: CGSize = CGSize(width: 480, height: 640)
     
     func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection) {
         guard !runningTypes.contains(type) else { return }

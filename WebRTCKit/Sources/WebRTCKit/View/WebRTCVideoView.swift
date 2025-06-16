@@ -62,7 +62,9 @@ private struct WebRTCView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: RTCMTLVideoView, context: Context) {
-        videoTrack.add(uiView)
+        WebRTCActor.checkAsync {
+            videoTrack.add(uiView)
+        }
         context.coordinator.source = videoTrack.source
     }
 }

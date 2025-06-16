@@ -54,6 +54,10 @@ final class DefaultCallManager: CallManager {
         }
     }
     
+    func didAcceptCallRequest() async {
+        await delegate?.didAcceptCallRequest()
+    }
+    
     func endCall() async throws {
         log.info("Ending call…")
         try await stateHolder.changeState(to: .endingCall)
@@ -152,9 +156,12 @@ extension DefaultCallManager: WebRTCManagerDelegate {
     func callDidEnd() {
         Task { @WebRTCActor in
             
-            log.info("callDidEnd()")
-            
             let state = await stateHolder.getState()
+            
+            // prevent calling this twice
+            guard state != .idle else { return }
+            
+            log.info("callDidEnd()")
             
             do {
                 // If in the connecting or receivingCallRequest state, go to endingCall first

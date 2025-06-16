@@ -104,8 +104,27 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Parameter delegate: The delegate to handle calls and receive audio & video streams.
     func setCallManagerDelegate(_ delegate: CallManagerDelegate)
     
-    /// Connect to the signaling server and prepares the peer connection.
+    /// Set the initial data channels that will be added before first negotiation.
     ///
+    /// They will only be added if we are the initiator of the call.
+    /// - Parameter dataChannels: The initial data channels.
+    func setInitialDataChannels(_ dataChannels: [DataChannelSetup])
+    
+    /// Enables video initially before first negotiation,
+    /// so that no re-negotiation is necessary to enable it.
+    /// - Parameters:
+    ///   - enabled: Should video be enabled initially?
+    ///   - imageSize: The image size of the local video.
+    ///   - videoCapturer: An optional capturer to use.
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer) async
+    
+    /// Enables video initially before first negotiation,
+    /// so that no re-negotiation is necessary to enable it.
+    /// - Parameters:
+    ///   - enabled: Should video be enabled initially?
+    func setInitialVideoEnabled(enabled: Bool) async
+    
+    /// Connect to the signaling server and prepares the peer connection.
     /// - Returns: The ID of the local peer.
     func setupConnection() async throws -> PeerID
     
@@ -144,24 +163,11 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// End the call and disconnect from the signaling server.
     func disconnect() async throws
     
-    /// Create a peer-to-peer data channel to the other peer.
-    /// To receive data, just set the channels delegate.
-    /// 
+    /// Creates a data channel with the given configuration.
     /// - Parameters:
-    ///   - label: The identifier of the channel.
-    ///   - config: The configuration of the channel or nil to use the default one.
-    ///
-    /// - Returns: The created data channel.
-    func createDataChannel(label: String, config: RTCDataChannelConfiguration) async throws -> WRKDataChannel?
-    
-    /// Create a peer-to-peer data channel to the other peer.
-    /// To receive data, just set the channels delegate.
-    ///
-    /// - Parameters:
-    ///   - label: The identifier of the channel.
-    ///
-    /// - Returns: The created data channel using the default configuration.
-    func createDataChannel(label: String) async throws -> WRKDataChannel?
+    ///   - setup: The configuration of the data channel.
+    /// - Throws: Throws `WebRTCManagerError` on failure.
+    func createDataChannel(setup: DataChannelSetup) async throws
     
     /// Start the configuration of things like data channels and other parameters.
     /// While doing the configuration, there is no re-negotiation happening.
@@ -181,6 +187,30 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func setCallManagerDelegate(_ delegate: CallManagerDelegate) {
         container.callManager.setDelegate(delegate)
+    }
+    
+    func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
+        container.webRTCManager.setInitialDataChannels(dataChannels)
+    }
+    
+    func setInitialVideoEnabled(enabled: Bool) async {
+        await container.webRTCManager.setInitialVideoEnabled(
+            enabled: enabled,
+            imageSize: .zero, // not needed when using default video capturer
+            videoCapturer: nil
+        )
+    }
+    
+    func setInitialVideoEnabled(
+        enabled: Bool,
+        imageSize: CGSize,
+        videoCapturer: RTCVideoCapturer
+    ) async {
+        await container.webRTCManager.setInitialVideoEnabled(
+            enabled: enabled,
+            imageSize: imageSize,
+            videoCapturer: VideoCapturer(videoCapturer)
+        )
     }
     
     func setupConnection() async throws -> PeerID {
@@ -236,15 +266,8 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.callManager.disconnect()
     }
     
-    func createDataChannel(label: String, config: RTCDataChannelConfiguration) async throws -> WRKDataChannel? {
-        try await container.webRTCManager.createDataChannel(
-            label: label,
-            config: config
-        )
-    }
-    
-    func createDataChannel(label: String) async throws -> (any WRKDataChannel)? {
-        try await container.webRTCManager.createDataChannel(label: label, config: nil)
+    func createDataChannel(setup: DataChannelSetup) async throws {
+        try await container.webRTCManager.createDataChannel(setup: setup)
     }
     
     func startConfiguration() async throws {

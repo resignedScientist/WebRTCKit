@@ -18,8 +18,6 @@ extension CXErrorCodeIncomingCallError.Code: @retroactive CustomStringConvertibl
             return "filteredDuringRestrictedSharingMode"
         case .callIsProtected:
             return "callIsProtected"
-        case .filteredBySensitiveParticipants:
-            return "filteredBySensitiveParticipants"
         @unknown default:
             return "unknown"
         }

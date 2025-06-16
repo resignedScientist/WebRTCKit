@@ -24,6 +24,10 @@ final class PreviewCallManager: CallManager {
         
     }
     
+    func didAcceptCallRequest() async {
+        
+    }
+    
     func endCall() async throws {
         
     }

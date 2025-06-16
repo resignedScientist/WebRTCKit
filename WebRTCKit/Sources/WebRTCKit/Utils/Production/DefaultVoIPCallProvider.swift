@@ -265,6 +265,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("Answer call action received.")
         
         do {
+            await callManager.didAcceptCallRequest()
             try await webRTCManager.answerCall()
             action.fulfill()
             answerCallHandler?(nil)
@@ -390,7 +391,7 @@ private extension DefaultVoIPCallProvider {
         
         let configuration = RTCAudioSessionConfiguration.webRTC()
         configuration.categoryOptions = [
-            .allowBluetoothHFP,
+            .allowBluetooth,
             .allowBluetoothA2DP,
             .allowAirPlay,
             .defaultToSpeaker,

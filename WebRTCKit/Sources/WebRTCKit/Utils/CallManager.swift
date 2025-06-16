@@ -163,6 +163,9 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// - Parameter audioTrack: The remote audio track.
     func remoteAudioTrackWasRemoved(_ audioTrack: WRKRTCAudioTrack)
     
+    /// Called when an incoming call request has been accepted using CallKit system handles.
+    func didAcceptCallRequest() async
+    
     /// The call did start.
     func callDidStart()
     
@@ -170,7 +173,7 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// - Parameter error: Error if the call ended with an error.
     func callDidEnd(withError error: CallManagerError?)
     
-    /// Called when the peer created a new data channel.
+    /// Called when a new data channel is created by the peer or by us before first negotiation.
     /// - Parameter dataChannel: The new data channel.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
     
@@ -218,6 +221,9 @@ protocol CallManager: Sendable {
     /// - Parameter accept: True if we accept it, false if we decline it.
     /// - Throws: An error if answering the call request fails.
     func answerCallRequest(accept: Bool) async throws
+    
+    /// Called when an incoming call request has been accepted using CallKit system handles.
+    func didAcceptCallRequest() async
     
     /// End a running call.
     /// - Throws: An error if ending the call fails.
