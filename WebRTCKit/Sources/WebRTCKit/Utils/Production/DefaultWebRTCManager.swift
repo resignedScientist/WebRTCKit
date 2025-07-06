@@ -791,12 +791,19 @@ private extension DefaultWebRTCManager {
             ] : nil
         )
         
-        let sdp = try await peerConnection.offer(for: offerConstraints)
+        let originalSdp = try await peerConnection.offer(for: offerConstraints)
         
-        try await peerConnection.setLocalDescription(sdp)
+        // Modify SDP to set DTLS setup to active for the caller (initiator)
+        let modifiedSdpString = SDPModifier.modifyDTLSSetup(originalSdp.sdp, setup: .active)
+        let modifiedSdp = SessionDescription(
+            type: originalSdp.type,
+            sdp: modifiedSdpString
+        )
         
-        // encode the offer
-        let offerData = try encoder.encode(sdp)
+        try await peerConnection.setLocalDescription(modifiedSdp)
+        
+        // encode the modified offer
+        let offerData = try encoder.encode(modifiedSdp)
         
         if let offerStr = String(data: offerData, encoding: .utf8) {
             log.debug("Sending offer: \(offerStr)")
@@ -816,11 +823,18 @@ private extension DefaultWebRTCManager {
             optionalConstraints: nil
         )
         
-        let answer = try await peerConnection.answer(for: answerConstraints)
+        let originalAnswer = try await peerConnection.answer(for: answerConstraints)
         
-        try await peerConnection.setLocalDescription(answer)
+        // Modify SDP to set DTLS setup to passive for the callee (non-initiator)
+        let modifiedSdpString = SDPModifier.modifyDTLSSetup(originalAnswer.sdp, setup: .passive)
+        let modifiedAnswer = SessionDescription(
+            type: originalAnswer.type,
+            sdp: modifiedSdpString
+        )
         
-        let answerData = try encoder.encode(answer)
+        try await peerConnection.setLocalDescription(modifiedAnswer)
+        
+        let answerData = try encoder.encode(modifiedAnswer)
         
         if let answerStr = String(data: answerData, encoding: .utf8) {
             log.info("Sending answer: \(answerStr)")
@@ -1044,9 +1058,28 @@ private extension DefaultWebRTCManager {
         }
         
         do {
-            try await peerConnection.setLocalDescription()
-            guard let sdp = peerConnection.localDescription else { return }
-            let signal = try encoder.encode(SessionDescription(from: sdp))
+            // Generate an offer for re-negotiation
+            let offerConstraints = MediaConstraints(
+                mandatoryConstraints: [
+                    kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueTrue,
+                    kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueTrue
+                ],
+                optionalConstraints: nil
+            )
+            
+            let originalSdp = try await peerConnection.offer(for: offerConstraints)
+            
+            // Modify SDP to maintain DTLS setup based on initiator role
+            let dtlsSetup: SDPModifier.DTLSSetup = isInitiator ? .active : .passive
+            let modifiedSdpString = SDPModifier.modifyDTLSSetup(originalSdp.sdp, setup: dtlsSetup)
+            let modifiedSdp = SessionDescription(
+                type: originalSdp.type,
+                sdp: modifiedSdpString
+            )
+            
+            try await peerConnection.setLocalDescription(modifiedSdp)
+            
+            let signal = try encoder.encode(modifiedSdp)
             try await signalingServer.sendSignal(signal, to: remotePeerID)
             configurationChanged = false
             
