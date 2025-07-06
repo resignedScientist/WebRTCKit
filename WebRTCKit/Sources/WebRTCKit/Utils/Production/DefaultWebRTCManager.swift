@@ -848,9 +848,8 @@ private extension DefaultWebRTCManager {
     
     func handleICECandidate(_ candidateData: Data) async {
         
-        guard let peerConnection else { return }
-        
         guard
+            let peerConnection,
             peerConnection.iceGatheringState == .gathering,
             peerConnection.remoteDescription != nil
         else {
