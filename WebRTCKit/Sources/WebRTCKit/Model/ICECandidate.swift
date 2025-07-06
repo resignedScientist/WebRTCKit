@@ -10,7 +10,7 @@ struct ICECandidate: Codable, Equatable {
         self.sdpMLineIndex = rtcCandidate.sdpMLineIndex
         self.sdpMid = rtcCandidate.sdpMid?
             // decrease the network cost of relays
-            .replacingOccurrences(of: "network-cost=900", with: "network-cost=10")
+            .replacingOccurrences(of: "network-cost 900", with: "network-cost 10")
     }
     
     func toRTCIceCandidate() -> RTCIceCandidate {
