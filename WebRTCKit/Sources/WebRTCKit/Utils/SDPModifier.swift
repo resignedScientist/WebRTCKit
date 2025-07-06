@@ -41,9 +41,6 @@ struct SDPModifier {
             modifiedSDP = addSetupAttributeToMediaSections(modifiedSDP, setup: setup)
         }
         
-        // lower the network cost of relays
-        modifiedSDP = modifiedSDP.replacingOccurrences(of: "network-cost=900", with: "network-cost=10")
-        
         return modifiedSDP
     }
     
