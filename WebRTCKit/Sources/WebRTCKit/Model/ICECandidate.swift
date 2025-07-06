@@ -7,8 +7,6 @@ struct ICECandidate: Codable, Equatable {
     
     init(from rtcCandidate: RTCIceCandidate) {
         self.candidate = rtcCandidate.sdp
-            // decrease the network cost of relays
-            .replacingOccurrences(of: "network-cost 900", with: "network-cost 10")
         self.sdpMLineIndex = rtcCandidate.sdpMLineIndex
         self.sdpMid = rtcCandidate.sdpMid
     }
