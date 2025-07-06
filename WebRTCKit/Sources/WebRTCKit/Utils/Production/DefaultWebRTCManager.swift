@@ -609,6 +609,7 @@ private extension DefaultWebRTCManager {
                 tlsEllipticCurves: $0.tlsEllipticCurves
             )
         }
+        rtcConfig.iceTransportPolicy = .relay
         
         guard let peerConnection = factory.peerConnection(
             with: rtcConfig,
