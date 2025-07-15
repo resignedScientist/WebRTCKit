@@ -838,6 +838,7 @@ private extension DefaultWebRTCManager {
             peerConnection.iceGatheringState == .gathering,
             peerConnection.remoteDescription != nil
         else {
+            log.debug("Cached ICE candidate for later use.")
             await cachedICECandidates.store(candidateData)
             return
         }
@@ -863,7 +864,10 @@ private extension DefaultWebRTCManager {
             peerConnection?.iceGatheringState == .gathering,
             peerConnection?.remoteDescription != nil,
             !isProcessingCandidates
-        else { return }
+        else {
+            log.debug("processCachedCandidates - not ready for processing yet; skipping")
+            return
+        }
         
         isProcessingCandidates = true
         
