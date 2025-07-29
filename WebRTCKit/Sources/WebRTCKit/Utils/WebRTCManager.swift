@@ -70,6 +70,11 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
     /// Called when we lost the connection to our peer.
     func didLosePeerConnection()
+    
+    /// We received a message from the signaling server asking us to connect to a peer.
+    ///
+    /// - Parameter remotePeerID: The ID of the remote peer to connect to.
+    func shouldConnect(to remotePeerID: PeerID) async
 }
 
 @WebRTCActor

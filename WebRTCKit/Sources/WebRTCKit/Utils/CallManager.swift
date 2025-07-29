@@ -187,6 +187,15 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// When using manual mode, this tells the delegate the perfect time
     /// to deactivate the audio session.
     func shouldDeactivateAudioSession()
+    
+    /// We received a message from the signaling server asking us to connect to a peer.
+    ///
+    /// - Parameter remotePeerID: The ID of the remote peer to connect to.
+    func shouldConnect(to remotePeerID: PeerID) async
+}
+
+public extension CallManagerDelegate {
+    func shouldConnect(to remotePeerID: PeerID) async {}
 }
 
 extension CallManagerDelegate {

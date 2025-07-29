@@ -379,6 +379,10 @@ extension DefaultWebRTCManager: SignalingServerDelegate {
         delegate?.didReceiveEndCall()
     }
     
+    func shouldConnect(to remotePeerID: PeerID) async {
+        await delegate?.shouldConnect(to: remotePeerID)
+    }
+    
     func socketDidOpen() {
         Task { @WebRTCActor in
             guard

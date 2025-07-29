@@ -299,6 +299,10 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             }
         }
     }
+    
+    func shouldConnect(to remotePeerID: PeerID) async {
+        await delegate?.shouldConnect(to: remotePeerID)
+    }
 }
 
 // MARK: - Private functions
