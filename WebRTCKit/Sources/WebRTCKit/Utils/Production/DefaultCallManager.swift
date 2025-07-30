@@ -28,7 +28,7 @@ final class DefaultCallManager: CallManager {
         self.delegate = delegate
     }
     
-    func setAutoAcceptCall(autoAccept: Bool) async {
+    func setAutoAcceptCalls(autoAccept: Bool) async {
         self.autoAcceptCall = autoAccept
     }
     

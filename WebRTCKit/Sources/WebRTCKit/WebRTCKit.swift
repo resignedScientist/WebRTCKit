@@ -175,6 +175,12 @@ public protocol WebRTCController: AnyObject, Sendable {
     
     /// Finish the configuration. After calling it, the re-negotiation is happening.
     func commitConfiguration() async throws
+    
+    /// Set auto accept of calls. If set to true, incoming connection messages from
+    /// the signaling server are automatically accepted, establishing a connection.
+    ///
+    /// - Parameter autoAccept: Should incoming calls be automatically accepted?
+    func setAutoAcceptCalls(autoAccept: Bool) async
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -276,5 +282,9 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func commitConfiguration() async throws {
         try await container.webRTCManager.commitConfiguration()
+    }
+    
+    func setAutoAcceptCalls(autoAccept: Bool) async {
+        await container.callManager.setAutoAcceptCalls(autoAccept: autoAccept)
     }
 }
