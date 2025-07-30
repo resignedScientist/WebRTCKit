@@ -218,6 +218,12 @@ protocol CallManager: Sendable {
     /// - Parameter delegate: The delegate to handle call events.
     func setDelegate(_ delegate: CallManagerDelegate?)
     
+    /// Set auto accept of calls. If set to true, incoming connection messages from
+    /// the signaling server are automatically accepted, establishing a connection.
+    ///
+    /// - Parameter autoAccept: Should incoming calls be automatically accepted?
+    func setAutoAcceptCall(autoAccept: Bool) async
+    
     /// Called after the DIContainer was initialized and is ready to go.
     func setup() async
     

@@ -12,6 +12,10 @@ final class PreviewCallManager: CallManager {
         self.delegate = delegate
     }
     
+    func setAutoAcceptCall(autoAccept: Bool) async {
+        
+    }
+    
     func setup() {
         
     }

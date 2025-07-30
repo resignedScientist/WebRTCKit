@@ -14,6 +14,7 @@ final class DefaultCallManager: CallManager {
     private let log = Logger(caller: "CallManager")
     
     private var connectionTimeout: Task<Void, Never>?
+    private var autoAcceptCall = false
     
     init(stateHolder: CallManagerStateHolder = CallManagerStateHolderImpl(initialState: .idle)) {
         self.stateHolder = stateHolder
@@ -25,6 +26,10 @@ final class DefaultCallManager: CallManager {
     
     func setDelegate(_ delegate: CallManagerDelegate?) {
         self.delegate = delegate
+    }
+    
+    func setAutoAcceptCall(autoAccept: Bool) async {
+        self.autoAcceptCall = autoAccept
     }
     
     func setup() async {
@@ -190,13 +195,18 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             
             do {
                 try await stateHolder.changeState(to: .receivingCallRequest)
-                try await callProvider.reportIncomingCall(
-                    uuid: UUID(),
-                    handle: peerID,
-                    hasVideo: true
-                )
-                Task.detached { [delegate] in
-                    delegate?.didReceiveIncomingCall(from: peerID)
+                
+                if autoAcceptCall {
+                    try await answerCallRequest(accept: true)
+                } else {
+                    try await callProvider.reportIncomingCall(
+                        uuid: UUID(),
+                        handle: peerID,
+                        hasVideo: true
+                    )
+                    Task.detached { [delegate] in
+                        delegate?.didReceiveIncomingCall(from: peerID)
+                    }
                 }
             } catch let error as CXErrorCodeIncomingCallError {
                 log.error("DidReceiveOffer failed - \(error.code)")
