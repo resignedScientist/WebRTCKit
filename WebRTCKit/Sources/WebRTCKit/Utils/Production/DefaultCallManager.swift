@@ -52,7 +52,11 @@ final class DefaultCallManager: CallManager {
         
         if accept {
             try await stateHolder.changeState(to: .connecting)
-            try await callProvider.acceptIncomingCall()
+            if autoAcceptCall {
+                try await webRTCManager.answerCall()
+            } else {
+                try await callProvider.acceptIncomingCall()
+            }
             startConnectionTimeout()
         } else {
             try await endCall()
