@@ -213,7 +213,12 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     func disconnect() async {
         
         // skip if already disconnected
-        guard peerConnection != nil else { return }
+        guard peerConnection != nil else {
+            log.info("Disconnect() called, but we are already disconnected.")
+            return
+        }
+        
+        log.info("Disconnecting…")
         
         peerConnection?.close()
         peerConnection = nil
