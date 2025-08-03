@@ -200,6 +200,8 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             do {
                 try await stateHolder.changeState(to: .receivingCallRequest)
                 
+                delegate?.didReceiveIncomingCall(from: peerID)
+                
                 if autoAcceptCall {
                     try await answerCallRequest(accept: true)
                 } else {
@@ -208,9 +210,6 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                         handle: peerID,
                         hasVideo: true
                     )
-                    Task.detached { [delegate] in
-                        delegate?.didReceiveIncomingCall(from: peerID)
-                    }
                 }
             } catch let error as CXErrorCodeIncomingCallError {
                 log.error("DidReceiveOffer failed - \(error.code)")
