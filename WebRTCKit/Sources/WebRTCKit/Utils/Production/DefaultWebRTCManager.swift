@@ -70,7 +70,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) async {
         self.isInitialVideoEnabled = enabled
         self.initialImageSize = imageSize
-        self.localVideoTrack = try? await makeVideoTrack(videoCapturer: videoCapturer)
+        if enabled {
+            self.localVideoTrack = try? await makeVideoTrack(videoCapturer: videoCapturer)
+        } else {
+            self.localVideoTrack = nil
+        }
     }
     
     @discardableResult
