@@ -39,11 +39,15 @@ final class DefaultCallManager: CallManager {
     func sendCallRequest(to peerID: PeerID) async throws {
         log.info("Sending call request…")
         try await stateHolder.changeState(to: .sendingCallRequest)
-        try await callProvider.startOutgoingCall(
-            uuid: UUID(),
-            handle: peerID,
-            hasVideo: true
-        )
+        if autoAcceptCall {
+            try await webRTCManager.startVideoCall(to: peerID)
+        } else {
+            try await callProvider.startOutgoingCall(
+                uuid: UUID(),
+                handle: peerID,
+                hasVideo: true
+            )
+        }
         startConnectionTimeout()
     }
     
@@ -70,7 +74,11 @@ final class DefaultCallManager: CallManager {
     func endCall() async throws {
         log.info("Ending call…")
         try await stateHolder.changeState(to: .endingCall)
-        try await callProvider.endCall()
+        if autoAcceptCall {
+            try await webRTCManager.stopVideoCall()
+        } else {
+            try await callProvider.endCall()
+        }
         stopConnectionTimeout()
     }
     
@@ -154,7 +162,11 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             
             do {
                 try await stateHolder.changeState(to: .endingCall)
-                try await callProvider.endCall()
+                if autoAcceptCall {
+                    try await webRTCManager.stopVideoCall()
+                } else {
+                    try await callProvider.endCall()
+                }
                 stopConnectionTimeout()
             } catch {
                 log.error("DidReceiveEndCall failed - \(error)")
@@ -225,7 +237,11 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             log.error("onError - \(error)")
             
             do {
-                try await callProvider.endCall()
+                if autoAcceptCall {
+                    try await webRTCManager.stopVideoCall()
+                } else {
+                    try await callProvider.endCall()
+                }
                 try await stateHolder.changeState(to: .idle)
                 Task.detached { [delegate] in
                     delegate?.callDidEnd(withError: .webRTCManagerError(error))
