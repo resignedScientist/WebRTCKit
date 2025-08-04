@@ -1,8 +1,8 @@
 import WebRTC
 
 public struct DataChannelSetup: Sendable {
-    let label: String
-    let configuration: DataChannelConfiguration
+    public let label: String
+    public let configuration: DataChannelConfiguration
     
     var rtcConfig: RTCDataChannelConfiguration {
         configuration.toRTCConfiguration()
