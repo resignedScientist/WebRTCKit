@@ -3,7 +3,7 @@ import PushKit
 public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
     
     private let log = Logger(caller: "VoIPPushHandler")
-    private let pushRegistry = PKPushRegistry(queue: WebRTCActor.queue)
+    private let pushRegistry = PKPushRegistry(queue: .main)
     private let store: PushCredentialStoring
     
     private weak var delegate: VoIPPushHandlerDelegate?
