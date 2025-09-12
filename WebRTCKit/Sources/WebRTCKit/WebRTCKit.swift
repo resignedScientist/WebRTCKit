@@ -31,7 +31,7 @@ public struct WebRTCKit {
                 )
             ),
             callProvider: DefaultVoIPCallProvider(),
-            pushHandler: DefaultVoIPPushHandler(),
+            pushHandler: DefaultVoIPPushHandler(store: PushCredentialStore()),
             signalingServer: signalingServer,
             callManager: DefaultCallManager(),
             networkMonitor: DefaultNetworkMonitor(),

@@ -2,6 +2,10 @@ import PushKit
 
 final class PreviewVoIPPushHandler: NSObject, VoIPPushHandler {
     
+    func setDelegate(_ delegate: any VoIPPushHandlerDelegate) {
+        
+    }
+    
     func register() {
         
     }
