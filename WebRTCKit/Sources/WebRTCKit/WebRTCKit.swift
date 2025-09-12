@@ -191,6 +191,11 @@ public protocol WebRTCController: AnyObject, Sendable {
     ///
     /// - Parameter autoAccept: Should incoming calls be automatically accepted?
     func setAutoAcceptCalls(autoAccept: Bool) async
+    
+    /// Report an incoming call.
+    ///
+    /// - Parameter peerID: The ID of the remote peer that is calling.
+    func reportIncomingCall(from peerID: PeerID) async throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -299,5 +304,13 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func setAutoAcceptCalls(autoAccept: Bool) async {
         await container.callManager.setAutoAcceptCalls(autoAccept: autoAccept)
+    }
+    
+    func reportIncomingCall(from peerID: PeerID) async throws {
+        try await container.callProvider.reportIncomingCall(
+            uuid: UUID(),
+            handle: peerID,
+            hasVideo: true
+        )
     }
 }
