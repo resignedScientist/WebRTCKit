@@ -42,7 +42,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         for type: PKPushType
     ) {
         
-        log.debug("🪲 Did update push credentials for type '\(type)'")
+        log.debug("Did update push credentials for type '\(type)'")
         
         let credentials = PushCredentials(credentials: pushCredentials)
         Task {
@@ -56,7 +56,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         for type: PKPushType
     ) async {
         
-        log.debug("🪲 Did receive incoming push notification of type '\(type)'")
+        log.debug("Did receive incoming push notification of type '\(type)'")
         
         do {
             let pushPayload = try PushPayload(payload: payload)
