@@ -8,6 +8,7 @@ struct DIContainer: Sendable {
     let webRTCManager: WebRTCManager
     let callProvider: VoIPCallProvider
     let pushHandler: VoIPPushHandler
+    let pushCredentialProvider: PushCredentialProviding
     let signalingServer: SignalingServerConnection
     let callManager: CallManager
     let networkMonitor: NetworkMonitor
@@ -19,6 +20,7 @@ struct DIContainer: Sendable {
         webRTCManager: WebRTCManager,
         callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
+        pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
         callManager: CallManager,
         networkMonitor: NetworkMonitor,
@@ -29,6 +31,7 @@ struct DIContainer: Sendable {
         self.webRTCManager = webRTCManager
         self.callProvider = callProvider
         self.pushHandler = pushHandler
+        self.pushCredentialProvider = pushCredentialProvider
         self.signalingServer = signalingServer
         self.callManager = callManager
         self.networkMonitor = networkMonitor
@@ -41,6 +44,7 @@ struct DIContainer: Sendable {
         webRTCManager: WebRTCManager,
         callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
+        pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
         callManager: CallManager,
         networkMonitor: NetworkMonitor,
@@ -52,6 +56,7 @@ struct DIContainer: Sendable {
             webRTCManager: webRTCManager,
             callProvider: callProvider,
             pushHandler: pushHandler,
+            pushCredentialProvider: pushCredentialProvider,
             signalingServer: signalingServer,
             callManager: callManager,
             networkMonitor: networkMonitor,

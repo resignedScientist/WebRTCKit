@@ -23,6 +23,7 @@ public struct WebRTCKit {
         loggerDelegate: LoggerDelegate? = nil
     ) async -> WebRTCController {
         
+        let pushCredentialStore = PushCredentialStore()
         let container = DIContainer.create(
             config: config,
             webRTCManager: DefaultWebRTCManager(
@@ -31,7 +32,8 @@ public struct WebRTCKit {
                 )
             ),
             callProvider: DefaultVoIPCallProvider(),
-            pushHandler: DefaultVoIPPushHandler(store: PushCredentialStore()),
+            pushHandler: DefaultVoIPPushHandler(store: pushCredentialStore),
+            pushCredentialProvider: pushCredentialStore,
             signalingServer: signalingServer,
             callManager: DefaultCallManager(),
             networkMonitor: DefaultNetworkMonitor(),
@@ -51,11 +53,13 @@ public struct WebRTCKit {
     /// Initialize the framework for testing or previews using mock classes.
     public static func initializeForTesting() -> WebRTCController {
         
+        let pushCredentialStore = PushCredentialStore()
         let container = DIContainer.create(
             config: .preview,
             webRTCManager: PreviewWebRTCManager(),
             callProvider: PreviewVoIPCallProvider(),
             pushHandler: PreviewVoIPPushHandler(),
+            pushCredentialProvider: pushCredentialStore,
             signalingServer: PreviewSignalingServerConnection(),
             callManager: PreviewCallManager(),
             networkMonitor: PreviewNetworkMonitor(),
@@ -72,6 +76,7 @@ public struct WebRTCKit {
         webRTCManager: WebRTCManager,
         callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
+        pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
         callManager: CallManager,
         networkMonitor: NetworkMonitor
@@ -82,6 +87,7 @@ public struct WebRTCKit {
             webRTCManager: webRTCManager,
             callProvider: callProvider,
             pushHandler: pushHandler,
+            pushCredentialProvider: pushCredentialProvider,
             signalingServer: signalingServer,
             callManager: callManager,
             networkMonitor: networkMonitor,
