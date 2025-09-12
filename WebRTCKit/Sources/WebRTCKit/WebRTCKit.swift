@@ -105,6 +105,10 @@ public struct WebRTCKit {
 @WebRTCActor
 public protocol WebRTCController: AnyObject, Sendable {
     
+    var voipPushHandler: VoIPPushHandler { get }
+    
+    var pushCredentialProvider: PushCredentialProviding { get }
+    
     /// Set the delegate to handle calls and receive audio & video streams.
     ///
     /// - Parameter delegate: The delegate to handle calls and receive audio & video streams.
@@ -192,6 +196,9 @@ public protocol WebRTCController: AnyObject, Sendable {
 final class WebRTCControllerImpl: WebRTCController {
     
     private let container: DIContainer
+    
+    var voipPushHandler: VoIPPushHandler { container.pushHandler }
+    var pushCredentialProvider: PushCredentialProviding { container.pushCredentialProvider }
     
     init(container: DIContainer) {
         self.container = container
