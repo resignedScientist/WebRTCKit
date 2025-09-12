@@ -13,6 +13,17 @@ public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
         super.init()
         pushRegistry.delegate = self
         pushRegistry.desiredPushTypes = [.voIP]
+        if let token = pushRegistry.pushToken(for: .voIP) {
+            log.info("Saving VoIP Push token")
+            Task {
+                await store.store(
+                    credentials: PushCredentials(
+                        token: token,
+                        type: .voIP
+                    )
+                )
+            }
+        }
         log.info("Registered for receiving VoIP push notifications.")
     }
     
