@@ -84,7 +84,6 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
                 } else {
                     Task { @WebRTCActor in
                         do {
-                            try await DIContainer.shared?.callManager.reportIncomingVoIPCall()
                             try DIContainer.shared?.callProvider.setCurrentCallID(callId)
                             self?.delegate?.didReceivePushNotification(payload: pushPayload)
                         } catch {
