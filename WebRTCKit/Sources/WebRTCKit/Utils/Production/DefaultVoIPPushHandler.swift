@@ -62,9 +62,9 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
     public nonisolated func pushRegistry(
         _ registry: PKPushRegistry,
         didReceiveIncomingPushWith payload: PKPushPayload,
-        for type: PKPushType
-    ) async {
-        
+        for type: PKPushType,
+        completion: @escaping @Sendable () -> Void
+    ) {
         log.debug("Did receive incoming push notification of type '\(type)'")
         
         do {
@@ -77,7 +77,14 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             update.remoteHandle = CXHandle(type: .generic, value: handle)
             update.hasVideo = true
             
-            try await provider.reportNewIncomingCall(with: UUID(), update: update)
+            provider.reportNewIncomingCall(with: UUID(), update: update) { [log] error in
+                if let error {
+                    log.error("Failed to report incoming call - \(error)")
+                } else {
+                    log.debug("Incoming call reported!")
+                }
+                completion()
+            }
             
             log.debug("Incoming call reported!")
             
@@ -94,8 +101,10 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             let uuid = UUID()
             
             // we must always report the call; due to failure, we immediately end it
-            try? await provider.reportNewIncomingCall(with: uuid, update: update)
-            provider.reportCall(with: uuid, endedAt: .now, reason: .failed)
+            provider.reportNewIncomingCall(with: UUID(), update: update) { [provider] _ in
+                completion()
+                provider.reportCall(with: uuid, endedAt: .now, reason: .failed)
+            }
         }
     }
 }
