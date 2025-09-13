@@ -10,6 +10,10 @@ enum CallProviderError: Error {
 
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
+    private let webRTCManager: WebRTCManager
+    private let callManager: CallManager
+    private let manualAudioMode: Bool
+    
     private let provider: WRKCXProvider
     private let callController: WRKCallController
     private var rtcAudioSession: WRKRTCAudioSession!
@@ -23,21 +27,6 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private var doNotDisturbIsEnabled = false
     private var isEndingCall = false
     
-    @WebRTCActor
-    private func webRTCManager() -> WebRTCManager {
-        DIContainer.shared!.webRTCManager
-    }
-    
-    @WebRTCActor
-    private func callManager() -> CallManager {
-        DIContainer.shared!.callManager
-    }
-    
-    @WebRTCActor
-    private func manualAudioMode() -> Bool {
-        DIContainer.shared!.config.manualAudioMode
-    }
-    
     init(
         provider: WRKCXProvider = {
             let configuration = CXProviderConfiguration()
@@ -49,21 +38,22 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     ) async {
         self.provider = provider
         self.callController = callController
-        
-        let rtcAudioSession = await {
-            if let rtcAudioSession {
-                return rtcAudioSession
-            }
-            return await WRKRTCAudioSessionImpl.sharedInstance
-        }()
         self.rtcAudioSession = rtcAudioSession
+        
+        let container = await DIContainer.shared!
+        self.webRTCManager = container.webRTCManager
+        self.callManager = container.callManager
+        self.manualAudioMode = container.config.manualAudioMode
         
         super.init()
         
         provider.setDelegate(self)
         
-        await rtcAudioSession.add(self)
-        await rtcAudioSession.setManualAudio(true)
+        Task { @WebRTCActor in
+            let audioSession = rtcAudioSession ?? WRKRTCAudioSessionImpl.sharedInstance
+            audioSession.add(self)
+            audioSession.useManualAudio = true
+        }
     }
     
     func reportIncomingCall(
@@ -268,9 +258,9 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         
         let peerID = action.handle.value
         do {
-            let localPeerID = try await webRTCManager().setup()
+            let localPeerID = try await webRTCManager.setup()
             setLocalPeerID(localPeerID)
-            try await webRTCManager().startVideoCall(to: peerID)
+            try await webRTCManager.startVideoCall(to: peerID)
             action.fulfill()
             startCallHandler?(nil)
         } catch {
@@ -284,8 +274,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("Answer call action received.")
         
         do {
-            await callManager().didAcceptCallRequest()
-            try await webRTCManager().answerCall()
+            await callManager.didAcceptCallRequest()
+            try await webRTCManager.answerCall()
             action.fulfill()
             answerCallHandler?(nil)
         } catch {
@@ -317,7 +307,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("End call action received.")
         
         do {
-            try await webRTCManager().stopVideoCall()
+            try await webRTCManager.stopVideoCall()
             action.fulfill()
             endCallHandler?(nil)
         } catch {
@@ -328,9 +318,9 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
-        if await manualAudioMode() {
+        if manualAudioMode {
             log.info("Should activate audio session")
-            await callManager().shouldActivateAudioSession()
+            await callManager.shouldActivateAudioSession()
             await rtcAudioSession.setAudioEnabled(true)
         } else {
             log.info("Activating audio session…")
@@ -339,9 +329,9 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     }
     
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
-        if (await manualAudioMode()) {
+        if (manualAudioMode) {
             log.info("Should deactivate audio session")
-            await callManager().shouldDeactivateAudioSession()
+            await callManager.shouldDeactivateAudioSession()
             await rtcAudioSession.setAudioEnabled(false)
         } else {
             log.info("Deactivating audio session…")
