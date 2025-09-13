@@ -1,6 +1,6 @@
 import CallKit
 
-@WebRTCActor
+@MainActor
 protocol WRKCallController: AnyObject, Sendable {
     
     func request(_ transaction: CXTransaction) async throws
@@ -42,7 +42,7 @@ private extension CXCallController {
     }
 }
 
-@WebRTCActor
+@MainActor
 protocol CallAction: Sendable {
     
 }

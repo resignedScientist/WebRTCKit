@@ -10,9 +10,9 @@ enum CallProviderError: Error {
 
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
-    @Inject(\.webRTCManager) private var webRTCManager
-    @Inject(\.callManager) private var callManager
-    @Inject(\.config.manualAudioMode) private var manualAudioMode
+    private let webRTCManager: WebRTCManager
+    private let callManager: CallManager
+    private let manualAudioMode: Bool
     
     private let provider: WRKCXProvider
     private let callController: WRKCallController
@@ -34,17 +34,26 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
             return WRKCXProvider(configuration: configuration)
         }(),
         callController: WRKCallController = WRKCallControllerImpl(CXCallController()),
-        rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl.sharedInstance
-    ) {
+        rtcAudioSession: WRKRTCAudioSession? = nil
+    ) async {
         self.provider = provider
         self.callController = callController
         self.rtcAudioSession = rtcAudioSession
         
+        let container = await DIContainer.shared!
+        self.webRTCManager = container.webRTCManager
+        self.callManager = container.callManager
+        self.manualAudioMode = container.config.manualAudioMode
+        
         super.init()
         
         provider.setDelegate(self)
-        rtcAudioSession.add(self)
-        rtcAudioSession.useManualAudio = true
+        
+        Task { @WebRTCActor in
+            let audioSession = rtcAudioSession ?? WRKRTCAudioSessionImpl.sharedInstance
+            audioSession.add(self)
+            audioSession.useManualAudio = true
+        }
     }
     
     func reportIncomingCall(
@@ -311,8 +320,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     func provider(_ provider: WRKCXProvider, didActivate audioSession: AVAudioSession) async {
         if manualAudioMode {
             log.info("Should activate audio session")
-            callManager.shouldActivateAudioSession()
-            rtcAudioSession.isAudioEnabled = true
+            await callManager.shouldActivateAudioSession()
+            await rtcAudioSession.setAudioEnabled(true)
         } else {
             log.info("Activating audio session…")
             await activateAudioSession()
@@ -322,8 +331,8 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
     func provider(_ provider: WRKCXProvider, didDeactivate audioSession: AVAudioSession) async {
         if (manualAudioMode) {
             log.info("Should deactivate audio session")
-            callManager.shouldDeactivateAudioSession()
-            rtcAudioSession.isAudioEnabled = false
+            await callManager.shouldDeactivateAudioSession()
+            await rtcAudioSession.setAudioEnabled(false)
         } else {
             log.info("Deactivating audio session…")
             await deactivateAudioSession()
@@ -363,17 +372,17 @@ private extension DefaultVoIPCallProvider {
         self.localPeerID = localPeerID
     }
     
-    func overrideAudioToSpeaker(_ session: WRKRTCAudioSession) {
-        session.lockForConfiguration()
+    func overrideAudioToSpeaker(_ session: WRKRTCAudioSession) async {
+        await session.lockForConfiguration()
         
         do {
-            try session.overrideOutputAudioPort(.speaker)
+            try await session.overrideOutputAudioPort(.speaker)
             log.info("Overwritten audio port to speaker.")
         } catch {
             log.error("Failed to override output audio port to speaker - \(error)")
         }
         
-        session.unlockForConfiguration()
+        await session.unlockForConfiguration()
     }
     
     func activateAudioSession() async {
@@ -387,11 +396,11 @@ private extension DefaultVoIPCallProvider {
     }
     
     func setupAudioConfiguration() async {
-        rtcAudioSession.lockForConfiguration()
+        await rtcAudioSession.lockForConfiguration()
         
         let configuration = RTCAudioSessionConfiguration.webRTC()
         configuration.categoryOptions = [
-            .allowBluetooth,
+            .allowBluetoothHFP,
             .allowBluetoothA2DP,
             .allowAirPlay,
             .defaultToSpeaker,
@@ -399,13 +408,13 @@ private extension DefaultVoIPCallProvider {
         ]
         
         do {
-            try rtcAudioSession.setConfiguration(configuration)
+            try await rtcAudioSession.setConfiguration(configuration)
             log.info("Successfully configured audio session.")
         } catch {
             log.error("Failed to configure audio session: \(error)")
         }
         
-        rtcAudioSession.unlockForConfiguration()
+        await rtcAudioSession.unlockForConfiguration()
     }
     
     func resetAudioConfiguration() {
@@ -424,11 +433,11 @@ private extension DefaultVoIPCallProvider {
     }
     
     func setAudioSessionActive(_ active: Bool) async {
-        rtcAudioSession.lockForConfiguration()
+        await rtcAudioSession.lockForConfiguration()
         
         do {
-            try rtcAudioSession.setActive(active)
-            rtcAudioSession.isAudioEnabled = active
+            try await rtcAudioSession.setActive(active)
+            await rtcAudioSession.setAudioEnabled(active)
             if active {
                 log.info("Successfully activated audio session.")
             } else {
@@ -438,6 +447,6 @@ private extension DefaultVoIPCallProvider {
             log.error("Failed to set audio session active (\(active)): \(error)")
         }
         
-        rtcAudioSession.unlockForConfiguration()
+        await rtcAudioSession.unlockForConfiguration()
     }
 }

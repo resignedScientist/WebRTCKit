@@ -24,7 +24,7 @@ public struct WebRTCKit {
     ) async -> WebRTCController {
         
         let pushCredentialStore = PushCredentialStore()
-        let container = DIContainer.create(
+        let container = await DIContainer.create(
             config: config,
             webRTCManager: DefaultWebRTCManager(
                 factory: WRKRTCPeerConnectionFactoryImpl(
@@ -195,12 +195,13 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// Report an incoming call.
     ///
     /// - Parameter peerID: The ID of the remote peer that is calling.
+    @MainActor
     func reportIncomingCall(from peerID: PeerID) async throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
     
-    private let container: DIContainer
+    @MainActor private let container: DIContainer
     
     var voipPushHandler: VoIPPushHandler { container.pushHandler }
     var pushCredentialProvider: PushCredentialProviding { container.pushCredentialProvider }
