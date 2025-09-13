@@ -71,13 +71,14 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             
             let pushPayload = try PushPayload(payload: payload)
             let parsedPayload = try parser.parse(pushPayload)
+            let callId = parsedPayload.callId
             let handle = parsedPayload.handle
             
             let update = CXCallUpdate()
             update.remoteHandle = CXHandle(type: .generic, value: handle)
             update.hasVideo = true
             
-            provider.reportNewIncomingCall(with: UUID(), update: update) { [log] error in
+            provider.reportNewIncomingCall(with: callId, update: update) { [log] error in
                 if let error {
                     log.error("Failed to report incoming call - \(error)")
                 } else {
