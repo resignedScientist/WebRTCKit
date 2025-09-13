@@ -77,7 +77,11 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             update.remoteHandle = CXHandle(type: .generic, value: handle)
             update.hasVideo = true
             
+            log.debug("Reporting incoming call to call provider…")
+            
             try await provider.reportNewIncomingCall(with: UUID(), update: update)
+            
+            log.debug("…incoming call reported!")
             
             Task { @WebRTCActor in
                 delegate?.didReceivePushNotification(payload: pushPayload)
