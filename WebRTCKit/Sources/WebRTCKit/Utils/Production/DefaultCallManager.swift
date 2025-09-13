@@ -83,7 +83,9 @@ final class DefaultCallManager: CallManager {
     }
     
     func onEndCallAction(callId: UUID) async throws {
-        await delegate?.didDeclineCallRequest()
+        if await stateHolder.getState() == .receivingCallRequest {
+            await delegate?.didDeclineCallRequest()
+        }
         try await webRTCManager.stopVideoCall()
     }
     
