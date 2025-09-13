@@ -60,7 +60,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         
         do {
             let pushPayload = try PushPayload(payload: payload)
-            Task { @WebRTCActor in
+            Task { @MainActor in
                 delegate?.didReceivePushNotification(payload: pushPayload)
             }
         } catch {
