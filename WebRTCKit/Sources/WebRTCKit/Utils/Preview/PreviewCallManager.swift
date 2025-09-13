@@ -32,7 +32,15 @@ final class PreviewCallManager: CallManager {
         
     }
     
-    func didAcceptCallRequest() async {
+    func onStartCallAction(to remotePeerID: PeerID) async throws {
+        
+    }
+    
+    func onAnswerCallAction() async throws {
+        
+    }
+    
+    func onEndCallAction() async throws {
         
     }
     

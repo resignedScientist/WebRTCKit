@@ -239,8 +239,11 @@ protocol CallManager: Sendable {
     /// - Throws: An error if answering the call request fails.
     func answerCallRequest(accept: Bool) async throws
     
-    /// Called when an incoming call request has been accepted using CallKit system handles.
-    func didAcceptCallRequest() async
+    func onStartCallAction(to remotePeerID: PeerID) async throws
+    
+    func onAnswerCallAction() async throws
+    
+    func onEndCallAction() async throws
     
     /// End a running call.
     /// - Throws: An error if ending the call fails.

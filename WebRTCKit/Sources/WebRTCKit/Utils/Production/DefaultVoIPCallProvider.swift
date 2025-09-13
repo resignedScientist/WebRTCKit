@@ -10,7 +10,6 @@ enum CallProviderError: Error {
 
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
-    @Inject(\.webRTCManager) private var webRTCManager
     @Inject(\.callManager) private var callManager
     @Inject(\.config.manualAudioMode) private var manualAudioMode
     
@@ -19,7 +18,6 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private var rtcAudioSession: WRKRTCAudioSession!
     private let log = Logger(caller: "VoIPCallProvider")
     
-    private var localPeerID: PeerID?
     private var currentCallID: UUID?
     private var startCallHandler: (@Sendable (Error?) -> Void)?
     private var endCallHandler: (@Sendable (Error?) -> Void)?
@@ -252,9 +250,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         
         let peerID = action.handle.value
         do {
-            let localPeerID = try await webRTCManager.setup()
-            setLocalPeerID(localPeerID)
-            try await webRTCManager.startVideoCall(to: peerID)
+            try await callManager.onStartCallAction(to: peerID)
             action.fulfill()
             startCallHandler?(nil)
         } catch {
@@ -268,8 +264,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("Answer call action received.")
         
         do {
-            await callManager.didAcceptCallRequest()
-            try await webRTCManager.answerCall()
+            try await callManager.onAnswerCallAction()
             action.fulfill()
             answerCallHandler?(nil)
         } catch {
@@ -301,7 +296,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("End call action received.")
         
         do {
-            try await webRTCManager.stopVideoCall()
+            try await callManager.onEndCallAction()
             action.fulfill()
             endCallHandler?(nil)
         } catch {
@@ -360,10 +355,6 @@ private extension DefaultVoIPCallProvider {
     
     func setEndCallHandler(_ endCallHandler: @escaping @Sendable (Error?) -> Void) {
         self.endCallHandler = endCallHandler
-    }
-    
-    func setLocalPeerID(_ localPeerID: PeerID) {
-        self.localPeerID = localPeerID
     }
     
     func overrideAudioToSpeaker(_ session: WRKRTCAudioSession) {
