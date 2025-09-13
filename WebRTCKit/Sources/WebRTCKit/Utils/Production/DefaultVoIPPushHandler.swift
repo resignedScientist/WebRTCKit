@@ -78,20 +78,19 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             update.remoteHandle = CXHandle(type: .generic, value: handle)
             update.hasVideo = true
             
-            provider.reportNewIncomingCall(with: callId, update: update) { [log] error in
+            provider.reportNewIncomingCall(with: callId, update: update) { [log, weak self] error in
                 if let error {
                     log.error("Failed to report incoming call - \(error)")
                 } else {
                     log.debug("Incoming call reported!")
+                    Task { @WebRTCActor in
+                        DIContainer.shared?.callProvider.setCurrentCallID(callId)
+                        self?.delegate?.didReceivePushNotification(payload: pushPayload)
+                    }
                 }
                 completion()
             }
             
-            log.debug("Incoming call reported!")
-            
-            Task { @WebRTCActor in
-                delegate?.didReceivePushNotification(payload: pushPayload)
-            }
         } catch {
             log.error("didReceiveIncomingPush failed - \(error)")
             

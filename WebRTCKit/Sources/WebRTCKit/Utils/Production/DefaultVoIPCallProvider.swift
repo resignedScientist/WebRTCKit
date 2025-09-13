@@ -230,6 +230,13 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         }
         #endif
     }
+    
+    func setCurrentCallID(_ id: UUID) throws {
+        guard currentCallID == nil else {
+            throw CallProviderError.multipleReportedCalls
+        }
+        currentCallID = id
+    }
 }
 
 // MARK: - CXProviderDelegate

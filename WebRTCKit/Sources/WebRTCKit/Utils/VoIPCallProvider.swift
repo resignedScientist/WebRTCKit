@@ -43,4 +43,10 @@ protocol VoIPCallProvider: Sendable {
     /// Ends an active call, terminating communication.
     /// - Throws: An error if the call cannot be ended.
     func endCall() async throws
+    
+    /// Set the current call ID.
+    ///
+    /// Used when receiving a call by VoIP push notification.
+    /// - Parameter id: A unique identifier for the call.
+    func setCurrentCallID(_ id: UUID)
 }
