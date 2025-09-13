@@ -65,7 +65,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         for type: PKPushType
     ) async {
         
-//        log.debug("Did receive incoming push notification of type '\(type)'")
+        log.debug("Did receive incoming push notification of type '\(type)'")
         
         do {
             
@@ -77,17 +77,25 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             update.remoteHandle = CXHandle(type: .generic, value: handle)
             update.hasVideo = true
             
-//            log.debug("Reporting incoming call to call provider…")
-            
             try await provider.reportNewIncomingCall(with: UUID(), update: update)
             
-            log.debug("…incoming call reported!")
+            log.debug("Incoming call reported!")
             
             Task { @WebRTCActor in
                 delegate?.didReceivePushNotification(payload: pushPayload)
             }
         } catch {
             log.error("didReceiveIncomingPush failed - \(error)")
+            
+            let update = CXCallUpdate()
+            update.remoteHandle = CXHandle(type: .generic, value: "Unknown Caller")
+            update.hasVideo = true
+            
+            let uuid = UUID()
+            
+            // we must always report the call; due to failure, we immediately end it
+            try? await provider.reportNewIncomingCall(with: uuid, update: update)
+            provider.reportCall(with: uuid, endedAt: .now, reason: .failed)
         }
     }
 }
