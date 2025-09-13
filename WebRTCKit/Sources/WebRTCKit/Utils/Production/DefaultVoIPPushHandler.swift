@@ -69,10 +69,9 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         
         do {
             
-//            let pushPayload = try PushPayload(payload: payload)
-//            let parsedPayload = try parser.parse(pushPayload)
-//            let handle = parsedPayload.handle
-            let handle = "Unknown Caller"
+            let pushPayload = try PushPayload(payload: payload)
+            let parsedPayload = try parser.parse(pushPayload)
+            let handle = parsedPayload.handle
             
             let update = CXCallUpdate()
             update.remoteHandle = CXHandle(type: .generic, value: handle)
@@ -82,9 +81,9 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             
             log.debug("Incoming call reported!")
             
-//            Task { @WebRTCActor in
-//                delegate?.didReceivePushNotification(payload: pushPayload)
-//            }
+            Task { @WebRTCActor in
+                delegate?.didReceivePushNotification(payload: pushPayload)
+            }
         } catch {
             log.error("didReceiveIncomingPush failed - \(error)")
             
