@@ -1,7 +1,7 @@
 import AVKit
 import CallKit
 
-@MainActor
+@WebRTCActor
 final class WRKCXProvider: NSObject, Sendable {
     private let provider: CXProvider
     private weak var delegate: CallProviderDelegate?
@@ -112,7 +112,6 @@ struct CallHandle: Sendable {
 
 // MARK: -
 
-@MainActor
 protocol CallProviderDelegate: AnyObject, Sendable {
     
     func providerDidReset(_ provider: WRKCXProvider) async

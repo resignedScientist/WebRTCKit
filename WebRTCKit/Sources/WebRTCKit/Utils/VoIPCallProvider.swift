@@ -9,7 +9,7 @@ import WebRTC
 ///
 /// This is needed to communicate with the system to make it act like a usual call
 /// including the call UI the user is used to.
-@MainActor
+@WebRTCActor
 protocol VoIPCallProvider: Sendable {
     
     /// Reports an incoming call to the system, allowing the user to accept or deny the call.

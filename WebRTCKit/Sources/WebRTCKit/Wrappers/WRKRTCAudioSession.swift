@@ -49,8 +49,6 @@ protocol WRKRTCAudioSession: AnyObject, Sendable {
     func add(_ delegate: WRKRTCAudioSessionDelegate)
     
     func overrideOutputAudioPort(_ portOverride: AVAudioSession.PortOverride) throws
-    
-    func setAudioEnabled(_ enabled: Bool)
 }
 
 final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
@@ -118,10 +116,6 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
     
     func overrideOutputAudioPort(_ portOverride: AVAudioSession.PortOverride) throws {
         try _audioSession.overrideOutputAudioPort(portOverride)
-    }
-    
-    func setAudioEnabled(_ enabled: Bool) {
-        isAudioEnabled = enabled
     }
 }
 
