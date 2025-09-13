@@ -178,7 +178,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func stopVideoCall() async throws {
-        guard peerConnection != nil else { return }
+        guard peerConnection != nil else {
+            delegate?.callDidEnd()
+            return
+        }
         
         log.info("Stopping video call…")
         

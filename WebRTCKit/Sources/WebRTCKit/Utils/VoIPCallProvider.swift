@@ -48,5 +48,5 @@ protocol VoIPCallProvider: Sendable {
     ///
     /// Used when receiving a call by VoIP push notification.
     /// - Parameter id: A unique identifier for the call.
-    func setCurrentCallID(_ id: UUID)
+    func setCurrentCallID(_ id: UUID) throws
 }

@@ -20,6 +20,10 @@ final class PreviewCallManager: CallManager {
         
     }
     
+    func reportIncomingVoIPCall() async throws {
+        
+    }
+    
     func sendCallRequest(to peerID: PeerID) async throws {
         
     }

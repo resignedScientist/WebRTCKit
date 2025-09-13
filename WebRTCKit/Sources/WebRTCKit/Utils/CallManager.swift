@@ -227,6 +227,8 @@ protocol CallManager: Sendable {
     /// Called after the DIContainer was initialized and is ready to go.
     func setup() async
     
+    func reportIncomingVoIPCall() async throws
+    
     /// Call another peer.
     /// - Parameter peerID: The ID of the peer to call.
     /// - Throws: An error if the call request fails.

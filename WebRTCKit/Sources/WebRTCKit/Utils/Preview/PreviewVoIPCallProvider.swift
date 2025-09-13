@@ -17,4 +17,8 @@ final class PreviewVoIPCallProvider: VoIPCallProvider {
     func endCall() async throws {
         
     }
+    
+    func setCurrentCallID(_ id: UUID) throws {
+        
+    }
 }

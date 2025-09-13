@@ -36,6 +36,10 @@ final class DefaultCallManager: CallManager {
         webRTCManager.setDelegate(self)
     }
     
+    func reportIncomingVoIPCall() async throws {
+        try await stateHolder.changeState(to: .receivingCallRequest)
+    }
+    
     func sendCallRequest(to peerID: PeerID) async throws {
         log.info("Sending call request…")
         try await stateHolder.changeState(to: .sendingCallRequest)
