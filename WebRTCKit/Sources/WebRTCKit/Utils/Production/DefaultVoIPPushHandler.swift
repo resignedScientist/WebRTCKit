@@ -65,7 +65,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         for type: PKPushType
     ) async {
         
-        log.debug("Did receive incoming push notification of type '\(type)'")
+//        log.debug("Did receive incoming push notification of type '\(type)'")
         
         do {
             
@@ -77,7 +77,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             update.remoteHandle = CXHandle(type: .generic, value: handle)
             update.hasVideo = true
             
-            log.debug("Reporting incoming call to call provider…")
+//            log.debug("Reporting incoming call to call provider…")
             
             try await provider.reportNewIncomingCall(with: UUID(), update: update)
             
