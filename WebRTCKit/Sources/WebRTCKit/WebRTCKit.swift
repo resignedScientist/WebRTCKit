@@ -51,10 +51,10 @@ public struct WebRTCKit {
     }
     
     /// Initialize the framework for testing or previews using mock classes.
-    public static func initializeForTesting() async -> WebRTCController {
+    public static func initializeForTesting() -> WebRTCController {
         
         let pushCredentialStore = PushCredentialStore()
-        let container = await DIContainer.create(
+        let container = DIContainer.create(
             config: .preview,
             webRTCManager: PreviewWebRTCManager(),
             callProvider: PreviewVoIPCallProvider(),
