@@ -1,4 +1,5 @@
 import WebRTC
+import CallKit
 
 public typealias PeerID = String
 
@@ -20,10 +21,18 @@ public struct WebRTCKit {
         config: Config,
         audioDevice: RTCAudioDevice? = nil,
         logLevel: LogLevel = .error,
-        loggerDelegate: LoggerDelegate? = nil
+        loggerDelegate: LoggerDelegate? = nil,
+        pushPayloadParser: PushPayloadParser? = nil
     ) async -> WebRTCController {
         
         let pushCredentialStore = PushCredentialStore()
+        
+        let callProvider = CXProvider(configuration: {
+            let configuration = CXProviderConfiguration()
+            configuration.supportsVideo = true
+            return configuration
+        }())
+        
         let container = DIContainer.create(
             config: config,
             webRTCManager: DefaultWebRTCManager(
@@ -31,8 +40,14 @@ public struct WebRTCKit {
                     audioDevice: audioDevice
                 )
             ),
-            callProvider: DefaultVoIPCallProvider(),
-            pushHandler: DefaultVoIPPushHandler(store: pushCredentialStore),
+            callProvider: DefaultVoIPCallProvider(
+                provider: WRKCXProvider(provider: callProvider)
+            ),
+            pushHandler: DefaultVoIPPushHandler(
+                store: pushCredentialStore,
+                parser: pushPayloadParser ?? DefaultPushPayloadParser(),
+                provider: callProvider
+            ),
             pushCredentialProvider: pushCredentialStore,
             signalingServer: signalingServer,
             callManager: DefaultCallManager(),

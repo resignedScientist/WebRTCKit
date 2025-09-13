@@ -1,15 +1,24 @@
 import PushKit
+@preconcurrency import CallKit
 
 public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
     
     private let log = Logger(caller: "VoIPPushHandler")
     private let pushRegistry = PKPushRegistry(queue: .main)
     private let store: PushCredentialStoring
+    nonisolated private let parser: PushPayloadParser
+    nonisolated private let provider: CXProvider
     
     private weak var delegate: VoIPPushHandlerDelegate?
     
-    public init(store: PushCredentialStoring) {
+    public init(
+        store: PushCredentialStoring,
+        parser: PushPayloadParser,
+        provider: CXProvider
+    ) {
         self.store = store
+        self.parser = parser
+        self.provider = provider
         super.init()
         pushRegistry.delegate = self
         pushRegistry.desiredPushTypes = [.voIP]
@@ -59,12 +68,22 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         log.debug("Did receive incoming push notification of type '\(type)'")
         
         do {
+            
             let pushPayload = try PushPayload(payload: payload)
+            let parsedPayload = try parser.parse(pushPayload)
+            let handle = parsedPayload.handle
+            
+            let update = CXCallUpdate()
+            update.remoteHandle = CXHandle(type: .generic, value: handle)
+            update.hasVideo = true
+            
+            try await provider.reportNewIncomingCall(with: UUID(), update: update)
+            
             Task { @WebRTCActor in
                 delegate?.didReceivePushNotification(payload: pushPayload)
             }
         } catch {
-            log.error("Failed to encode push payload - \(error)")
+            log.error("didReceiveIncomingPush failed - \(error)")
         }
     }
 }

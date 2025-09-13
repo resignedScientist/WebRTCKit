@@ -6,8 +6,8 @@ final class WRKCXProvider: NSObject, Sendable {
     private let provider: CXProvider
     private weak var delegate: CallProviderDelegate?
     
-    init(configuration: CXProviderConfiguration) {
-        provider = CXProvider(configuration: configuration)
+    init(provider: CXProvider) {
+        self.provider = provider
         super.init()
         provider.setDelegate(self, queue: WebRTCActor.queue)
     }

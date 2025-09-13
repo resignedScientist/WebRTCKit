@@ -28,11 +28,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private var isEndingCall = false
     
     init(
-        provider: WRKCXProvider = {
-            let configuration = CXProviderConfiguration()
-            configuration.supportsVideo = true
-            return WRKCXProvider(configuration: configuration)
-        }(),
+        provider: WRKCXProvider,
         callController: WRKCallController = WRKCallControllerImpl(CXCallController()),
         rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl.sharedInstance
     ) {
