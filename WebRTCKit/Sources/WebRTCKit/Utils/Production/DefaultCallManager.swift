@@ -73,16 +73,17 @@ final class DefaultCallManager: CallManager {
     
     func onStartCallAction(to remotePeerID: PeerID) async throws {
         await delegate?.didAcceptCallRequest()
-        let localPeerID = try await webRTCManager.setup()
+        try await webRTCManager.setup()
         try await webRTCManager.startVideoCall(to: remotePeerID)
     }
     
-    func onAnswerCallAction() async throws {
+    func onAnswerCallAction(callId: UUID) async throws {
         await delegate?.didAcceptCallRequest()
         try await webRTCManager.answerCall()
     }
     
-    func onEndCallAction() async throws {
+    func onEndCallAction(callId: UUID) async throws {
+        await delegate?.didDeclineCallRequest()
         try await webRTCManager.stopVideoCall()
     }
     

@@ -264,7 +264,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("Answer call action received.")
         
         do {
-            try await callManager.onAnswerCallAction()
+            try await callManager.onAnswerCallAction(callId: action.callUUID)
             action.fulfill()
             answerCallHandler?(nil)
         } catch {
@@ -296,7 +296,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("End call action received.")
         
         do {
-            try await callManager.onEndCallAction()
+            try await callManager.onEndCallAction(callId: action.callUUID)
             action.fulfill()
             endCallHandler?(nil)
         } catch {
@@ -385,7 +385,7 @@ private extension DefaultVoIPCallProvider {
         
         let configuration = RTCAudioSessionConfiguration.webRTC()
         configuration.categoryOptions = [
-            .allowBluetooth,
+            .allowBluetoothHFP,
             .allowBluetoothA2DP,
             .allowAirPlay,
             .defaultToSpeaker,

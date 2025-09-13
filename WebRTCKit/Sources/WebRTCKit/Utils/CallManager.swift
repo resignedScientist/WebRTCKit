@@ -166,6 +166,9 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// Called when an incoming call request has been accepted using CallKit system handles.
     func didAcceptCallRequest() async
     
+    /// Called when an incoming call request has been declined using CallKit system handles.
+    func didDeclineCallRequest() async
+    
     /// The call did start.
     func callDidStart()
     
@@ -241,9 +244,9 @@ protocol CallManager: Sendable {
     
     func onStartCallAction(to remotePeerID: PeerID) async throws
     
-    func onAnswerCallAction() async throws
+    func onAnswerCallAction(callId: UUID) async throws
     
-    func onEndCallAction() async throws
+    func onEndCallAction(callId: UUID) async throws
     
     /// End a running call.
     /// - Throws: An error if ending the call fails.

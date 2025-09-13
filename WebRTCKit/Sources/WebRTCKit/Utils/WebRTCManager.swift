@@ -101,7 +101,7 @@ protocol WebRTCManager: Sendable {
     /// Sets up the WebRTC connection and returns a `PeerID`.
     /// - Returns: A `PeerID` representing the local peer.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func setup() async throws -> PeerID
+    @discardableResult func setup() async throws -> PeerID
     
     /// Manual audio mode only; Call this after the audio session was configured.
     /// Tells the manager that the audio track can be added to the call.

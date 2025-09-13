@@ -36,11 +36,11 @@ final class PreviewCallManager: CallManager {
         
     }
     
-    func onAnswerCallAction() async throws {
+    func onAnswerCallAction(callId: UUID) async throws {
         
     }
     
-    func onEndCallAction() async throws {
+    func onEndCallAction(callId: UUID) async throws {
         
     }
     
