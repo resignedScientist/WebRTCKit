@@ -206,6 +206,10 @@ public protocol WebRTCController: AnyObject, Sendable {
     ///
     /// - Parameter autoAccept: Should incoming calls be automatically accepted?
     func setAutoAcceptCalls(autoAccept: Bool) async
+    
+    /// Wait for the websocket connection to be established.
+    /// - Parameter timeout: The timeout; after it passed, an error will be thrown.
+    func waitForSignalingServerConnection(timeout: TimeInterval) async throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -314,5 +318,9 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func setAutoAcceptCalls(autoAccept: Bool) async {
         await container.callManager.setAutoAcceptCalls(autoAccept: autoAccept)
+    }
+    
+    func waitForSignalingServerConnection(timeout: TimeInterval) async throws {
+        try await container.signalingServer.waitForConnection(timeout: timeout)
     }
 }
