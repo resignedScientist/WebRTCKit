@@ -49,4 +49,8 @@ protocol VoIPCallProvider: Sendable {
     /// Used when receiving a call by VoIP push notification.
     /// - Parameter id: A unique identifier for the call.
     func setCurrentCallID(_ id: UUID) throws
+    
+    /// Check if a call is running in CallKit.
+    /// - Returns: True if the call is running.
+    func isCallRunning() -> Bool
 }

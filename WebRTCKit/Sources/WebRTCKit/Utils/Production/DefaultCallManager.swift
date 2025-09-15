@@ -90,7 +90,8 @@ final class DefaultCallManager: CallManager {
         try await stateHolder.changeState(to: .endingCall)
         if autoAcceptCall {
             try await webRTCManager.stopVideoCall()
-        } else {
+        }
+        if callProvider.isCallRunning() {
             try await callProvider.endCall()
         }
         stopConnectionTimeout()
@@ -178,7 +179,8 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                 try await stateHolder.changeState(to: .endingCall)
                 if autoAcceptCall {
                     try await webRTCManager.stopVideoCall()
-                } else {
+                }
+                if callProvider.isCallRunning() {
                     try await callProvider.endCall()
                 }
                 stopConnectionTimeout()
@@ -253,7 +255,8 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             do {
                 if autoAcceptCall {
                     try await webRTCManager.stopVideoCall()
-                } else {
+                }
+                if callProvider.isCallRunning() {
                     try await callProvider.endCall()
                 }
                 try await stateHolder.changeState(to: .idle)

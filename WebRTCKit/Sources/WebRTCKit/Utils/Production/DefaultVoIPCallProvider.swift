@@ -235,6 +235,10 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         }
         currentCallID = id
     }
+    
+    func isCallRunning() -> Bool {
+        currentCallID != nil
+    }
 }
 
 // MARK: - CXProviderDelegate
