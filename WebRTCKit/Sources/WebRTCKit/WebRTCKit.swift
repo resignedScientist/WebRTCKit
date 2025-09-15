@@ -210,6 +210,9 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// Wait for the websocket connection to be established.
     /// - Parameter timeout: The timeout; after it passed, an error will be thrown.
     func waitForSignalingServerConnection(timeout: TimeInterval) async throws
+    
+    /// Tells CallKit that the call has been answered somewhere else.
+    func answeredElsewhere() throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -322,5 +325,9 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func waitForSignalingServerConnection(timeout: TimeInterval) async throws {
         try await container.signalingServer.waitForConnection(timeout: timeout)
+    }
+    
+    func answeredElsewhere() throws {
+        try container.callProvider.answeredElsewhere()
     }
 }
