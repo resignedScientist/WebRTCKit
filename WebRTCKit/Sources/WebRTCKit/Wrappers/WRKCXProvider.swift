@@ -37,6 +37,14 @@ final class WRKCXProvider: NSObject, Sendable {
             }
         }
     }
+    
+    func reportCall(with UUID: UUID, endedAt dateEnded: Date?, reason endedReason: CXCallEndedReason) {
+        provider.reportCall(
+            with: UUID,
+            endedAt: dateEnded,
+            reason: endedReason
+        )
+    }
 }
 
 // MARK: - CXProviderDelegate

@@ -239,6 +239,19 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     func isCallRunning() -> Bool {
         currentCallID != nil
     }
+    
+    func answeredElsewhere() throws {
+        guard let currentCallID else {
+            log.error("answeredElsewhere - there is no call running.")
+            return
+        }
+        self.currentCallID = nil
+        provider.reportCall(
+            with: currentCallID,
+            endedAt: Date.now,
+            reason: .answeredElsewhere
+        )
+    }
 }
 
 // MARK: - CXProviderDelegate
@@ -300,7 +313,9 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("End call action received.")
         
         do {
-            try await callManager.onEndCallAction(callId: action.callUUID)
+            if isCallRunning() {
+                try await callManager.onEndCallAction(callId: action.callUUID)
+            }
             action.fulfill()
             endCallHandler?(nil)
         } catch {

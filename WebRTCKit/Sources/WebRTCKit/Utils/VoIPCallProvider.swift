@@ -53,4 +53,7 @@ protocol VoIPCallProvider: Sendable {
     /// Check if a call is running in CallKit.
     /// - Returns: True if the call is running.
     func isCallRunning() -> Bool
+    
+    /// Tells CallKit that the call has been answered somewhere else.
+    func answeredElsewhere() throws
 }
