@@ -2,7 +2,7 @@ import PushKit
 @preconcurrency import CallKit
 
 enum VoIPPushHandlerError: Error {
-    case callStateNotIdle
+    case callManagerBlockedNewCall
 }
 
 public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
@@ -89,9 +89,8 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
                     Task { @WebRTCActor in
                         let container = DIContainer.shared!
                         do {
-                            let callState = await container.callManager.getState()
-                            guard callState == .idle else {
-                                throw VoIPPushHandlerError.callStateNotIdle
+                            guard await container.callManager.canReceiveNewVoIPCalls() else {
+                                throw VoIPPushHandlerError.callManagerBlockedNewCall
                             }
                             try container.callProvider.setCurrentCallID(callId)
                             self?.delegate?.didReceivePushNotification(payload: pushPayload)

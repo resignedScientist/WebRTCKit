@@ -125,6 +125,17 @@ final class DefaultCallManager: CallManager {
             delegate?.shouldDeactivateAudioSession()
         }
     }
+    
+    func canReceiveNewVoIPCalls() async -> Bool {
+        
+        // do not allow VoIP calls if autoAcceptCall is enabled
+        guard !autoAcceptCall else { return false }
+        
+        // do not allow VoIP calls if state is not idle
+        guard await stateHolder.getState() == .idle else { return false }
+        
+        return true
+    }
 }
 
 // MARK: - WebRTCManagerDelegate

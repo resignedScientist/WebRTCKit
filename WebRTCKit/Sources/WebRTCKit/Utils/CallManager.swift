@@ -261,4 +261,10 @@ protocol CallManager: Sendable {
     /// When using manual mode, this should tell the delegate the perfect time
     /// to deactivate the audio session.
     func shouldDeactivateAudioSession()
+    
+    /// Are we able to receive new VoIP calls?
+    ///
+    /// This is false if we are not in idle state or if `autoAcceptCalls` is enabled.
+    /// - Returns: True if new VoIP calls can be received.
+    func canReceiveNewVoIPCalls() async -> Bool
 }
