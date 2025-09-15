@@ -53,10 +53,6 @@ public protocol SignalingServerConnection: Sendable {
     /// Establish a connection to the signaling server and receive the peer id.
     func connect() async throws -> PeerID
     
-    /// Wait for the websocket connection to be established.
-    /// - Parameter timeout: The timeout; after it passed, an error will be thrown.
-    func waitForConnection(timeout: TimeInterval) async throws
-    
     /// Disconnect from the signaling server.
     func disconnect() async
     
