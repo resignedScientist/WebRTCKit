@@ -1,6 +1,10 @@
 import PushKit
 @preconcurrency import CallKit
 
+enum VoIPPushHandlerError: Error {
+    case callStateNotIdle
+}
+
 public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
     
     private let log = Logger(caller: "VoIPPushHandler")
@@ -83,12 +87,17 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
                     log.error("Failed to report incoming call - \(error)")
                 } else {
                     Task { @WebRTCActor in
+                        let container = DIContainer.shared!
                         do {
-                            let container = DIContainer.shared!
+                            let callState = await container.callManager.getState()
+                            guard callState == .idle else {
+                                throw VoIPPushHandlerError.callStateNotIdle
+                            }
                             try container.callProvider.setCurrentCallID(callId)
                             self?.delegate?.didReceivePushNotification(payload: pushPayload)
                         } catch {
                             log.error("Failed to report incoming call - \(error)")
+                            try? container.callProvider.answeredElsewhere()
                         }
                     }
                 }
