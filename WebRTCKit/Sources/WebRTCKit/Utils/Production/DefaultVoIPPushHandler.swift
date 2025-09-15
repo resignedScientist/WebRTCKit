@@ -84,7 +84,8 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
                 } else {
                     Task { @WebRTCActor in
                         do {
-                            try DIContainer.shared?.callProvider.setCurrentCallID(callId)
+                            let container = try await ensureDIContainer()
+                            try container.callProvider.setCurrentCallID(callId)
                             self?.delegate?.didReceivePushNotification(payload: pushPayload)
                         } catch {
                             log.error("Failed to report incoming call - \(error)")
@@ -110,4 +111,13 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
             }
         }
     }
+}
+
+@WebRTCActor
+fileprivate func ensureDIContainer() async throws -> DIContainer {
+    if let container = DIContainer.shared {
+        return container
+    }
+    try await Task.sleep(for: .milliseconds(500))
+    return try await ensureDIContainer()
 }
