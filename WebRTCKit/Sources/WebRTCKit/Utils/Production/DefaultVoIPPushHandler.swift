@@ -84,6 +84,7 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
                 } else {
                     Task { @WebRTCActor in
                         do {
+                            try await Task.sleep(for: .milliseconds(1000))
                             let container = try await ensureDIContainer()
                             try container.callProvider.setCurrentCallID(callId)
                             self?.delegate?.didReceivePushNotification(payload: pushPayload)
