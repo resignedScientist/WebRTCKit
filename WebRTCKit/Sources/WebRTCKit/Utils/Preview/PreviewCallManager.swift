@@ -59,4 +59,8 @@ final class PreviewCallManager: CallManager {
     func shouldDeactivateAudioSession() {
         
     }
+    
+    func canReceiveNewVoIPCalls() async -> Bool {
+        true
+    }
 }
