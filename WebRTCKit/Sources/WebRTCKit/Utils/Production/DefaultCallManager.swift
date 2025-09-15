@@ -74,9 +74,9 @@ final class DefaultCallManager: CallManager {
     }
     
     func onAnswerCallAction(callId: UUID) async throws {
-        try callProvider.answeredElsewhere()
         await delegate?.didAcceptCallRequest()
         try await webRTCManager.answerCall()
+        try callProvider.answeredElsewhere()
     }
     
     func onEndCallAction(callId: UUID) async throws {
