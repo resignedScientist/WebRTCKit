@@ -25,4 +25,8 @@ final class PreviewVoIPCallProvider: VoIPCallProvider {
     func isCallRunning() -> Bool {
         false
     }
+    
+    func answeredElsewhere() throws {
+        
+    }
 }
