@@ -89,10 +89,10 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
                     Task { @WebRTCActor in
                         let container = DIContainer.shared!
                         do {
+                            try container.callProvider.setCurrentCallID(callId)
                             guard await container.callManager.canReceiveNewVoIPCalls() else {
                                 throw VoIPPushHandlerError.callManagerBlockedNewCall
                             }
-                            try container.callProvider.setCurrentCallID(callId)
                             self?.delegate?.didReceivePushNotification(payload: pushPayload)
                         } catch {
                             log.error("Failed to report incoming call - \(error)")
