@@ -20,28 +20,28 @@ public struct DataChannelSetup: Sendable {
 public struct DataChannelConfiguration: Sendable {
     
     /// Set to true if ordered delivery is required.
-    let isOrdered: Bool
+    public let isOrdered: Bool
 
     /**
      Max period in milliseconds in which retransmissions will be sent.
      After this time, no more retransmissions will be sent. -1 if unset.
      */
-    let maxPacketLifeTime: Int32
+    public let maxPacketLifeTime: Int32
 
     /// The max number of retransmissions. -1 if unset.
-    let maxRetransmits: Int32
+    public let maxRetransmits: Int32
 
     /**
      Set to true if the channel has been externally negotiated and we do not send
      an in-band signalling in the form of an "open" message.
      */
-    let isNegotiated: Bool
+    public let isNegotiated: Bool
 
     /// The id of the data channel.
-    let channelId: Int32
+    public let channelId: Int32
 
     /// Set by the application and opaque to the WebRTC implementation.
-    let `protocol`: String
+    public let `protocol`: String
     
     public init(
         isOrdered: Bool = true,
