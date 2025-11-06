@@ -35,6 +35,11 @@ protocol BitrateAdjustor: AnyObject {
     ///   - type: The type of bitrate for which to set the initial encoding parameters.
     ///   - peerConnection: The peer connection on which to set the encoding parameters.
     func setStartEncodingParameters(for type: BitrateType, peerConnection: WRKRTCPeerConnection)
+    
+    /// Manually update the scaling factor.
+    ///
+    /// This must be done when updating the image size while a call is running.
+    func updateScalingFactor(peerConnection: any WRKRTCPeerConnection) async
 }
 
 final class BitrateAdjustorImpl: BitrateAdjustor {
@@ -111,6 +116,27 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         case .video:
             setStartVideoEncodingParameters(peerConnection)
         }
+    }
+    
+    func updateScalingFactor(peerConnection: any WRKRTCPeerConnection) async {
+        
+        guard
+            runningTypes.contains(.video),
+            let sender = peerConnection.senders.first(where: { $0.track?.kind == BitrateType.video.rawValue }),
+            let encoding = sender.parameters.encodings.first,
+            var bitrate = encoding.maxBitrateBps?.intValue
+        else { return }
+        
+        let scalingFactor = calculateVideoScaling(for: bitrate)
+        encoding.scaleResolutionDownBy = scalingFactor
+        
+        let parameters = sender.parameters
+        parameters.encodings = [encoding]
+        sender.parameters = parameters
+        
+        log.info("Updated video scaling factor to \(scalingFactor)")
+        
+        await videoAdjustmentTracker.trackAdjustment()
     }
 }
 

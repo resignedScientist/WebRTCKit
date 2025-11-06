@@ -124,7 +124,7 @@ protocol WebRTCManager: Sendable {
     ///
     /// This will be used for scaling and is only really needed if the image size changes at runtime.
     /// - Parameter imageSize: The new image size.
-    func updateImageSize(_ imageSize: CGSize)
+    func updateImageSize(_ imageSize: CGSize) async
     
     /// Initiates a video call to a specified peer.
     /// - Parameter peerID: The `PeerID` of the peer to call.
