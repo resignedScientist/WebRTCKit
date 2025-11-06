@@ -172,6 +172,12 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// Was a video track added by calling `startVideoRecording`?
     func isVideoRecording() -> Bool
     
+    /// Update the size of the image that we receive as input.
+    ///
+    /// This will be used for scaling and is only really needed if the image size changes at runtime.
+    /// - Parameter imageSize: The new image size.
+    func updateImageSize(_ imageSize: CGSize)
+    
     /// Initialize a call with another peer.
     ///
     /// - Parameter peerID: The ID of the remote peer.
@@ -285,6 +291,10 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func isVideoRecording() -> Bool {
         container.webRTCManager.isVideoRecording()
+    }
+    
+    func updateImageSize(_ imageSize: CGSize) {
+        container.webRTCManager.updateImageSize(imageSize)
     }
     
     func sendCallRequest(to peerID: PeerID) async throws {

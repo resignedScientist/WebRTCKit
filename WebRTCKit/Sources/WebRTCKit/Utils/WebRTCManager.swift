@@ -120,6 +120,12 @@ protocol WebRTCManager: Sendable {
     /// - Returns: A boolean indicating if video recording is active.
     func isVideoRecording() -> Bool
     
+    /// Update the size of the image that we receive as input.
+    ///
+    /// This will be used for scaling and is only really needed if the image size changes at runtime.
+    /// - Parameter imageSize: The new image size.
+    func updateImageSize(_ imageSize: CGSize)
+    
     /// Initiates a video call to a specified peer.
     /// - Parameter peerID: The `PeerID` of the peer to call.
     /// - Throws: Throws `WebRTCManagerError` on failure.

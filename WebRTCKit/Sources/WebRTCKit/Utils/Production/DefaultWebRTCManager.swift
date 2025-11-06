@@ -161,6 +161,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         peerConnection?.senders.contains(where: { $0.track is RTCVideoTrack }) == true
     }
     
+    func updateImageSize(_ imageSize: CGSize) {
+        bitrateAdjustor.imageSize = imageSize
+    }
+    
     func startVideoCall(to peerID: PeerID) async throws {
         guard peerConnection == nil else {
             throw WebRTCManagerError.critical("⚠️ startVideoCall failed; PeerConnection is not nil; Are you already in a call?")
