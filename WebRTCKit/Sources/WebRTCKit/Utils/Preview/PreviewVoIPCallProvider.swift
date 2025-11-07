@@ -22,6 +22,10 @@ final class PreviewVoIPCallProvider: VoIPCallProvider {
         
     }
     
+    func getCurrentCallID() -> UUID? {
+        nil
+    }
+    
     func isCallRunning() -> Bool {
         false
     }
