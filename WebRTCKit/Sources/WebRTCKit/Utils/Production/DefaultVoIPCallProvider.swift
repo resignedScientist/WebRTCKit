@@ -236,10 +236,6 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         currentCallID = id
     }
     
-    func getCurrentCallID() -> UUID? {
-        currentCallID
-    }
-    
     func isCallRunning() -> Bool {
         currentCallID != nil
     }

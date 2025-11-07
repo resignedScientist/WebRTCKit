@@ -50,8 +50,6 @@ protocol VoIPCallProvider: Sendable {
     /// - Parameter id: A unique identifier for the call.
     func setCurrentCallID(_ id: UUID) throws
     
-    func getCurrentCallID() -> UUID?
-    
     /// Check if a call is running in CallKit.
     /// - Returns: True if the call is running.
     func isCallRunning() -> Bool

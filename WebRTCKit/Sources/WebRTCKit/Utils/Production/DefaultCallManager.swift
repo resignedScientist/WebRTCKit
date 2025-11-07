@@ -54,17 +54,6 @@ final class DefaultCallManager: CallManager {
     func answerCallRequest(accept: Bool) async throws {
         log.info("Answering call request (accept = \(accept))…")
         
-        // Handle calls from CallKit that were triggered via VoIP push message
-        if let callId = callProvider.getCurrentCallID() {
-            try callProvider.answeredElsewhere()
-            if accept {
-                try await onAnswerCallAction(callId: callId)
-            } else {
-                try await onEndCallAction(callId: callId)
-            }
-            return
-        }
-        
         if accept {
             try await stateHolder.changeState(to: .connecting)
             if autoAcceptCall {
