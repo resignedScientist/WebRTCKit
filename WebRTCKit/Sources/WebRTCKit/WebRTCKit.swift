@@ -279,8 +279,8 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.webRTCManager.startVideoRecording(
             videoCapturer: nil,
             imageSize: CGSize(
-                width: 640,
-                height: 480
+                width: 480,
+                height: 640
             )
         )
     }
