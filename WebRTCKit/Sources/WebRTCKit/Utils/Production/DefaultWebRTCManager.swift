@@ -162,9 +162,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func updateImageSize(_ imageSize: CGSize) async {
-        guard let peerConnection else { return }
-        bitrateAdjustor.imageSize = imageSize
-        await bitrateAdjustor.updateScalingFactor(peerConnection: peerConnection)
+//        guard let peerConnection else { return }
+//        bitrateAdjustor.imageSize = imageSize
+//        await bitrateAdjustor.updateScalingFactor(peerConnection: peerConnection)
     }
     
     func startVideoCall(to peerID: PeerID) async throws {
