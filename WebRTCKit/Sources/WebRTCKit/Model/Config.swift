@@ -201,7 +201,7 @@ public extension WebRTCKit.Config {
         public static var defaultForVideo: Bitrate {
             BitrateConfig(
                 minBitrate: 100_000,
-                maxBitrate: 6_000_000,
+                maxBitrate: 4_000_000,
                 startBitrate: 1_000_000,
                 bitrateStepUp: 0.15,
                 bitrateStepDown: 0.15,
