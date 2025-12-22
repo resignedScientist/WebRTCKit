@@ -289,7 +289,7 @@ private extension BitrateAdjustorImpl {
             switch bitrate {
             case let b where b >= 4_000_000:
                 return 1080
-            case 1_800_000..<3_500_000:
+            case 1_800_000..<4_000_000:
                 return 720
             case 1_400_000..<1_800_000:
                 return 540
