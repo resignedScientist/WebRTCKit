@@ -23,6 +23,28 @@ public struct WebRTCKit {
         pushPayloadParser: PushPayloadParser? = nil
     ) async -> WebRTCController {
         
+        // CallKit ---->
+        
+        // TODO: replace with WebRTCManager
+        let callEstablisher: CallEstablisher = DummyCallEstablisher()
+        
+        // TODO: must come as a property
+        let audioSessionConfigurator: AudioSessionConfigurator = AudioSessionConfiguratorImpl()
+        
+        let callManager: CallManager = CallManagerImpl(
+            callEstablisher: callEstablisher
+        )
+        let providerDelegate = ProviderDelegateImpl(
+            callManager: callManager,
+            audioSessionConfigurator: audioSessionConfigurator
+        )
+        let callEstablisherDelegate: CallEstablisherDelegate = CallEstablisherDelegateImpl(
+            providerDelegate: providerDelegate
+        )
+        
+        callEstablisher.setDelegate(callEstablisherDelegate)
+        // <---- CallKit
+        
         let pushCredentialStore = PushCredentialStore()
         
         let container = DIContainer.create(
@@ -40,7 +62,9 @@ public struct WebRTCKit {
             signalingServer: signalingServer,
             networkMonitor: DefaultNetworkMonitor(),
             logLevel: logLevel,
-            loggerDelegate: loggerDelegate
+            loggerDelegate: loggerDelegate,
+            callManager: callManager,
+            providerDelegate: providerDelegate
         )
         
         if logLevel == .verbose {
@@ -55,6 +79,10 @@ public struct WebRTCKit {
     /// Initialize the framework for testing or previews using mock classes.
     public static func initializeForTesting() -> WebRTCController {
         
+        let callManager = CallManagerImpl(
+            callEstablisher: DummyCallEstablisher()
+        )
+        
         let pushCredentialStore = PushCredentialStore()
         let container = DIContainer.create(
             config: .preview,
@@ -64,7 +92,14 @@ public struct WebRTCKit {
             signalingServer: PreviewSignalingServerConnection(),
             networkMonitor: PreviewNetworkMonitor(),
             logLevel: .debug,
-            loggerDelegate: nil
+            loggerDelegate: nil,
+            callManager: CallManagerImpl(
+                callEstablisher: DummyCallEstablisher()
+            ),
+            providerDelegate: ProviderDelegateImpl(
+                callManager: callManager,
+                audioSessionConfigurator: AudioSessionConfiguratorImpl()
+            )
         )
         
         return WebRTCControllerImpl(container: container)
@@ -77,7 +112,9 @@ public struct WebRTCKit {
         pushHandler: VoIPPushHandler,
         pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
-        networkMonitor: NetworkMonitor
+        networkMonitor: NetworkMonitor,
+        callManager: CallManager,
+        providerDelegate: ProviderDelegate
     ) async -> WebRTCController {
         
         let container = DIContainer.create(
@@ -88,7 +125,9 @@ public struct WebRTCKit {
             signalingServer: signalingServer,
             networkMonitor: networkMonitor,
             logLevel: .debug,
-            loggerDelegate: nil
+            loggerDelegate: nil,
+            callManager: callManager,
+            providerDelegate: providerDelegate
         )
         
         await container.setup()

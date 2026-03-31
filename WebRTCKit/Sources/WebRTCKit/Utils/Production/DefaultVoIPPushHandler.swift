@@ -6,6 +6,8 @@ enum VoIPPushHandlerError: Error {
 
 public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
     
+    @Inject(\.providerDelegate) private var providerDelegate
+    
     private let log = Logger(caller: "VoIPPushHandler")
     private let pushRegistry = PKPushRegistry(queue: .main)
     private let store: PushCredentialStoring
@@ -62,11 +64,21 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
     public func pushRegistry(
         _ registry: PKPushRegistry,
         didReceiveIncomingPushWith payload: PKPushPayload,
-        for type: PKPushType,
-        completion: @escaping @Sendable () -> Void
-    ) {
+        for type: PKPushType
+    ) async {
+        
+        guard
+            let uuidString = payload.dictionaryPayload["UUID"] as? String,
+            let handle = payload.dictionaryPayload["handle"] as? String,
+            let uuid = UUID(uuidString: uuidString)
+        else { return }
+        
         log.debug("Did receive incoming push notification of type '\(type)'")
         
-        // TODO: trigger incoming call in CallKit
+        do {
+            try await providerDelegate.reportNewIncomingCall(uuid: uuid, handle: handle)
+        } catch {
+            print("reportNewIncomingCall failed - \(error)")
+        }
     }
 }
