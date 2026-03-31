@@ -8,6 +8,7 @@
 import Foundation
 import CallKit
 
+@MainActor
 protocol CallManager {
     
     /// Sets the delegate to handle call state changes.
