@@ -41,6 +41,7 @@ public protocol SignalingServerDelegate: AnyObject, Sendable {
     func socketDidClose()
 }
 
+@MainActor
 public protocol SignalingServerConnection {
     
     /// Returns true if the connection is established / open.
