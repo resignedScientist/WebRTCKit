@@ -1,5 +1,6 @@
 import WebRTC
 
+@MainActor
 final class VideoCapturer {
     
     private let videoCapturer: RTCVideoCapturer
