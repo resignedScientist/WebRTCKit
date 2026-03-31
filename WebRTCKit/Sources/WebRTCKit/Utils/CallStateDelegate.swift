@@ -14,6 +14,9 @@ public enum CallState {
     /// We are sending a call request and the receiver did not answer yet.
     case sendingCallRequest
     
+    /// We are sending an answer to the received call request.
+    case answeringCallRequest
+    
     /// We are ending a call.
     case endingCall
     
@@ -21,7 +24,7 @@ public enum CallState {
     case connecting
 }
 
-public protocol CallStateDelegate: AnyObject, Sendable {
+public protocol WebRTCKitCallStateDelegate: AnyObject, Sendable {
     
     func callStateDidChange(to callState: CallState, callUUID: UUID)
     

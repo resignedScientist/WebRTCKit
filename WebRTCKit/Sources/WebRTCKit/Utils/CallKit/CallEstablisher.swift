@@ -10,13 +10,15 @@ import CallKit
 
 protocol CallEstablisher: Sendable {
     
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?)
+    
     func answerCall(_ callUUID: UUID)
     
     func startCall(_ callUUID: UUID, handle: String)
     
     func endCall(_ callUUID: UUID)
     
-    func setCallMuted(_ isMuted: Bool)
+    func setCallMuted(_ isMuted: Bool, callUUID: UUID)
 }
 
 final class CallEstablisherImpl: CallEstablisher {
@@ -28,6 +30,8 @@ final class CallEstablisherImpl: CallEstablisher {
     private let webRTCManager: WebRTCManager
     private let log = Logger(caller: "CallEstablisher", category: .default)
     
+    private weak var callStateDelegate: WebRTCKitCallStateDelegate?
+    
     private var currentCallUUID: UUID?
     private var connectionTimeoutTask: Task<Void, Never>?
     private var isReconnecting = false
@@ -37,13 +41,19 @@ final class CallEstablisherImpl: CallEstablisher {
         webRTCManager.setCallDelegate(self)
     }
     
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?) {
+        self.callStateDelegate = callStateDelegate
+    }
+    
     func answerCall(_ callUUID: UUID) {
         Task {
             do {
+                callStateDelegate?.callStateDidChange(to: .answeringCallRequest, callUUID: callUUID)
                 try await webRTCManager.answerCall()
             } catch {
                 log.error("Failed to answer call - \(error)")
                 providerDelegate.reportCallEnded(callUUID, at: .now, with: .failed)
+                callStateDelegate?.callStateDidChange(to: .idle, callUUID: callUUID)
             }
         }
     }
@@ -51,11 +61,13 @@ final class CallEstablisherImpl: CallEstablisher {
     func startCall(_ callUUID: UUID, handle: String) {
         Task {
             do {
+                callStateDelegate?.callStateDidChange(to: .sendingCallRequest, callUUID: callUUID)
                 try await webRTCManager.startVideoCall(to: handle)
                 startConnectionTimeout()
             } catch {
                 log.error("Failed to start call - \(error)")
                 providerDelegate.reportCallEnded(callUUID, at: .now, with: .failed)
+                callStateDelegate?.callStateDidChange(to: .idle, callUUID: callUUID)
             }
         }
     }
@@ -64,15 +76,19 @@ final class CallEstablisherImpl: CallEstablisher {
         currentCallUUID = nil
         Task {
             do {
+                callStateDelegate?.callStateDidChange(to: .endingCall, callUUID: callUUID)
                 try await webRTCManager.stopVideoCall()
+                callStateDelegate?.callStateDidChange(to: .idle, callUUID: callUUID)
             } catch {
                 log.error("Failed to end call - \(error)")
+                callStateDelegate?.callStateDidChange(to: .idle, callUUID: callUUID)
             }
         }
     }
     
-    func setCallMuted(_ isMuted: Bool) {
+    func setCallMuted(_ isMuted: Bool, callUUID: UUID) {
         webRTCManager.setLocalAudioMuted(isMuted)
+        callStateDelegate?.muteStateDidChange(to: isMuted, callUUID: callUUID)
     }
 }
 

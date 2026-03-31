@@ -2,6 +2,10 @@ import Foundation
 
 final class DummyCallEstablisher: CallEstablisher {
     
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?) {
+        
+    }
+    
     func answerCall(_ callUUID: UUID) {
         
     }
@@ -14,7 +18,7 @@ final class DummyCallEstablisher: CallEstablisher {
         
     }
     
-    func setCallMuted(_ isMuted: Bool) {
+    func setCallMuted(_ isMuted: Bool, callUUID: UUID) {
         
     }
 }

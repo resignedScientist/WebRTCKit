@@ -151,6 +151,10 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Parameter delegate: A delegate conforming to `WebRTCKitErrorDelegate`.
     func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?)
     
+    /// Sets the delegate to handle call state changes.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitCallStateDelegate`.
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?)
+    
     /// Set the initial data channels that will be added before first negotiation.
     ///
     /// They will only be added if we are the initiator of the call.
@@ -253,6 +257,10 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?) {
         container.webRTCManager.setErrorDelegate(errorDelegate)
+    }
+    
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?) {
+        container.callManager.setCallStateDelegate(callStateDelegate)
     }
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {

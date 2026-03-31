@@ -10,6 +10,10 @@ import CallKit
 
 protocol CallManager: Sendable {
     
+    /// Sets the delegate to handle call state changes.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitCallStateDelegate`.
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?)
+    
     /// Called by the app to request a start call transaction.
     func requestStartCall(_ handle: String) async throws -> UUID
     
@@ -59,6 +63,10 @@ final class CallManagerImpl: CallManager {
     
     init(callEstablisher: CallEstablisher) {
         self.callEstablisher = callEstablisher
+    }
+    
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?) {
+        callEstablisher.setCallStateDelegate(callStateDelegate)
     }
     
     func requestStartCall(_ handle: String) async throws -> UUID {
@@ -134,6 +142,6 @@ final class CallManagerImpl: CallManager {
     
     func setCallMuted(call: Call, isMuted: Bool) {
         calls[call.uuid] = call.muted(isMuted)
-        callEstablisher.setCallMuted(isMuted)
+        callEstablisher.setCallMuted(isMuted, callUUID: call.uuid)
     }
 }
