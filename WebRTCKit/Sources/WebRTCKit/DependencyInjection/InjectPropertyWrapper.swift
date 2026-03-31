@@ -1,4 +1,3 @@
-@WebRTCActor
 @propertyWrapper struct Inject<T> {
     
     private let keyPath: KeyPath<DIContainer, T>

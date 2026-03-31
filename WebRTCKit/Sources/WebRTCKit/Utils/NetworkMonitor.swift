@@ -1,4 +1,3 @@
-@WebRTCActor
 protocol NetworkMonitor: Sendable {
     
     /// Starts monitoring network path updates asynchronously.

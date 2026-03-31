@@ -124,7 +124,7 @@ extension ICEServer {
     }
 }
 
-extension RTCTlsCertPolicy: Codable {
+extension RTCTlsCertPolicy: @retroactive Codable {
     
     var key: Key {
         switch self {

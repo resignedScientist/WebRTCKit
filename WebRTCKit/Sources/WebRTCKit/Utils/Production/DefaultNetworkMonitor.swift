@@ -5,7 +5,6 @@ final class DefaultNetworkMonitor: NetworkMonitor {
     @Inject(\.signalingServer) private var signalingServer
     
     private let monitor: WRKNetworkPathMonitor
-    private let queue = WebRTCActor.queue
     private let log = Logger(caller: "NetworkMonitor")
     
     private var currentStatus: NWPath.Status = .satisfied
@@ -14,17 +13,17 @@ final class DefaultNetworkMonitor: NetworkMonitor {
         self.monitor = monitor
     }
     
-    func startMonitoring() async {
-        await monitor.setPathUpdateHandler { [weak self] path in
+    func startMonitoring() {
+        monitor.setPathUpdateHandler { [weak self] path in
             Task { [weak self] in
                 await self?.pathDidUpdate(path)
             }
         }
-        await monitor.start(queue: queue)
+        monitor.start(queue: .main)
     }
     
-    func stopMonitoring() async {
-        await monitor.cancel()
+    func stopMonitoring() {
+        monitor.cancel()
     }
 }
 

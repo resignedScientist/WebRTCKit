@@ -1,6 +1,6 @@
 import WebRTC
 
-struct SessionDescription: Codable {
+struct SessionDescription: Codable, Sendable {
     let type: Int
     let sdp: String
     
@@ -14,7 +14,7 @@ struct SessionDescription: Codable {
 
 extension SessionDescription {
     
-    init(from rtcSdp: RTCSessionDescription) {
+    nonisolated init(from rtcSdp: RTCSessionDescription) {
         self.type = rtcSdp.type.rawValue
         self.sdp = rtcSdp.sdp
     }

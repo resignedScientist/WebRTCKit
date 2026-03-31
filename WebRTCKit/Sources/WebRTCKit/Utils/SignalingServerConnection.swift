@@ -1,6 +1,5 @@
 import Foundation
 
-@WebRTCActor
 public protocol SignalingServerDelegate: AnyObject, Sendable {
     
     /// We did receive a signal from another peer.
@@ -41,7 +40,6 @@ public protocol SignalingServerDelegate: AnyObject, Sendable {
     func socketDidClose()
 }
 
-@WebRTCActor
 public protocol SignalingServerConnection: Sendable {
     
     /// Returns true if the connection is established / open.

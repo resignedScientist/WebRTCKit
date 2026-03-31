@@ -1,6 +1,5 @@
 import WebRTC
 
-@WebRTCActor
 protocol WRKRTCAudioSession: AnyObject, Sendable {
     
     /// This property is only effective if useManualAudio is YES.
@@ -124,7 +123,7 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
 extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
     
     nonisolated func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
-        Task { @WebRTCActor in
+        Task { @MainActor in
             delegate?.audioSessionDidSetActive(self, active: active)
         }
     }

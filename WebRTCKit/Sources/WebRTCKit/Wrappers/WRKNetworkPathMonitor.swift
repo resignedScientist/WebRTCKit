@@ -1,6 +1,6 @@
 import Network
 
-protocol WRKNetworkPathMonitor: Actor, Sendable {
+protocol WRKNetworkPathMonitor: Sendable {
     
     func setPathUpdateHandler(_ updateHandler: @Sendable @escaping (_ newPath: WRKNetworkPath) -> Void)
     
@@ -9,7 +9,7 @@ protocol WRKNetworkPathMonitor: Actor, Sendable {
     func cancel()
 }
 
-actor WRKNetworkPathMonitorImpl: WRKNetworkPathMonitor {
+final class WRKNetworkPathMonitorImpl: WRKNetworkPathMonitor {
     
     let pathMonitor: NWPathMonitor
     

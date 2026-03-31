@@ -1,20 +1,15 @@
 import WebRTC
 
-final class VideoCapturer: @unchecked Sendable {
+final class VideoCapturer {
     
     private let videoCapturer: RTCVideoCapturer
-    private let queue = WebRTCActor.queue
     
     var delegate: RTCVideoCapturerDelegate? {
         get {
-            WebRTCActor.checkSync {
-                videoCapturer.delegate
-            }
+            videoCapturer.delegate
         }
         set {
-            WebRTCActor.checkSync {
-                videoCapturer.delegate = newValue
-            }
+            videoCapturer.delegate = newValue
         }
     }
     
@@ -27,18 +22,16 @@ final class VideoCapturer: @unchecked Sendable {
         fps: Int
     ) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            WebRTCActor.checkAsync {
-                guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
-                videoCapturer.startCapture(
-                    with: device.device,
-                    format: device.activeFormat,
-                    fps: fps
-                ) { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
+            guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
+            videoCapturer.startCapture(
+                with: device.device,
+                format: device.activeFormat,
+                fps: fps
+            ) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
                 }
             }
         }
@@ -47,11 +40,9 @@ final class VideoCapturer: @unchecked Sendable {
     func stop() async {
         if videoCapturer is RTCCameraVideoCapturer {
             await withCheckedContinuation { continuation in
-                WebRTCActor.checkAsync {
-                    guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
-                    videoCapturer.stopCapture {
-                        continuation.resume()
-                    }
+                guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
+                videoCapturer.stopCapture {
+                    continuation.resume()
                 }
             }
         }

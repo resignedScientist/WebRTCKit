@@ -2,7 +2,6 @@ import WebRTC
 
 public typealias PeerID = String
 
-@WebRTCActor
 public struct WebRTCKit {
     
     /// Initialize the WebRTCKit for production.
@@ -99,7 +98,6 @@ public struct WebRTCKit {
 }
 
 /// An object to interact with the WebRTCKit.
-@WebRTCActor
 public protocol WebRTCController: AnyObject, Sendable {
     
     var voipPushHandler: VoIPPushHandler { get }

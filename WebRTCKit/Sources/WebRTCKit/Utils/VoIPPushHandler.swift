@@ -1,6 +1,5 @@
 import PushKit
 
-@WebRTCActor
 public protocol VoIPPushHandler: Sendable {
     func setDelegate(_ delegate: VoIPPushHandlerDelegate)
 }

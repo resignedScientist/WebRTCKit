@@ -23,7 +23,6 @@ public enum WebRTCManagerError: LocalizedError, Equatable {
     }
 }
 
-@WebRTCActor
 protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
     /// Called when a local video track has been added.
@@ -77,7 +76,6 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     func shouldConnect(to remotePeerID: PeerID) async
 }
 
-@WebRTCActor
 protocol WebRTCManager: Sendable {
     
     /// Sets the delegate to handle WebRTC events.

@@ -1,6 +1,5 @@
 import WebRTC
 
-@WebRTCActor
 struct DIContainer: Sendable {
     private(set) static var shared: DIContainer?
     

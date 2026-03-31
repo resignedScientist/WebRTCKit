@@ -1,26 +1,19 @@
 import WebRTC
 
-final class RtpSender: @unchecked Sendable {
+final class RtpSender {
     
     private let sender: RTCRtpSender
-    private let queue = WebRTCActor.queue
     
     var track: RTCMediaStreamTrack? {
-        WebRTCActor.checkSync {
-            sender.track
-        }
+        sender.track
     }
     
     var parameters: RTCRtpParameters {
         get {
-            WebRTCActor.checkSync {
-                sender.parameters
-            }
+            sender.parameters
         }
         set {
-            WebRTCActor.checkSync {
-                sender.parameters = newValue
-            }
+            sender.parameters = newValue
         }
     }
     
@@ -29,7 +22,7 @@ final class RtpSender: @unchecked Sendable {
     }
     
     func unwrapUnsafely() -> RTCRtpSender {
-        assert(WebRTCActor.isRunningOnQueue())
+        assert(RunLoop.current == .main)
         return sender
     }
 }

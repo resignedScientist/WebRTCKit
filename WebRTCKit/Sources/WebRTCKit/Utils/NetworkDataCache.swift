@@ -11,7 +11,7 @@ private enum Constants {
 
 /// The NetworkDataCache protocol provides the interface for caching network data points
 /// and computing packet loss rate over a specified time interval.
-protocol NetworkDataCache: Actor {
+protocol NetworkDataCache {
     
     /// Add a data point. Should be called every second.
     /// - Parameter dataPoint: The data point to add.
@@ -26,7 +26,7 @@ protocol NetworkDataCache: Actor {
     func deleteAllData()
 }
 
-actor NetworkDataCacheImpl: NetworkDataCache {
+final class NetworkDataCacheImpl: NetworkDataCache {
     
     private var dataPoints: [NetworkDataPoint] = []
     

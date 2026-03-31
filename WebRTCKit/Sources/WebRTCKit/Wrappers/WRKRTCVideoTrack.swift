@@ -15,29 +15,22 @@ public protocol WRKRTCVideoTrack: WRKRTCMediaStreamTrack {
     func add(_ renderer: RTCVideoRenderer)
 }
 
-final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
+final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack {
     
     private let _videoTrack: RTCVideoTrack
-    private let queue = WebRTCActor.queue
     
     public let source: MediaTrackSource
     
     public var videoTrack: RTCVideoTrack {
-        WebRTCActor.checkSync {
-            _videoTrack
-        }
+        _videoTrack
     }
     
     public var isEnabled: Bool {
         get {
-            WebRTCActor.checkSync {
-                _videoTrack.isEnabled
-            }
+            _videoTrack.isEnabled
         }
         set {
-            WebRTCActor.checkSync {
-                _videoTrack.isEnabled = newValue
-            }
+            _videoTrack.isEnabled = newValue
         }
     }
     
@@ -47,8 +40,6 @@ final class WRKRTCVideoTrackImpl: WRKRTCVideoTrack, @unchecked Sendable {
     }
     
     func add(_ renderer: RTCVideoRenderer) {
-        WebRTCActor.checkSync {
-            _videoTrack.add(renderer)
-        }
+        _videoTrack.add(renderer)
     }
 }
