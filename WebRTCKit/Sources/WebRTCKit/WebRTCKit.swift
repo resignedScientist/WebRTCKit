@@ -201,6 +201,9 @@ public protocol WebRTCController: AnyObject, Sendable {
     
     /// Finish the configuration. After calling it, the re-negotiation is happening.
     func commitConfiguration() async throws
+    
+    /// End the call.
+    func endCall() async throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -289,5 +292,10 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func commitConfiguration() async throws {
         try await container.webRTCManager.commitConfiguration()
+    }
+    
+    func endCall() async throws {
+        // We only ever have one call for now; so we just use the `endAllCalls` function.
+        container.callManager.endAllCalls()
     }
 }
