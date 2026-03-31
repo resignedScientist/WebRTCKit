@@ -41,7 +41,7 @@ public protocol WebRTCKitVideoTrackDelegate: AnyObject, Sendable {
     func didRemoveRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
 }
 
-protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
+public protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local audio track has been added.
     func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
@@ -53,7 +53,7 @@ protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
     func didRemoveRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
 }
 
-protocol WebRTCKitErrorDelegate: AnyObject, Sendable {
+public protocol WebRTCKitErrorDelegate: AnyObject, Sendable {
     
     /// Triggered whenever there is an error.
     func onError(_ error: WebRTCManagerError)

@@ -135,6 +135,22 @@ public protocol WebRTCController: AnyObject, Sendable {
     
     var pushCredentialProvider: PushCredentialProviding { get }
     
+    /// Sets the delegate to handle WebRTC data channel events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitDataChannelDelegate`.
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?)
+    
+    /// Sets the delegate to handle WebRTC video track events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitVideoTrackDelegate`.
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?)
+    
+    /// Sets the delegate to handle WebRTC audio track events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitAudioTrackDelegate`.
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?)
+    
+    /// Sets the delegate to handle WebRTC errors.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitErrorDelegate`.
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?)
+    
     /// Set the initial data channels that will be added before first negotiation.
     ///
     /// They will only be added if we are the initiator of the call.
@@ -221,6 +237,22 @@ final class WebRTCControllerImpl: WebRTCController {
     
     init(container: DIContainer) {
         self.container = container
+    }
+    
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?) {
+        container.webRTCManager.setDataChannelDelegate(dataChannelDelegate)
+    }
+    
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?) {
+        container.webRTCManager.setVideoTrackDelegate(videoTrackDelegate)
+    }
+    
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?) {
+        container.webRTCManager.setAudioTrackDelegate(audioTrackDelegate)
+    }
+    
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?) {
+        container.webRTCManager.setErrorDelegate(errorDelegate)
     }
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
