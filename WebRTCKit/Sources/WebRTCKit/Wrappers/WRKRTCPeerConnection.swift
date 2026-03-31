@@ -134,25 +134,17 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
     }
     
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender? {
-        return await withCheckedContinuation { continuation in
-            if let audioTrack = (track as? WRKRTCAudioTrackImpl)?.audioTrack {
-                if let sender = self._peerConnection.add(audioTrack, streamIds: streamIds) {
-                    let rtpSender = RtpSender(sender: sender)
-                    continuation.resume(returning: rtpSender)
-                } else {
-                    continuation.resume(returning: nil)
-                }
-            } else if let videoTrack = (track as? WRKRTCVideoTrackImpl)?.videoTrack {
-                if let sender = self._peerConnection.add(videoTrack, streamIds: streamIds) {
-                    let rtpSender = RtpSender(sender: sender)
-                    continuation.resume(returning: rtpSender)
-                } else {
-                    continuation.resume(returning: nil)
-                }
-            } else {
-                continuation.resume(returning: nil)
+        if let audioTrack = (track as? WRKRTCAudioTrackImpl)?.audioTrack {
+            if let sender = self._peerConnection.add(audioTrack, streamIds: streamIds) {
+                return RtpSender(sender: sender)
+            }
+        } else if let videoTrack = (track as? WRKRTCVideoTrackImpl)?.videoTrack {
+            if let sender = self._peerConnection.add(videoTrack, streamIds: streamIds) {
+                return RtpSender(sender: sender)
             }
         }
+        
+        return nil
     }
     
     func removeTrack(_ sender: RtpSender) async -> Bool {
