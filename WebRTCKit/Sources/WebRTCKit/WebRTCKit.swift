@@ -208,6 +208,10 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Returns: The UUID of the starting call.
     func sendCallRequest(to peerID: PeerID) async throws -> UUID
     
+    /// Accept the incoming call request.
+    /// - Parameter callUUID: The UUID of the call to accept.
+    func acceptIncomingCall(_ callUUID: UUID) async throws
+    
     /// End the call.
     /// - Parameter callUUID: The UUID of the call to end.
     func endCall(_ callUUID: UUID) async throws
@@ -303,6 +307,14 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func sendCallRequest(to peerID: PeerID) async throws -> UUID {
         try await container.callManager.requestStartCall(peerID)
+    }
+    
+    func acceptIncomingCall(_ callUUID: UUID) async throws {
+        let callManager = container.callManager
+        
+        guard let call = callManager.callWithUUID(callUUID) else { return }
+        
+        try await callManager.requestAcceptIncomingCall(call)
     }
     
     func endCall(_ callUUID: UUID) async throws {
