@@ -23,12 +23,14 @@ public enum WebRTCManagerError: LocalizedError, Equatable {
     }
 }
 
+@MainActor
 public protocol WebRTCKitDataChannelDelegate: AnyObject, Sendable {
     
     /// Called when a new data channel is created by the peer or by us before first negotiation.
     func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
 }
 
+@MainActor
 public protocol WebRTCKitVideoTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local video track has been added.
@@ -41,6 +43,7 @@ public protocol WebRTCKitVideoTrackDelegate: AnyObject, Sendable {
     func didRemoveRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
 }
 
+@MainActor
 public protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local audio track has been added.
@@ -53,12 +56,14 @@ public protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
     func didRemoveRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
 }
 
+@MainActor
 public protocol WebRTCKitErrorDelegate: AnyObject, Sendable {
     
     /// Triggered whenever there is an error.
     func onError(_ error: WebRTCManagerError)
 }
 
+@MainActor
 protocol WebRTCManagerCallDelegate: AnyObject, Sendable {
     
     /// Triggered when a call offer is received from a peer.

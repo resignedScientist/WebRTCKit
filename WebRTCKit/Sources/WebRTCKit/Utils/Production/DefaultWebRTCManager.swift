@@ -378,7 +378,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
 }
 
-// MARK: - WebsocketConnectionDelegate
+// MARK: - SignalingServerDelegate
 
 extension DefaultWebRTCManager: SignalingServerDelegate {
     

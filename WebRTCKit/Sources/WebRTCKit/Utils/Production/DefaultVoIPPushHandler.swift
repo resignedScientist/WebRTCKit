@@ -45,7 +45,7 @@ public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
 
 // MARK: - PKPushRegistryDelegate
 
-extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
+extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
     
     public func pushRegistry(
         _ registry: PKPushRegistry,

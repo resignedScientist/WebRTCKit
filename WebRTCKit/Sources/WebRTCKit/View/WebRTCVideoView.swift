@@ -85,7 +85,7 @@ private extension WebRTCView {
 
 // MARK: - RTCVideoViewDelegate
 
-extension WebRTCView.Coordinator: RTCVideoViewDelegate {
+extension WebRTCView.Coordinator: @MainActor RTCVideoViewDelegate {
     
     func videoView(_ videoView: any RTCVideoRenderer, didChangeVideoSize size: CGSize) {
         log.info("\(source) video stream did change video size to \(size)")

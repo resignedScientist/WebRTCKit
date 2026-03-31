@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 public protocol SignalingServerDelegate: AnyObject, Sendable {
     
     /// We did receive a signal from another peer.
