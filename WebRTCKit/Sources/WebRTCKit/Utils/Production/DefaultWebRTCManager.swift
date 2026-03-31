@@ -4,7 +4,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
     weak var delegate: WebRTCManagerDelegate?
     
-    @Inject(\.callProvider) private var callProvider
     @Inject(\.signalingServer) private var signalingServer
     @Inject(\.config) private var config
     

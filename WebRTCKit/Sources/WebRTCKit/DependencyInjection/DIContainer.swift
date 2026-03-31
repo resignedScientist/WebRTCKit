@@ -6,11 +6,9 @@ struct DIContainer: Sendable {
     
     let config: WebRTCKitConfig
     let webRTCManager: WebRTCManager
-    let callProvider: VoIPCallProvider
     let pushHandler: VoIPPushHandler
     let pushCredentialProvider: PushCredentialProviding
     let signalingServer: SignalingServerConnection
-    let callManager: CallManager
     let networkMonitor: NetworkMonitor
     let logLevel: LogLevel
     let loggerDelegate: LoggerDelegate?
@@ -18,22 +16,18 @@ struct DIContainer: Sendable {
     private init(
         config: WebRTCKitConfig,
         webRTCManager: WebRTCManager,
-        callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
         pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
-        callManager: CallManager,
         networkMonitor: NetworkMonitor,
         logLevel: LogLevel,
         loggerDelegate: LoggerDelegate?
     ) {
         self.config = config
         self.webRTCManager = webRTCManager
-        self.callProvider = callProvider
         self.pushHandler = pushHandler
         self.pushCredentialProvider = pushCredentialProvider
         self.signalingServer = signalingServer
-        self.callManager = callManager
         self.networkMonitor = networkMonitor
         self.logLevel = logLevel
         self.loggerDelegate = loggerDelegate
@@ -42,11 +36,9 @@ struct DIContainer: Sendable {
     static func create(
         config: WebRTCKitConfig,
         webRTCManager: WebRTCManager,
-        callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
         pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
-        callManager: CallManager,
         networkMonitor: NetworkMonitor,
         logLevel: LogLevel,
         loggerDelegate: LoggerDelegate?
@@ -54,11 +46,9 @@ struct DIContainer: Sendable {
         let container = DIContainer(
             config: config,
             webRTCManager: webRTCManager,
-            callProvider: callProvider,
             pushHandler: pushHandler,
             pushCredentialProvider: pushCredentialProvider,
             signalingServer: signalingServer,
-            callManager: callManager,
             networkMonitor: networkMonitor,
             logLevel: logLevel,
             loggerDelegate: loggerDelegate
@@ -68,6 +58,7 @@ struct DIContainer: Sendable {
     }
     
     func setup() async {
-        await callManager.setup()
+        // TODO: still needed?
+//        await callManager.setup()
     }
 }

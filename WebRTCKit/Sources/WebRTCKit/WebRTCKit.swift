@@ -1,5 +1,4 @@
 import WebRTC
-import CallKit
 
 public typealias PeerID = String
 
@@ -27,12 +26,6 @@ public struct WebRTCKit {
         
         let pushCredentialStore = PushCredentialStore()
         
-        let callProvider = CXProvider(configuration: {
-            let configuration = CXProviderConfiguration()
-            configuration.supportsVideo = true
-            return configuration
-        }())
-        
         let container = DIContainer.create(
             config: config,
             webRTCManager: DefaultWebRTCManager(
@@ -40,17 +33,12 @@ public struct WebRTCKit {
                     audioDevice: audioDevice
                 )
             ),
-            callProvider: DefaultVoIPCallProvider(
-                provider: WRKCXProvider(provider: callProvider)
-            ),
             pushHandler: DefaultVoIPPushHandler(
                 store: pushCredentialStore,
-                parser: pushPayloadParser ?? DefaultPushPayloadParser(),
-                provider: callProvider
+                parser: pushPayloadParser ?? DefaultPushPayloadParser()
             ),
             pushCredentialProvider: pushCredentialStore,
             signalingServer: signalingServer,
-            callManager: DefaultCallManager(),
             networkMonitor: DefaultNetworkMonitor(),
             logLevel: logLevel,
             loggerDelegate: loggerDelegate
@@ -72,11 +60,9 @@ public struct WebRTCKit {
         let container = DIContainer.create(
             config: .preview,
             webRTCManager: PreviewWebRTCManager(),
-            callProvider: PreviewVoIPCallProvider(),
             pushHandler: PreviewVoIPPushHandler(),
             pushCredentialProvider: pushCredentialStore,
             signalingServer: PreviewSignalingServerConnection(),
-            callManager: PreviewCallManager(),
             networkMonitor: PreviewNetworkMonitor(),
             logLevel: .debug,
             loggerDelegate: nil
@@ -89,22 +75,18 @@ public struct WebRTCKit {
     static func initialize(
         config: Config,
         webRTCManager: WebRTCManager,
-        callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
         pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
-        callManager: CallManager,
         networkMonitor: NetworkMonitor
     ) async -> WebRTCController {
         
         let container = DIContainer.create(
             config: config,
             webRTCManager: webRTCManager,
-            callProvider: callProvider,
             pushHandler: pushHandler,
             pushCredentialProvider: pushCredentialProvider,
             signalingServer: signalingServer,
-            callManager: callManager,
             networkMonitor: networkMonitor,
             logLevel: .debug,
             loggerDelegate: nil
@@ -123,11 +105,6 @@ public protocol WebRTCController: AnyObject, Sendable {
     var voipPushHandler: VoIPPushHandler { get }
     
     var pushCredentialProvider: PushCredentialProviding { get }
-    
-    /// Set the delegate to handle calls and receive audio & video streams.
-    ///
-    /// - Parameter delegate: The delegate to handle calls and receive audio & video streams.
-    func setCallManagerDelegate(_ delegate: CallManagerDelegate)
     
     /// Set the initial data channels that will be added before first negotiation.
     ///
@@ -178,22 +155,6 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Parameter imageSize: The new image size.
     func updateImageSize(_ imageSize: CGSize) async
     
-    /// Initialize a call with another peer.
-    ///
-    /// - Parameter peerID: The ID of the remote peer.
-    func sendCallRequest(to peerID: PeerID) async throws
-    
-    /// Answer the incoming call request.
-    ///
-    /// - Parameter accept: True if the request should be accepted.
-    func answerCallRequest(accept: Bool) async throws
-    
-    /// End the call.
-    func endCall() async throws
-    
-    /// End the call and disconnect from the signaling server.
-    func disconnect() async throws
-    
     /// Creates a data channel with the given configuration.
     /// - Parameters:
     ///   - setup: The configuration of the data channel.
@@ -206,15 +167,6 @@ public protocol WebRTCController: AnyObject, Sendable {
     
     /// Finish the configuration. After calling it, the re-negotiation is happening.
     func commitConfiguration() async throws
-    
-    /// Set auto accept of calls. If set to true, incoming connection messages from
-    /// the signaling server are automatically accepted, establishing a connection.
-    ///
-    /// - Parameter autoAccept: Should incoming calls be automatically accepted?
-    func setAutoAcceptCalls(autoAccept: Bool) async
-    
-    /// Tells CallKit that the call has been answered somewhere else.
-    func answeredElsewhere() throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -226,10 +178,6 @@ final class WebRTCControllerImpl: WebRTCController {
     
     init(container: DIContainer) {
         self.container = container
-    }
-    
-    func setCallManagerDelegate(_ delegate: CallManagerDelegate) {
-        container.callManager.setDelegate(delegate)
     }
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
@@ -297,22 +245,6 @@ final class WebRTCControllerImpl: WebRTCController {
         await container.webRTCManager.updateImageSize(imageSize)
     }
     
-    func sendCallRequest(to peerID: PeerID) async throws {
-        try await container.callManager.sendCallRequest(to: peerID)
-    }
-    
-    func endCall() async throws {
-        try await container.callManager.endCall()
-    }
-    
-    func answerCallRequest(accept: Bool) async throws {
-        try await container.callManager.answerCallRequest(accept: accept)
-    }
-    
-    func disconnect() async throws {
-        try await container.callManager.disconnect()
-    }
-    
     func createDataChannel(setup: DataChannelSetup) async throws {
         try await container.webRTCManager.createDataChannel(setup: setup)
     }
@@ -323,13 +255,5 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func commitConfiguration() async throws {
         try await container.webRTCManager.commitConfiguration()
-    }
-    
-    func setAutoAcceptCalls(autoAccept: Bool) async {
-        await container.callManager.setAutoAcceptCalls(autoAccept: autoAccept)
-    }
-    
-    func answeredElsewhere() throws {
-        try container.callProvider.answeredElsewhere()
     }
 }
