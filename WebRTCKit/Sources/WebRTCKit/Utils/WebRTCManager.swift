@@ -23,7 +23,13 @@ public enum WebRTCManagerError: LocalizedError, Equatable {
     }
 }
 
-protocol WebRTCManagerDelegate: AnyObject, Sendable {
+public protocol WebRTCKitDataChannelDelegate: AnyObject, Sendable {
+    
+    /// Called when a new data channel is created by the peer or by us before first negotiation.
+    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+}
+
+public protocol WebRTCKitVideoTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local video track has been added.
     func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack)
@@ -33,6 +39,9 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
     /// Called when a remote video track has been removed by the peer.
     func didRemoveRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+}
+
+protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local audio track has been added.
     func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
@@ -42,9 +51,9 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
     /// Called when a remote audio track has been removed by the peer.
     func didRemoveRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
-    
-    /// Called when a new data channel is created by the peer or by us before first negotiation.
-    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+}
+
+protocol WebRTCKitErrorDelegate: AnyObject, Sendable {
     
     /// Triggered whenever there is an error.
     func onError(_ error: WebRTCManagerError)
@@ -75,9 +84,21 @@ protocol WebRTCManagerCallDelegate: AnyObject, Sendable {
 
 protocol WebRTCManager: Sendable {
     
-    /// Sets the delegate to handle WebRTC events.
-    /// - Parameter delegate: A delegate conforming to `WebRTCManagerDelegate`.
-    func setDelegate(_ delegate: WebRTCManagerDelegate?)
+    /// Sets the delegate to handle WebRTC data channel events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitDataChannelDelegate`.
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?)
+    
+    /// Sets the delegate to handle WebRTC video track events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitVideoTrackDelegate`.
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?)
+    
+    /// Sets the delegate to handle WebRTC audio track events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitAudioTrackDelegate`.
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?)
+    
+    /// Sets the delegate to handle WebRTC errors.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitErrorDelegate`.
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?)
     
     /// Sets the delegate to handle call events.
     /// - Parameter callDelegate: A delegate conforming to `WebRTCManagerCallDelegate`.

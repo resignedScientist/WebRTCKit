@@ -2,7 +2,10 @@ import WebRTC
 
 final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
-    private weak var delegate: WebRTCManagerDelegate?
+    private weak var dataChannelDelegate: WebRTCKitDataChannelDelegate?
+    private weak var videoTrackDelegate: WebRTCKitVideoTrackDelegate?
+    private weak var audioTrackDelegate: WebRTCKitAudioTrackDelegate?
+    private weak var errorDelegate: WebRTCKitErrorDelegate?
     private weak var callDelegate: WebRTCManagerCallDelegate?
     
     @Inject(\.signalingServer) private var signalingServer
@@ -59,8 +62,20 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         super.init()
     }
     
-    func setDelegate(_ delegate: WebRTCManagerDelegate?) {
-        self.delegate = delegate
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?) {
+        self.dataChannelDelegate = dataChannelDelegate
+    }
+    
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?) {
+        self.videoTrackDelegate = videoTrackDelegate
+    }
+    
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?) {
+        self.audioTrackDelegate = audioTrackDelegate
+    }
+    
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?) {
+        self.errorDelegate = errorDelegate
     }
     
     func setCallDelegate(_ callDelegate: WebRTCManagerCallDelegate?) {
@@ -304,7 +319,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         if let dataChannel {
             log.info("New data channel created. Label: \(dataChannel.label)")
-            delegate?.didReceiveDataChannel(dataChannel)
+            dataChannelDelegate?.didReceiveDataChannel(dataChannel)
         } else {
             log.error("Failed to create a new data channel.")
         }
@@ -474,7 +489,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             if let videoTrack = rtpReceiver.track as? RTCVideoTrack {
                 let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack, source: .remote)
                 self.remoteVideoTrack = remoteVideoTrack
-                delegate?.didAddRemoteVideoTrack(remoteVideoTrack)
+                videoTrackDelegate?.didAddRemoteVideoTrack(remoteVideoTrack)
                 log.info("Remote peer did add receiver for video.")
             }
             
@@ -482,7 +497,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             if let audioTrack = rtpReceiver.track as? RTCAudioTrack {
                 let remoteAudioTrack = WRKRTCAudioTrackImpl(audioTrack, source: .remote)
                 self.remoteAudioTrack = remoteAudioTrack
-                delegate?.didAddRemoteAudioTrack(remoteAudioTrack)
+                audioTrackDelegate?.didAddRemoteAudioTrack(remoteAudioTrack)
                 log.info("Remote peer did add receiver for audio.")
             }
         }
@@ -494,14 +509,14 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             // video
             if rtpReceiver.track is RTCVideoTrack, let remoteVideoTrack {
                 self.remoteVideoTrack = nil
-                delegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+                videoTrackDelegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
                 log.info("Remote peer did remove receiver for video.")
             }
             
             // audio
             if rtpReceiver.track is RTCAudioTrack, let remoteAudioTrack {
                 self.remoteAudioTrack = nil
-                delegate?.didRemoveRemoteAudioTrack(remoteAudioTrack)
+                audioTrackDelegate?.didRemoveRemoteAudioTrack(remoteAudioTrack)
                 log.info("Remote peer did remove receiver for audio.")
             }
         }
@@ -519,7 +534,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             log.info("ICE connection state: \(newState)")
             switch newState {
             case .failed:
-                delegate?.onError(.connectionFailed)
+                errorDelegate?.onError(.connectionFailed)
             case .connected, .completed, .new, .checking, .disconnected, .closed, .count:
                 break
             @unknown default:
@@ -588,7 +603,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: WRKDataChannel) {
         Task { @MainActor in
             log.info("Peer did open data channel - label: \(dataChannel.label); id: \(dataChannel.channelId); state: \(dataChannel.readyState)")
-            delegate?.didReceiveDataChannel(dataChannel)
+            dataChannelDelegate?.didReceiveDataChannel(dataChannel)
         }
     }
 }
@@ -664,7 +679,7 @@ private extension DefaultWebRTCManager {
                     forLabel: setup.label,
                     configuration: setup.rtcConfig
                 ) else { continue }
-                delegate?.didReceiveDataChannel(channel)
+                dataChannelDelegate?.didReceiveDataChannel(channel)
             }
         }
         
@@ -753,7 +768,7 @@ private extension DefaultWebRTCManager {
         let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
         
         // pass video track to the delegate
-        delegate?.didAddLocalVideoTrack(localVideoTrack)
+        videoTrackDelegate?.didAddLocalVideoTrack(localVideoTrack)
         
         log.info("Successfully created local video track.")
         
@@ -769,7 +784,7 @@ private extension DefaultWebRTCManager {
         // add the audio track to the peer connection
         if let localAudioTrack {
             await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
-            delegate?.didAddLocalAudioTrack(localAudioTrack)
+            audioTrackDelegate?.didAddLocalAudioTrack(localAudioTrack)
             return
         }
         
@@ -799,7 +814,7 @@ private extension DefaultWebRTCManager {
         self.localAudioTrack = localAudioTrack
         
         // inform our delegate
-        delegate?.didAddLocalAudioTrack(localAudioTrack)
+        audioTrackDelegate?.didAddLocalAudioTrack(localAudioTrack)
         
         log.info("Successfully added audio track.")
     }

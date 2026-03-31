@@ -2,15 +2,24 @@ import WebRTC
 
 final class PreviewWebRTCManager: WebRTCManager {
     
-    private weak var delegate: WebRTCManagerDelegate?
-    private weak var callDelegate: WebRTCManagerCallDelegate?
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?) {
+        
+    }
     
-    func setDelegate(_ delegate: WebRTCManagerDelegate?) {
-        self.delegate = delegate
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?) {
+        
+    }
+    
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?) {
+        
+    }
+    
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?) {
+        
     }
     
     func setCallDelegate(_ callDelegate: WebRTCManagerCallDelegate?) {
-        self.callDelegate = callDelegate
+        
     }
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
