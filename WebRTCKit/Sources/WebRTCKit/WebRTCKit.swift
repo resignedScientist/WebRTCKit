@@ -2,6 +2,7 @@ import WebRTC
 
 public typealias PeerID = String
 
+@MainActor
 public struct WebRTCKit {
     
     /// Initialize the WebRTCKit for production.
