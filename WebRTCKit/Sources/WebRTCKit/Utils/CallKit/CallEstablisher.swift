@@ -48,8 +48,8 @@ final class CallEstablisherImpl: CallEstablisher {
             do {
                 try await webRTCManager.answerCall()
             } catch {
-                // TODO: handle error properly with CallKit
                 log.error("Failed to answer call - \(error)")
+                providerDelegate.reportCallEnded(callUUID, at: .now, with: .failed)
             }
         }
     }
@@ -59,8 +59,8 @@ final class CallEstablisherImpl: CallEstablisher {
             do {
                 try await webRTCManager.startVideoCall(to: handle)
             } catch {
-                // TODO: handle error properly with CallKit
                 log.error("Failed to start call - \(error)")
+                providerDelegate.reportCallEnded(callUUID, at: .now, with: .failed)
             }
         }
     }
