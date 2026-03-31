@@ -1,7 +1,7 @@
 import WebRTC
 
 struct DIContainer {
-    private(set) static var shared: DIContainer?
+    @MainActor private(set) static var shared: DIContainer?
     
     let config: WebRTCKitConfig
     let webRTCManager: WebRTCManager
