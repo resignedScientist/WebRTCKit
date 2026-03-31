@@ -95,7 +95,7 @@ final class CallManagerImpl: CallManager {
     }
     
     func startCall(_ call: Call) {
-        callEstablisher.startCall(call.uuid)
+        callEstablisher.startCall(call.uuid, handle: call.handle)
     }
     
     func endCall(_ call: Call) {

@@ -15,7 +15,7 @@ protocol CallEstablisher: Sendable {
     
     func answerCall(_ callUUID: UUID)
     
-    func startCall(_ callUUID: UUID)
+    func startCall(_ callUUID: UUID, handle: String)
     
     func endCall(_ callUUID: UUID)
     
@@ -54,8 +54,15 @@ final class CallEstablisherImpl: CallEstablisher {
         }
     }
     
-    func startCall(_ callUUID: UUID) {
-        // TODO: we need the peer id here
+    func startCall(_ callUUID: UUID, handle: String) {
+        Task {
+            do {
+                try await webRTCManager.startVideoCall(to: handle)
+            } catch {
+                // TODO: handle error properly with CallKit
+                log.error("Failed to start call - \(error)")
+            }
+        }
     }
     
     func endCall(_ callUUID: UUID) {
