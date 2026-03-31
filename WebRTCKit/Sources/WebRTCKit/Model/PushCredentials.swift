@@ -1,7 +1,7 @@
 import Foundation
 import PushKit
 
-public struct PushCredentials {
+public struct PushCredentials: Sendable {
     public let token: Data
     public let type: PKPushType
 }

@@ -1,6 +1,6 @@
 import WebRTC
 
-protocol WRKRTCAudioSession: AnyObject, Sendable {
+protocol WRKRTCAudioSession: AnyObject {
     
     /// This property is only effective if useManualAudio is YES.
     /// Represents permission for WebRTC to initialize the VoIP audio unit.

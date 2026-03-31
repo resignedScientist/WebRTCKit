@@ -1,6 +1,6 @@
 import WebRTC
 
-public protocol WRKDataChannel: AnyObject, Sendable {
+public protocol WRKDataChannel: AnyObject {
     
     var label: String { get }
     
