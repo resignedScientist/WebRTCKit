@@ -1,6 +1,6 @@
 import PushKit
 
-public protocol VoIPPushHandler: Sendable {
+public protocol VoIPPushHandler {
     func setDelegate(_ delegate: VoIPPushHandlerDelegate)
 }
 

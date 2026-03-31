@@ -5,7 +5,7 @@
 //  Created by Norman Laudien on 26.03.2026.
 //
 
-public protocol AudioSessionConfigurator: Sendable {
+public protocol AudioSessionConfigurator {
     
     func configureAudioSession()
     

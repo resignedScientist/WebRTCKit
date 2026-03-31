@@ -8,7 +8,7 @@
 import Foundation
 import CallKit
 
-protocol CallEstablisher: Sendable {
+protocol CallEstablisher {
     
     func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?)
     

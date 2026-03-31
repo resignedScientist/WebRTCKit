@@ -82,7 +82,7 @@ protocol WebRTCManagerCallDelegate: AnyObject, Sendable {
     func shouldConnect(to remotePeerID: PeerID) async
 }
 
-protocol WebRTCManager: Sendable {
+protocol WebRTCManager {
     
     /// Sets the delegate to handle WebRTC data channel events.
     /// - Parameter delegate: A delegate conforming to `WebRTCKitDataChannelDelegate`.

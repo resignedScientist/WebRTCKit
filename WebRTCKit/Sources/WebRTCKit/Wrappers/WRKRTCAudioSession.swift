@@ -122,7 +122,7 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
 
 extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
     
-    nonisolated func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
+    func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
         Task { @MainActor in
             delegate?.audioSessionDidSetActive(self, active: active)
         }

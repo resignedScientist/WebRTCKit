@@ -1,6 +1,6 @@
 import WebRTC
 
-protocol WRKRTCPeerConnection: Sendable {
+protocol WRKRTCPeerConnection {
     
     /// The object that will be notifed about events such as state changes and
     /// streams being added or removed.
@@ -41,7 +41,7 @@ protocol WRKRTCPeerConnection: Sendable {
     func add(_ candidate: ICECandidate) async throws
     
     /// Generate an SDP offer.
-    nonisolated func offer(for constraints: MediaConstraints) async throws -> SessionDescription
+    func offer(for constraints: MediaConstraints) async throws -> SessionDescription
     
     /// Creates an offer or answer (depending on current signaling state) and sets
     /// it as the local session description.
@@ -54,7 +54,7 @@ protocol WRKRTCPeerConnection: Sendable {
     func setRemoteDescription(_ sdp: SessionDescription) async throws
     
     /// Generate an SDP answer.
-    nonisolated func answer(for constraints: MediaConstraints) async throws -> SessionDescription
+    func answer(for constraints: MediaConstraints) async throws -> SessionDescription
     
     /// Create a new data channel with the given label and configuration.
     func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> WRKDataChannel?

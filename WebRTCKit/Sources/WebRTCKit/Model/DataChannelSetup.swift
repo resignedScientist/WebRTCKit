@@ -1,6 +1,6 @@
 import WebRTC
 
-public struct DataChannelSetup: Sendable {
+public struct DataChannelSetup {
     public let label: String
     public let configuration: DataChannelConfiguration
     
@@ -17,7 +17,7 @@ public struct DataChannelSetup: Sendable {
     }
 }
 
-public struct DataChannelConfiguration: Sendable {
+public struct DataChannelConfiguration {
     
     /// Set to true if ordered delivery is required.
     public let isOrdered: Bool

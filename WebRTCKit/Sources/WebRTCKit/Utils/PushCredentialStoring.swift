@@ -1,3 +1,3 @@
-public protocol PushCredentialStoring: Sendable {
+public protocol PushCredentialStoring {
     func store(credentials: PushCredentials) async
 }

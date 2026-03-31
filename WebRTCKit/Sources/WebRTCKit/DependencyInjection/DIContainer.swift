@@ -1,6 +1,6 @@
 import WebRTC
 
-struct DIContainer: Sendable {
+struct DIContainer {
     private(set) static var shared: DIContainer?
     
     let config: WebRTCKitConfig

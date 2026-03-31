@@ -482,7 +482,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
         Task { @MainActor in
             
             // video
@@ -503,7 +503,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver) {
         Task { @MainActor [self] in
             
             // video
@@ -522,14 +522,14 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
+    func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
         Task { @MainActor in
             //            configurationChanged = true
             await handleNegotiation(peerConnection)
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceConnectionState) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceConnectionState) {
         Task { @MainActor in
             log.info("ICE connection state: \(newState)")
             switch newState {
@@ -543,7 +543,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceGatheringState) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceGatheringState) {
         Task { @MainActor in
             log.info("ICE gathering state: \(newState)")
             switch newState {
@@ -557,7 +557,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCPeerConnectionState) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCPeerConnectionState) {
         Task { @MainActor in
             log.info("Peer connection state: \(newState)")
             switch newState {
@@ -579,7 +579,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: ICECandidate) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: ICECandidate) {
         Task { @MainActor in
             
             guard let remotePeerID else { return }
@@ -594,13 +594,13 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [ICECandidate]) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [ICECandidate]) {
         Task { @MainActor in
             log.info("ICE candidates removed.")
         }
     }
     
-    nonisolated func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: WRKDataChannel) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: WRKDataChannel) {
         Task { @MainActor in
             log.info("Peer did open data channel - label: \(dataChannel.label); id: \(dataChannel.channelId); state: \(dataChannel.readyState)")
             dataChannelDelegate?.didReceiveDataChannel(dataChannel)

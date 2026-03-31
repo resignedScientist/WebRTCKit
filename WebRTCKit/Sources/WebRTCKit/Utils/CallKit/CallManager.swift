@@ -8,7 +8,7 @@
 import Foundation
 import CallKit
 
-protocol CallManager: Sendable {
+protocol CallManager {
     
     /// Sets the delegate to handle call state changes.
     /// - Parameter delegate: A delegate conforming to `WebRTCKitCallStateDelegate`.

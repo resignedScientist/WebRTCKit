@@ -1,6 +1,6 @@
 import Foundation
 
-struct NetworkDataPoint: Sendable, Equatable {
+struct NetworkDataPoint: Equatable {
     
     /// The total packets sent since call start.
     let packetsSent: Int

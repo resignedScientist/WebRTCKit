@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Call: Sendable {
+struct Call {
     let uuid: UUID
     let handle: String
     let direction: CallDirection

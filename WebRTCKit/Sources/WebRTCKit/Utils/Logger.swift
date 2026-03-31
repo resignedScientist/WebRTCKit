@@ -11,7 +11,7 @@ public enum LoggerCategory: String, Sendable {
     case userInterface
 }
 
-public enum LogType: Sendable {
+public enum LogType {
     
     /// Debug messages; usually for testing
     case debug
@@ -38,7 +38,7 @@ public protocol LoggerDelegate: AnyObject, Sendable {
 
 /// A class responsible for logging messages with different severity levels.
 /// This logger uses Apple's unified logging system.
-final class Logger: Sendable {
+final class Logger {
     
     private var logLevel: LogLevel {
         // Log everything before initialization of DIContainer was finished.

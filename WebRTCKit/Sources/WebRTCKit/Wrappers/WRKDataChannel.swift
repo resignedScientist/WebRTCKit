@@ -2,7 +2,7 @@ import WebRTC
 
 public protocol WRKDataChannel: AnyObject, Sendable {
     
-    nonisolated var label: String { get }
+    var label: String { get }
     
     var readyState: RTCDataChannelState { get }
     
@@ -20,7 +20,7 @@ final class WRKDataChannelImpl: WRKDataChannel {
     
     let dataChannel: RTCDataChannel
     
-    nonisolated let label: String
+    let label: String
     
     var readyState: RTCDataChannelState {
         dataChannel.readyState

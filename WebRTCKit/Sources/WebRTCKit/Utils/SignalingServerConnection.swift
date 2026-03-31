@@ -40,7 +40,7 @@ public protocol SignalingServerDelegate: AnyObject, Sendable {
     func socketDidClose()
 }
 
-public protocol SignalingServerConnection: Sendable {
+public protocol SignalingServerConnection {
     
     /// Returns true if the connection is established / open.
     var isOpen: Bool { get }
