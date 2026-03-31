@@ -6,7 +6,7 @@
 //
 
 @MainActor
-protocol AudioSessionConfigurator: Sendable {
+public protocol AudioSessionConfigurator: Sendable {
     
     func configureAudioSession()
     
@@ -15,17 +15,17 @@ protocol AudioSessionConfigurator: Sendable {
     func stopAudio()
 }
 
-struct AudioSessionConfiguratorImpl: AudioSessionConfigurator {
+struct MockAudioSessionConfigurator: AudioSessionConfigurator {
     
     func configureAudioSession() {
-        // TODO: use EyeScanFoundation classes to configure audio session
+        
     }
     
     func startAudio() {
-        // TODO: use EyeScanFoundation classes to start audio processing
+        
     }
     
     func stopAudio() {
-        // TODO: use EyeScanFoundation classes to stop audio processing
+        
     }
 }

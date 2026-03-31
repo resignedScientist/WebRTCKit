@@ -5,17 +5,20 @@ public typealias PeerID = String
 public struct WebRTCKit {
     
     /// Initialize the WebRTCKit for production.
-    /// 
+    ///  
     /// - Parameters:
     ///   - signalingServer: A reference to the signaling server connection to use.
+    ///   - audioSessionConfigurator: A reference to a class that configures the audio session.
     ///   - config: The configuration settings to apply.
     ///   - enableVerboseLogging: A Boolean value that determines wether verbose logging for WebRTC is enabled.
     ///   - audioDevice: An optional audio device to use.
     ///   - logLevel: The log level for our logger; defaults to only log errors.
     ///   - loggerDelegate: A delegate for the logger that receives all the logs.
+    ///   - pushPayloadParser: A reference to a class that parses the VoIP push payload.
     /// - Returns: The controller to interact with the WebRTCKit.
     public static func initialize(
         signalingServer: SignalingServerConnection,
+        audioSessionConfigurator: AudioSessionConfigurator,
         config: Config,
         audioDevice: RTCAudioDevice? = nil,
         logLevel: LogLevel = .error,
@@ -27,9 +30,6 @@ public struct WebRTCKit {
         
         // TODO: replace with WebRTCManager
         let callEstablisher: CallEstablisher = DummyCallEstablisher()
-        
-        // TODO: must come as a property
-        let audioSessionConfigurator: AudioSessionConfigurator = AudioSessionConfiguratorImpl()
         
         let callManager: CallManager = CallManagerImpl(
             callEstablisher: callEstablisher
@@ -98,7 +98,7 @@ public struct WebRTCKit {
             ),
             providerDelegate: ProviderDelegateImpl(
                 callManager: callManager,
-                audioSessionConfigurator: AudioSessionConfiguratorImpl()
+                audioSessionConfigurator: MockAudioSessionConfigurator()
             )
         )
         
