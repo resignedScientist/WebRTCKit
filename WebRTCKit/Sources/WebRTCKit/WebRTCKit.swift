@@ -130,6 +130,7 @@ public struct WebRTCKit {
 }
 
 /// An object to interact with the WebRTCKit.
+@MainActor
 public protocol WebRTCController: AnyObject {
     
     var voipPushHandler: VoIPPushHandler { get }
