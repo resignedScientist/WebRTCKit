@@ -26,11 +26,14 @@ public struct WebRTCKit {
         pushPayloadParser: PushPayloadParser? = nil
     ) async -> WebRTCController {
         
-        // CallKit ---->
-        
-        // TODO: replace with WebRTCManager
-        let callEstablisher: CallEstablisher = DummyCallEstablisher()
-        
+        let webRTCManager: WebRTCManager = DefaultWebRTCManager(
+            factory: WRKRTCPeerConnectionFactoryImpl(
+                audioDevice: audioDevice
+            )
+        )
+        let callEstablisher: CallEstablisher = CallEstablisherImpl(
+            webRTCManager: webRTCManager
+        )
         let callManager: CallManager = CallManagerImpl(
             callEstablisher: callEstablisher
         )
@@ -41,19 +44,13 @@ public struct WebRTCKit {
         let callEstablisherDelegate: CallEstablisherDelegate = CallEstablisherDelegateImpl(
             providerDelegate: providerDelegate
         )
+        let pushCredentialStore = PushCredentialStore()
         
         callEstablisher.setDelegate(callEstablisherDelegate)
-        // <---- CallKit
-        
-        let pushCredentialStore = PushCredentialStore()
         
         let container = DIContainer.create(
             config: config,
-            webRTCManager: DefaultWebRTCManager(
-                factory: WRKRTCPeerConnectionFactoryImpl(
-                    audioDevice: audioDevice
-                )
-            ),
+            webRTCManager: webRTCManager,
             pushHandler: DefaultVoIPPushHandler(
                 store: pushCredentialStore,
                 parser: pushPayloadParser ?? DefaultPushPayloadParser()
