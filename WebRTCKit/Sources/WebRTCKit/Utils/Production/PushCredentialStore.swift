@@ -1,6 +1,6 @@
 import PushKit
 
-public actor PushCredentialStore: PushCredentialProviding, PushCredentialStoring {
+public final class PushCredentialStore: PushCredentialProviding, PushCredentialStoring {
     
     private var credentials: [PKPushType: PushCredentials] = [:]
     
