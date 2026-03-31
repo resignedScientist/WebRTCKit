@@ -8,7 +8,6 @@
 import CallKit
 import AVFoundation
 
-@MainActor
 protocol ProviderDelegate: Sendable {
     
     func reportNewIncomingCall(uuid: UUID, handle: String) async throws

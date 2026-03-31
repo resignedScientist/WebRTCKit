@@ -8,7 +8,6 @@
 import Foundation
 import CallKit
 
-@MainActor
 protocol CallManager: Sendable {
     
     /// Called by the app to request a start call transaction.

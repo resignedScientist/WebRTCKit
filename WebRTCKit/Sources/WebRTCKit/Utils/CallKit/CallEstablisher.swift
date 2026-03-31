@@ -8,7 +8,6 @@
 import Foundation
 import CallKit
 
-@MainActor
 protocol CallEstablisher: Sendable {
     
     func answerCall(_ callUUID: UUID)
