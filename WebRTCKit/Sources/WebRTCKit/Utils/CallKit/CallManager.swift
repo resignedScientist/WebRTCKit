@@ -20,6 +20,9 @@ protocol CallManager: Sendable {
     /// Called by the app to request a mute / unmute transaction.
     func requestCallMuted(_ call: Call, muted: Bool) async throws
     
+    /// Called by the app to get all running calls.
+    func getAllRunningCalls() -> [Call]
+    
     /// Called by the provider delegate to add a call to our list.
     func addCall(_ call: Call)
     
@@ -85,6 +88,10 @@ final class CallManagerImpl: CallManager {
         let transaction = CXTransaction(action: muteCallAction)
         
         try await callController.request(transaction)
+    }
+    
+    func getAllRunningCalls() -> [Call] {
+        Array(calls.values)
     }
     
     func addCall(_ call: Call) {

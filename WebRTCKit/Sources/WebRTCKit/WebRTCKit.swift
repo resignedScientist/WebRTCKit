@@ -295,7 +295,11 @@ final class WebRTCControllerImpl: WebRTCController {
     }
     
     func endCall() async throws {
-        // We only ever have one call for now; so we just use the `endAllCalls` function.
-        container.callManager.endAllCalls()
+        // We only ever have one call at a time for now; so we just end all the calls.
+        let callManager = container.callManager
+        let runningCalls = callManager.getAllRunningCalls()
+        for call in runningCalls {
+            try await callManager.requestEndCall(call)
+        }
     }
 }
