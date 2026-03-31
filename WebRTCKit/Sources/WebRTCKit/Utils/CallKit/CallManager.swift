@@ -12,7 +12,7 @@ import CallKit
 protocol CallManager: Sendable {
     
     /// Called by the app to request a start call transaction.
-    func requestStartCall(_ handle: String) async throws
+    func requestStartCall(_ handle: String) async throws -> UUID
     
     /// Called by the app to request an end call transaction.
     func requestEndCall(_ call: Call) async throws
@@ -21,7 +21,7 @@ protocol CallManager: Sendable {
     func requestCallMuted(_ call: Call, muted: Bool) async throws
     
     /// Called by the app to get all running calls.
-    func getAllRunningCalls() -> [Call]
+    func getAllRunningCalls() -> [UUID]
     
     /// Called by the provider delegate to add a call to our list.
     func addCall(_ call: Call)
@@ -62,7 +62,7 @@ final class CallManagerImpl: CallManager {
         self.callEstablisher = callEstablisher
     }
     
-    func requestStartCall(_ handle: String) async throws {
+    func requestStartCall(_ handle: String) async throws -> UUID {
         
         let callUUID = UUID()
         let cxHandle = CXHandle(type: .generic, value: handle)
@@ -71,6 +71,8 @@ final class CallManagerImpl: CallManager {
         let transaction = CXTransaction(action: startCallAction)
         
         try await callController.request(transaction)
+        
+        return callUUID
     }
     
     func requestEndCall(_ call: Call) async throws {
@@ -90,8 +92,8 @@ final class CallManagerImpl: CallManager {
         try await callController.request(transaction)
     }
     
-    func getAllRunningCalls() -> [Call] {
-        Array(calls.values)
+    func getAllRunningCalls() -> [UUID] {
+        Array(calls.keys)
     }
     
     func addCall(_ call: Call) {

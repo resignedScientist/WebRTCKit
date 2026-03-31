@@ -203,12 +203,14 @@ public protocol WebRTCController: AnyObject, Sendable {
     func commitConfiguration() async throws
     
     /// Initialize a call with another peer.
-    ///
+    /// 
     /// - Parameter peerID: The ID of the remote peer.
-    func sendCallRequest(to peerID: PeerID) async throws
+    /// - Returns: The UUID of the starting call.
+    func sendCallRequest(to peerID: PeerID) async throws -> UUID
     
     /// End the call.
-    func endCall() async throws
+    /// - Parameter callUUID: The UUID of the call to end.
+    func endCall(_ callUUID: UUID) async throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -299,16 +301,16 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.webRTCManager.commitConfiguration()
     }
     
-    func sendCallRequest(to peerID: PeerID) async throws {
+    func sendCallRequest(to peerID: PeerID) async throws -> UUID {
         try await container.callManager.requestStartCall(peerID)
     }
     
-    func endCall() async throws {
-        // We only ever have one call at a time for now; so we just end all the calls.
+    func endCall(_ callUUID: UUID) async throws {
         let callManager = container.callManager
-        let runningCalls = callManager.getAllRunningCalls()
-        for call in runningCalls {
-            try await callManager.requestEndCall(call)
-        }
+        
+        // handle as success if a call with this id was not found
+        guard let call = callManager.callWithUUID(callUUID) else { return }
+        
+        try await callManager.requestEndCall(call)
     }
 }
