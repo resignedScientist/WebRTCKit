@@ -44,6 +44,10 @@ final class PreviewWebRTCManager: WebRTCManager {
         false
     }
     
+    func updateImageSize(_ imageSize: CGSize) {
+        
+    }
+    
     func answerCall() async throws {
         
     }

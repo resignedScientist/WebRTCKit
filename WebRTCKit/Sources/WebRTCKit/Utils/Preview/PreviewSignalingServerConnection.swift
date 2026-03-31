@@ -12,6 +12,10 @@ final class PreviewSignalingServerConnection: SignalingServerConnection {
         "0000"
     }
     
+    func waitForConnection(timeout: TimeInterval) async throws {
+        
+    }
+    
     func disconnect() {
         
     }

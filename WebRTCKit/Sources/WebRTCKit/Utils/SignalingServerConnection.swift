@@ -28,6 +28,12 @@ public protocol SignalingServerDelegate: AnyObject, Sendable {
     /// - Parameter remotePeerID: The ID of the sending peer.
     func didReceiveEndCall(from remotePeerID: PeerID) async
     
+    
+    /// We received a message from the signaling server asking us to connect to a peer.
+    ///
+    /// - Parameter remotePeerID: The ID of the remote peer to connect to.
+    func shouldConnect(to remotePeerID: PeerID) async
+    
     /// The websocket did open and is ready for sending / receiving messages.
     func socketDidOpen()
     

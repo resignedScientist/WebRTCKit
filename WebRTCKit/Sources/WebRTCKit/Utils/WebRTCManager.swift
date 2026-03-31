@@ -70,6 +70,11 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
     /// Called when we lost the connection to our peer.
     func didLosePeerConnection()
+    
+    /// We received a message from the signaling server asking us to connect to a peer.
+    ///
+    /// - Parameter remotePeerID: The ID of the remote peer to connect to.
+    func shouldConnect(to remotePeerID: PeerID) async
 }
 
 @WebRTCActor
@@ -96,7 +101,7 @@ protocol WebRTCManager: Sendable {
     /// Sets up the WebRTC connection and returns a `PeerID`.
     /// - Returns: A `PeerID` representing the local peer.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func setup() async throws -> PeerID
+    @discardableResult func setup() async throws -> PeerID
     
     /// Manual audio mode only; Call this after the audio session was configured.
     /// Tells the manager that the audio track can be added to the call.
@@ -114,6 +119,12 @@ protocol WebRTCManager: Sendable {
     /// Checks if video recording is currently active.
     /// - Returns: A boolean indicating if video recording is active.
     func isVideoRecording() -> Bool
+    
+    /// Update the size of the image that we receive as input.
+    ///
+    /// This will be used for scaling and is only really needed if the image size changes at runtime.
+    /// - Parameter imageSize: The new image size.
+    func updateImageSize(_ imageSize: CGSize) async
     
     /// Initiates a video call to a specified peer.
     /// - Parameter peerID: The `PeerID` of the peer to call.

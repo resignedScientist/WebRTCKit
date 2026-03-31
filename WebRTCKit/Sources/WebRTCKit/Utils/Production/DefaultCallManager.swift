@@ -14,6 +14,7 @@ final class DefaultCallManager: CallManager {
     private let log = Logger(caller: "CallManager")
     
     private var connectionTimeout: Task<Void, Never>?
+    private var autoAcceptCall = false
     
     init(stateHolder: CallManagerStateHolder = CallManagerStateHolderImpl(initialState: .idle)) {
         self.stateHolder = stateHolder
@@ -27,6 +28,10 @@ final class DefaultCallManager: CallManager {
         self.delegate = delegate
     }
     
+    func setAutoAcceptCalls(autoAccept: Bool) async {
+        self.autoAcceptCall = autoAccept
+    }
+    
     func setup() async {
         webRTCManager.setDelegate(self)
     }
@@ -34,11 +39,15 @@ final class DefaultCallManager: CallManager {
     func sendCallRequest(to peerID: PeerID) async throws {
         log.info("Sending call request…")
         try await stateHolder.changeState(to: .sendingCallRequest)
-        try await callProvider.startOutgoingCall(
-            uuid: UUID(),
-            handle: peerID,
-            hasVideo: true
-        )
+        if autoAcceptCall {
+            try await webRTCManager.startVideoCall(to: peerID)
+        } else {
+            try await callProvider.startOutgoingCall(
+                uuid: UUID(),
+                handle: peerID,
+                hasVideo: true
+            )
+        }
         startConnectionTimeout()
     }
     
@@ -47,21 +56,44 @@ final class DefaultCallManager: CallManager {
         
         if accept {
             try await stateHolder.changeState(to: .connecting)
-            try await callProvider.acceptIncomingCall()
+            if autoAcceptCall {
+                try await webRTCManager.answerCall()
+            } else {
+                try await callProvider.acceptIncomingCall()
+            }
             startConnectionTimeout()
         } else {
             try await endCall()
         }
     }
     
-    func didAcceptCallRequest() async {
+    func onStartCallAction(to remotePeerID: PeerID) async throws {
         await delegate?.didAcceptCallRequest()
+        try await webRTCManager.setup()
+        try await webRTCManager.startVideoCall(to: remotePeerID)
+    }
+    
+    func onAnswerCallAction(callId: UUID) async throws {
+        await delegate?.didAcceptCallRequest()
+        try await webRTCManager.answerCall()
+    }
+    
+    func onEndCallAction(callId: UUID) async throws {
+        if await stateHolder.getState() == .receivingCallRequest {
+            await delegate?.didDeclineCallRequest()
+        }
+        try await webRTCManager.stopVideoCall()
     }
     
     func endCall() async throws {
         log.info("Ending call…")
         try await stateHolder.changeState(to: .endingCall)
-        try await callProvider.endCall()
+        if autoAcceptCall {
+            try await webRTCManager.stopVideoCall()
+        }
+        if callProvider.isCallRunning() {
+            try await callProvider.endCall()
+        }
         stopConnectionTimeout()
     }
     
@@ -92,6 +124,17 @@ final class DefaultCallManager: CallManager {
         Task.detached { [delegate] in
             delegate?.shouldDeactivateAudioSession()
         }
+    }
+    
+    func canReceiveNewVoIPCalls() async -> Bool {
+        
+        // do not allow VoIP calls if autoAcceptCall is enabled
+        guard !autoAcceptCall else { return false }
+        
+        // do not allow VoIP calls if state is not idle
+        guard await stateHolder.getState() == .idle else { return false }
+        
+        return true
     }
 }
 
@@ -145,7 +188,12 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             
             do {
                 try await stateHolder.changeState(to: .endingCall)
-                try await callProvider.endCall()
+                if autoAcceptCall {
+                    try await webRTCManager.stopVideoCall()
+                }
+                if callProvider.isCallRunning() {
+                    try await callProvider.endCall()
+                }
                 stopConnectionTimeout()
             } catch {
                 log.error("DidReceiveEndCall failed - \(error)")
@@ -190,13 +238,17 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             
             do {
                 try await stateHolder.changeState(to: .receivingCallRequest)
-                try await callProvider.reportIncomingCall(
-                    uuid: UUID(),
-                    handle: peerID,
-                    hasVideo: true
-                )
-                Task.detached { [delegate] in
-                    delegate?.didReceiveIncomingCall(from: peerID)
+                
+                delegate?.didReceiveIncomingCall(from: peerID)
+                
+                if autoAcceptCall {
+                    try await answerCallRequest(accept: true)
+                } else {
+                    try await callProvider.reportIncomingCall(
+                        uuid: UUID(),
+                        handle: peerID,
+                        hasVideo: true
+                    )
                 }
             } catch let error as CXErrorCodeIncomingCallError {
                 log.error("DidReceiveOffer failed - \(error.code)")
@@ -212,7 +264,12 @@ extension DefaultCallManager: WebRTCManagerDelegate {
             log.error("onError - \(error)")
             
             do {
-                try await callProvider.endCall()
+                if autoAcceptCall {
+                    try await webRTCManager.stopVideoCall()
+                }
+                if callProvider.isCallRunning() {
+                    try await callProvider.endCall()
+                }
                 try await stateHolder.changeState(to: .idle)
                 Task.detached { [delegate] in
                     delegate?.callDidEnd(withError: .webRTCManagerError(error))
@@ -298,6 +355,10 @@ extension DefaultCallManager: WebRTCManagerDelegate {
                 log.fault("Failed to change state to 'connecting' - \(error)")
             }
         }
+    }
+    
+    func shouldConnect(to remotePeerID: PeerID) async {
+        await delegate?.shouldConnect(to: remotePeerID)
     }
 }
 

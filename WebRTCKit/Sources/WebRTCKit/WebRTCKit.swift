@@ -1,4 +1,5 @@
 import WebRTC
+import CallKit
 
 public typealias PeerID = String
 
@@ -20,8 +21,17 @@ public struct WebRTCKit {
         config: Config,
         audioDevice: RTCAudioDevice? = nil,
         logLevel: LogLevel = .error,
-        loggerDelegate: LoggerDelegate? = nil
+        loggerDelegate: LoggerDelegate? = nil,
+        pushPayloadParser: PushPayloadParser? = nil
     ) async -> WebRTCController {
+        
+        let pushCredentialStore = PushCredentialStore()
+        
+        let callProvider = CXProvider(configuration: {
+            let configuration = CXProviderConfiguration()
+            configuration.supportsVideo = true
+            return configuration
+        }())
         
         let container = DIContainer.create(
             config: config,
@@ -30,8 +40,15 @@ public struct WebRTCKit {
                     audioDevice: audioDevice
                 )
             ),
-            callProvider: DefaultVoIPCallProvider(),
-            pushHandler: DefaultVoIPPushHandler(),
+            callProvider: DefaultVoIPCallProvider(
+                provider: WRKCXProvider(provider: callProvider)
+            ),
+            pushHandler: DefaultVoIPPushHandler(
+                store: pushCredentialStore,
+                parser: pushPayloadParser ?? DefaultPushPayloadParser(),
+                provider: callProvider
+            ),
+            pushCredentialProvider: pushCredentialStore,
             signalingServer: signalingServer,
             callManager: DefaultCallManager(),
             networkMonitor: DefaultNetworkMonitor(),
@@ -51,11 +68,13 @@ public struct WebRTCKit {
     /// Initialize the framework for testing or previews using mock classes.
     public static func initializeForTesting() -> WebRTCController {
         
+        let pushCredentialStore = PushCredentialStore()
         let container = DIContainer.create(
             config: .preview,
             webRTCManager: PreviewWebRTCManager(),
             callProvider: PreviewVoIPCallProvider(),
             pushHandler: PreviewVoIPPushHandler(),
+            pushCredentialProvider: pushCredentialStore,
             signalingServer: PreviewSignalingServerConnection(),
             callManager: PreviewCallManager(),
             networkMonitor: PreviewNetworkMonitor(),
@@ -72,6 +91,7 @@ public struct WebRTCKit {
         webRTCManager: WebRTCManager,
         callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
+        pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
         callManager: CallManager,
         networkMonitor: NetworkMonitor
@@ -82,6 +102,7 @@ public struct WebRTCKit {
             webRTCManager: webRTCManager,
             callProvider: callProvider,
             pushHandler: pushHandler,
+            pushCredentialProvider: pushCredentialProvider,
             signalingServer: signalingServer,
             callManager: callManager,
             networkMonitor: networkMonitor,
@@ -98,6 +119,10 @@ public struct WebRTCKit {
 /// An object to interact with the WebRTCKit.
 @WebRTCActor
 public protocol WebRTCController: AnyObject, Sendable {
+    
+    var voipPushHandler: VoIPPushHandler { get }
+    
+    var pushCredentialProvider: PushCredentialProviding { get }
     
     /// Set the delegate to handle calls and receive audio & video streams.
     ///
@@ -147,6 +172,12 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// Was a video track added by calling `startVideoRecording`?
     func isVideoRecording() -> Bool
     
+    /// Update the size of the image that we receive as input.
+    ///
+    /// This will be used for scaling and is only really needed if the image size changes at runtime.
+    /// - Parameter imageSize: The new image size.
+    func updateImageSize(_ imageSize: CGSize) async
+    
     /// Initialize a call with another peer.
     ///
     /// - Parameter peerID: The ID of the remote peer.
@@ -175,11 +206,23 @@ public protocol WebRTCController: AnyObject, Sendable {
     
     /// Finish the configuration. After calling it, the re-negotiation is happening.
     func commitConfiguration() async throws
+    
+    /// Set auto accept of calls. If set to true, incoming connection messages from
+    /// the signaling server are automatically accepted, establishing a connection.
+    ///
+    /// - Parameter autoAccept: Should incoming calls be automatically accepted?
+    func setAutoAcceptCalls(autoAccept: Bool) async
+    
+    /// Tells CallKit that the call has been answered somewhere else.
+    func answeredElsewhere() throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
     
     private let container: DIContainer
+    
+    var voipPushHandler: VoIPPushHandler { container.pushHandler }
+    var pushCredentialProvider: PushCredentialProviding { container.pushCredentialProvider }
     
     init(container: DIContainer) {
         self.container = container
@@ -236,8 +279,8 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.webRTCManager.startVideoRecording(
             videoCapturer: nil,
             imageSize: CGSize(
-                width: 640,
-                height: 480
+                width: 480,
+                height: 640
             )
         )
     }
@@ -248,6 +291,10 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func isVideoRecording() -> Bool {
         container.webRTCManager.isVideoRecording()
+    }
+    
+    func updateImageSize(_ imageSize: CGSize) async {
+        await container.webRTCManager.updateImageSize(imageSize)
     }
     
     func sendCallRequest(to peerID: PeerID) async throws {
@@ -276,5 +323,13 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func commitConfiguration() async throws {
         try await container.webRTCManager.commitConfiguration()
+    }
+    
+    func setAutoAcceptCalls(autoAccept: Bool) async {
+        await container.callManager.setAutoAcceptCalls(autoAccept: autoAccept)
+    }
+    
+    func answeredElsewhere() throws {
+        try container.callProvider.answeredElsewhere()
     }
 }

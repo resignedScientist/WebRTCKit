@@ -70,7 +70,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) async {
         self.isInitialVideoEnabled = enabled
         self.initialImageSize = imageSize
-        self.localVideoTrack = try? await makeVideoTrack(videoCapturer: videoCapturer)
+        if enabled {
+            self.localVideoTrack = try? await makeVideoTrack(videoCapturer: videoCapturer)
+        } else {
+            self.localVideoTrack = nil
+        }
     }
     
     @discardableResult
@@ -157,6 +161,12 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         peerConnection?.senders.contains(where: { $0.track is RTCVideoTrack }) == true
     }
     
+    func updateImageSize(_ imageSize: CGSize) async {
+        guard let peerConnection else { return }
+        bitrateAdjustor.imageSize = imageSize
+        await bitrateAdjustor.updateScalingFactor(peerConnection: peerConnection)
+    }
+    
     func startVideoCall(to peerID: PeerID) async throws {
         guard peerConnection == nil else {
             throw WebRTCManagerError.critical("⚠️ startVideoCall failed; PeerConnection is not nil; Are you already in a call?")
@@ -174,7 +184,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func stopVideoCall() async throws {
-        guard peerConnection != nil else { return }
+        guard peerConnection != nil else {
+            delegate?.callDidEnd()
+            return
+        }
         
         log.info("Stopping video call…")
         
@@ -213,7 +226,12 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     func disconnect() async {
         
         // skip if already disconnected
-        guard peerConnection != nil else { return }
+        guard peerConnection != nil else {
+            log.info("Disconnect() called, but we are already disconnected.")
+            return
+        }
+        
+        log.info("Disconnecting…")
         
         peerConnection?.close()
         peerConnection = nil
@@ -377,6 +395,10 @@ extension DefaultWebRTCManager: SignalingServerDelegate {
         
         log.info("End Call message received.")
         delegate?.didReceiveEndCall()
+    }
+    
+    func shouldConnect(to remotePeerID: PeerID) async {
+        await delegate?.shouldConnect(to: remotePeerID)
     }
     
     func socketDidOpen() {
@@ -838,6 +860,7 @@ private extension DefaultWebRTCManager {
             peerConnection.iceGatheringState == .gathering,
             peerConnection.remoteDescription != nil
         else {
+            log.debug("Cached ICE candidate for later use.")
             await cachedICECandidates.store(candidateData)
             return
         }
@@ -863,7 +886,10 @@ private extension DefaultWebRTCManager {
             peerConnection?.iceGatheringState == .gathering,
             peerConnection?.remoteDescription != nil,
             !isProcessingCandidates
-        else { return }
+        else {
+            log.debug("processCachedCandidates - not ready for processing yet; skipping")
+            return
+        }
         
         isProcessingCandidates = true
         

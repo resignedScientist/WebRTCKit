@@ -166,6 +166,9 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// Called when an incoming call request has been accepted using CallKit system handles.
     func didAcceptCallRequest() async
     
+    /// Called when an incoming call request has been declined using CallKit system handles.
+    func didDeclineCallRequest() async
+    
     /// The call did start.
     func callDidStart()
     
@@ -187,6 +190,15 @@ public protocol CallManagerDelegate: AnyObject, Sendable {
     /// When using manual mode, this tells the delegate the perfect time
     /// to deactivate the audio session.
     func shouldDeactivateAudioSession()
+    
+    /// We received a message from the signaling server asking us to connect to a peer.
+    ///
+    /// - Parameter remotePeerID: The ID of the remote peer to connect to.
+    func shouldConnect(to remotePeerID: PeerID) async
+}
+
+public extension CallManagerDelegate {
+    func shouldConnect(to remotePeerID: PeerID) async {}
 }
 
 extension CallManagerDelegate {
@@ -209,6 +221,12 @@ protocol CallManager: Sendable {
     /// - Parameter delegate: The delegate to handle call events.
     func setDelegate(_ delegate: CallManagerDelegate?)
     
+    /// Set auto accept of calls. If set to true, incoming connection messages from
+    /// the signaling server are automatically accepted, establishing a connection.
+    ///
+    /// - Parameter autoAccept: Should incoming calls be automatically accepted?
+    func setAutoAcceptCalls(autoAccept: Bool) async
+    
     /// Called after the DIContainer was initialized and is ready to go.
     func setup() async
     
@@ -222,8 +240,11 @@ protocol CallManager: Sendable {
     /// - Throws: An error if answering the call request fails.
     func answerCallRequest(accept: Bool) async throws
     
-    /// Called when an incoming call request has been accepted using CallKit system handles.
-    func didAcceptCallRequest() async
+    func onStartCallAction(to remotePeerID: PeerID) async throws
+    
+    func onAnswerCallAction(callId: UUID) async throws
+    
+    func onEndCallAction(callId: UUID) async throws
     
     /// End a running call.
     /// - Throws: An error if ending the call fails.
@@ -240,4 +261,10 @@ protocol CallManager: Sendable {
     /// When using manual mode, this should tell the delegate the perfect time
     /// to deactivate the audio session.
     func shouldDeactivateAudioSession()
+    
+    /// Are we able to receive new VoIP calls?
+    ///
+    /// This is false if we are not in idle state or if `autoAcceptCalls` is enabled.
+    /// - Returns: True if new VoIP calls can be received.
+    func canReceiveNewVoIPCalls() async -> Bool
 }

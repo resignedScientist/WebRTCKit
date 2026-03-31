@@ -10,7 +10,6 @@ enum CallProviderError: Error {
 
 final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     
-    @Inject(\.webRTCManager) private var webRTCManager
     @Inject(\.callManager) private var callManager
     @Inject(\.config.manualAudioMode) private var manualAudioMode
     
@@ -19,7 +18,6 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private var rtcAudioSession: WRKRTCAudioSession!
     private let log = Logger(caller: "VoIPCallProvider")
     
-    private var localPeerID: PeerID?
     private var currentCallID: UUID?
     private var startCallHandler: (@Sendable (Error?) -> Void)?
     private var endCallHandler: (@Sendable (Error?) -> Void)?
@@ -28,11 +26,7 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
     private var isEndingCall = false
     
     init(
-        provider: WRKCXProvider = {
-            let configuration = CXProviderConfiguration()
-            configuration.supportsVideo = true
-            return WRKCXProvider(configuration: configuration)
-        }(),
+        provider: WRKCXProvider,
         callController: WRKCallController = WRKCallControllerImpl(CXCallController()),
         rtcAudioSession: WRKRTCAudioSession = WRKRTCAudioSessionImpl.sharedInstance
     ) {
@@ -234,6 +228,30 @@ final class DefaultVoIPCallProvider: NSObject, VoIPCallProvider {
         }
         #endif
     }
+    
+    func setCurrentCallID(_ id: UUID) throws {
+        guard currentCallID == nil else {
+            throw CallProviderError.multipleReportedCalls
+        }
+        currentCallID = id
+    }
+    
+    func isCallRunning() -> Bool {
+        currentCallID != nil
+    }
+    
+    func answeredElsewhere() throws {
+        guard let currentCallID else {
+            log.error("answeredElsewhere - there is no call running.")
+            return
+        }
+        self.currentCallID = nil
+        provider.reportCall(
+            with: currentCallID,
+            endedAt: Date.now,
+            reason: .answeredElsewhere
+        )
+    }
 }
 
 // MARK: - CXProviderDelegate
@@ -249,9 +267,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         
         let peerID = action.handle.value
         do {
-            let localPeerID = try await webRTCManager.setup()
-            setLocalPeerID(localPeerID)
-            try await webRTCManager.startVideoCall(to: peerID)
+            try await callManager.onStartCallAction(to: peerID)
             action.fulfill()
             startCallHandler?(nil)
         } catch {
@@ -265,8 +281,7 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("Answer call action received.")
         
         do {
-            await callManager.didAcceptCallRequest()
-            try await webRTCManager.answerCall()
+            try await callManager.onAnswerCallAction(callId: action.callUUID)
             action.fulfill()
             answerCallHandler?(nil)
         } catch {
@@ -298,7 +313,9 @@ extension DefaultVoIPCallProvider: CallProviderDelegate {
         log.info("End call action received.")
         
         do {
-            try await webRTCManager.stopVideoCall()
+            if isCallRunning() {
+                try await callManager.onEndCallAction(callId: action.callUUID)
+            }
             action.fulfill()
             endCallHandler?(nil)
         } catch {
@@ -359,10 +376,6 @@ private extension DefaultVoIPCallProvider {
         self.endCallHandler = endCallHandler
     }
     
-    func setLocalPeerID(_ localPeerID: PeerID) {
-        self.localPeerID = localPeerID
-    }
-    
     func overrideAudioToSpeaker(_ session: WRKRTCAudioSession) {
         session.lockForConfiguration()
         
@@ -391,9 +404,7 @@ private extension DefaultVoIPCallProvider {
         
         let configuration = RTCAudioSessionConfiguration.webRTC()
         configuration.categoryOptions = [
-            .allowBluetooth,
-            .allowBluetoothA2DP,
-            .allowAirPlay,
+            .allowBluetoothHFP,
             .defaultToSpeaker,
             .duckOthers
         ]

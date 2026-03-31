@@ -12,7 +12,15 @@ final class PreviewCallManager: CallManager {
         self.delegate = delegate
     }
     
+    func setAutoAcceptCalls(autoAccept: Bool) async {
+        
+    }
+    
     func setup() {
+        
+    }
+    
+    func reportIncomingVoIPCall() async throws {
         
     }
     
@@ -24,7 +32,15 @@ final class PreviewCallManager: CallManager {
         
     }
     
-    func didAcceptCallRequest() async {
+    func onStartCallAction(to remotePeerID: PeerID) async throws {
+        
+    }
+    
+    func onAnswerCallAction(callId: UUID) async throws {
+        
+    }
+    
+    func onEndCallAction(callId: UUID) async throws {
         
     }
     
@@ -42,5 +58,9 @@ final class PreviewCallManager: CallManager {
     
     func shouldDeactivateAudioSession() {
         
+    }
+    
+    func canReceiveNewVoIPCalls() async -> Bool {
+        true
     }
 }
