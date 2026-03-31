@@ -20,6 +20,9 @@ protocol CallManager: Sendable {
     /// Called by the app to request a mute / unmute transaction.
     func requestCallMuted(_ call: Call, muted: Bool) async throws
     
+    /// Called by the app to request an answer call transaction.
+    func requestAcceptIncomingCall(_ call: Call) async throws
+    
     /// Called by the provider delegate to add a call to our list.
     func addCall(_ call: Call)
     
@@ -85,6 +88,13 @@ final class CallManagerImpl: CallManager {
             muted: muted
         )
         let transaction = CXTransaction(action: muteCallAction)
+        
+        try await callController.request(transaction)
+    }
+    
+    func requestAcceptIncomingCall(_ call: Call) async throws {
+        let answerCallAction = CXAnswerCallAction(call: call.uuid)
+        let transaction = CXTransaction(action: answerCallAction)
         
         try await callController.request(transaction)
     }
