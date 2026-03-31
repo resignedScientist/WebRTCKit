@@ -32,7 +32,7 @@ protocol CallManager: Sendable {
     /// Called by the provider delegate to remove all calls from our list.
     func removeAllCalls()
     
-    /// Called by the provider delegate to get a call from our list.
+    /// Called by the provider delegate or the app to get a call from our list.
     func callWithUUID(_ uuid: UUID) -> Call?
     
     /// Called by the provider delegate when an answer call action has been received.
