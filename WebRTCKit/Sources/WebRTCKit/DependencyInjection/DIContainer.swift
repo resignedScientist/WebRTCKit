@@ -1,5 +1,6 @@
 import WebRTC
 
+@MainActor
 struct DIContainer {
     private(set) static var shared: DIContainer?
     

@@ -38,6 +38,7 @@ public protocol LoggerDelegate: AnyObject, Sendable {
 
 /// A class responsible for logging messages with different severity levels.
 /// This logger uses Apple's unified logging system.
+@MainActor
 final class Logger {
     
     private var logLevel: LogLevel {
