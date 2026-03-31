@@ -188,10 +188,8 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func stopVideoCall() async throws {
-        guard peerConnection != nil else {
-            callDelegate?.callDidEnd()
-            return
-        }
+        
+        guard peerConnection != nil else { return }
         
         log.info("Stopping video call…")
         
@@ -261,7 +259,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         await cachedICECandidates.clear()
         await videoCapturer?.stop()
         videoCapturer = nil
-        callDelegate?.callDidEnd()
     }
     
     func createDataChannel(setup: DataChannelSetup) async throws {

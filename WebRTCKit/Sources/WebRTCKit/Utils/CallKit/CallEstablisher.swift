@@ -24,6 +24,7 @@ protocol CallEstablisher: Sendable {
 
 final class CallEstablisherImpl: CallEstablisher {
     
+    @Inject(\.callManager) private var callManager
     @Inject(\.providerDelegate) private var providerDelegate
     
     private let webRTCManager: WebRTCManager
@@ -54,15 +55,22 @@ final class CallEstablisherImpl: CallEstablisher {
     }
     
     func startCall(_ callUUID: UUID) {
-        
+        // TODO: we need the peer id here
     }
     
     func endCall(_ callUUID: UUID) {
-        
+        currentCallUUID = nil
+        Task {
+            do {
+                try await webRTCManager.stopVideoCall()
+            } catch {
+                log.error("Failed to end call - \(error)")
+            }
+        }
     }
     
     func setCallMuted(callUUID: UUID, isMuted: Bool) {
-        
+        // TODO
     }
 }
 
@@ -91,27 +99,34 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
         )
     }
     
-    func didAcceptCallRequest() {
-        
-    }
-    
     func callDidStart() {
-        
+        guard let currentCallUUID else { return }
+        providerDelegate.reportOutgoingCallDidConnect(
+            currentCallUUID,
+            at: .now
+        )
     }
     
     func didReceiveEndCall() {
-        
-    }
-    
-    func callDidEnd() {
-        
+        guard let currentCallUUID else { return }
+        providerDelegate.reportCallEnded(
+            currentCallUUID,
+            at: .now,
+            with: .remoteEnded
+        )
+        self.currentCallUUID = nil
     }
     
     func didLosePeerConnection() {
-        
+        // TODO: what to do here? We lost connection and waiting for reconnection
+        // Can / should we inform CallKit?
     }
     
     func shouldConnect(to remotePeerID: PeerID) async {
-        
+        do {
+            try await callManager.requestStartCall(remotePeerID)
+        } catch {
+            log.error("Failed to request start call - \(error)")
+        }
     }
 }

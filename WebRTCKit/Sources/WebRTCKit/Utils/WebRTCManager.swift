@@ -64,9 +64,6 @@ protocol WebRTCManagerCallDelegate: AnyObject, Sendable {
     /// Triggered when an end call message is received from the peer.
     func didReceiveEndCall()
     
-    /// Triggered when the call has completely ended.
-    func callDidEnd()
-    
     /// Called when we lost the connection to our peer.
     func didLosePeerConnection()
     
