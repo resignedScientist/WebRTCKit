@@ -82,6 +82,7 @@ protocol WebRTCManagerCallDelegate: AnyObject, Sendable {
     func shouldConnect(to remotePeerID: PeerID) async
 }
 
+@MainActor
 protocol WebRTCManager {
     
     /// Sets the delegate to handle WebRTC data channel events.

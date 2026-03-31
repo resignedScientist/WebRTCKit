@@ -8,6 +8,7 @@
 import Foundation
 import CallKit
 
+@MainActor
 protocol CallEstablisher {
     
     func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?)

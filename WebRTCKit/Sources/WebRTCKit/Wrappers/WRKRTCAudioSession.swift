@@ -121,7 +121,7 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
 
 // MARK: - RTCAudioSessionDelegate
 
-extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
+extension WRKRTCAudioSessionImpl: @MainActor RTCAudioSessionDelegate {
     
     func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
         Task { @MainActor in

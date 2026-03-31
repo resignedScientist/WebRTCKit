@@ -12,6 +12,7 @@ enum BitrateType: String, Equatable {
 }
 
 /// A protocol defining methods to adjust and manage bitrate settings for peer connections.
+@MainActor
 protocol BitrateAdjustor: AnyObject {
     
     var imageSize: CGSize { get set }

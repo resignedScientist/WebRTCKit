@@ -1,3 +1,5 @@
+
+@MainActor
 protocol NetworkMonitor {
     
     /// Starts monitoring network path updates asynchronously.

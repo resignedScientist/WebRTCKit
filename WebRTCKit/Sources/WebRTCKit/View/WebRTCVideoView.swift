@@ -69,7 +69,8 @@ private struct WebRTCView: UIViewRepresentable {
 
 private extension WebRTCView {
     
-    class Coordinator {
+    @MainActor
+    final class Coordinator {
         @Binding var aspectRatio: CGFloat
         var source: MediaTrackSource
         
