@@ -41,12 +41,7 @@ public struct WebRTCKit {
             callManager: callManager,
             audioSessionConfigurator: audioSessionConfigurator
         )
-        let callEstablisherDelegate: CallEstablisherDelegate = CallEstablisherDelegateImpl(
-            providerDelegate: providerDelegate
-        )
         let pushCredentialStore = PushCredentialStore()
-        
-        callEstablisher.setDelegate(callEstablisherDelegate)
         
         let container = DIContainer.create(
             config: config,

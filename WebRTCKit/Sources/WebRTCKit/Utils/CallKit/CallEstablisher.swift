@@ -11,8 +11,6 @@ import CallKit
 @MainActor
 protocol CallEstablisher: Sendable {
     
-    func setDelegate(_ delegate: CallEstablisherDelegate?)
-    
     func answerCall(_ callUUID: UUID)
     
     func startCall(_ callUUID: UUID, handle: String)
@@ -31,8 +29,6 @@ final class CallEstablisherImpl: CallEstablisher {
     private let webRTCManager: WebRTCManager
     private let log = Logger(caller: "CallEstablisher", category: .default)
     
-    private weak var delegate: CallEstablisherDelegate?
-    
     private var currentCallUUID: UUID?
     private var connectionTimeoutTask: Task<Void, Never>?
     private var isReconnecting = false
@@ -40,10 +36,6 @@ final class CallEstablisherImpl: CallEstablisher {
     init(webRTCManager: WebRTCManager) {
         self.webRTCManager = webRTCManager
         webRTCManager.setCallDelegate(self)
-    }
-    
-    func setDelegate(_ delegate: CallEstablisherDelegate?) {
-        self.delegate = delegate
     }
     
     func answerCall(_ callUUID: UUID) {
@@ -142,7 +134,7 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     
     func shouldConnect(to remotePeerID: PeerID) async {
         do {
-            try await callManager.requestStartCall(remotePeerID)
+            currentCallUUID = try await callManager.requestStartCall(remotePeerID)
         } catch {
             log.error("Failed to request start call - \(error)")
         }
