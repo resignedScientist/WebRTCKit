@@ -202,6 +202,11 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// Finish the configuration. After calling it, the re-negotiation is happening.
     func commitConfiguration() async throws
     
+    /// Initialize a call with another peer.
+    ///
+    /// - Parameter peerID: The ID of the remote peer.
+    func sendCallRequest(to peerID: PeerID) async throws
+    
     /// End the call.
     func endCall() async throws
 }
@@ -292,6 +297,10 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func commitConfiguration() async throws {
         try await container.webRTCManager.commitConfiguration()
+    }
+    
+    func sendCallRequest(to peerID: PeerID) async throws {
+        try await container.callManager.requestStartCall(peerID)
     }
     
     func endCall() async throws {
