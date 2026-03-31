@@ -1,5 +1,6 @@
 import WebRTC
 
+@MainActor
 public protocol WRKDataChannel: AnyObject {
     
     var label: String { get }
