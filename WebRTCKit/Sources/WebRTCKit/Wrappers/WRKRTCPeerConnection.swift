@@ -263,7 +263,7 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
 
 // MARK: - RTCPeerConnectionDelegate
 
-extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
+extension WRKRTCPeerConnectionImpl: @MainActor RTCPeerConnectionDelegate {
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
         _delegate?.peerConnection(self, didChange: stateChanged)
