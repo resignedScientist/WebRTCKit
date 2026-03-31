@@ -24,6 +24,7 @@ protocol CallEstablisher: Sendable {
 
 final class CallEstablisherImpl: CallEstablisher {
     
+    @Inject(\.config) private var config
     @Inject(\.callManager) private var callManager
     @Inject(\.providerDelegate) private var providerDelegate
     
@@ -33,6 +34,8 @@ final class CallEstablisherImpl: CallEstablisher {
     private weak var delegate: CallEstablisherDelegate?
     
     private var currentCallUUID: UUID?
+    private var connectionTimeoutTask: Task<Void, Never>?
+    private var isReconnecting = false
     
     init(webRTCManager: WebRTCManager) {
         self.webRTCManager = webRTCManager
@@ -58,6 +61,7 @@ final class CallEstablisherImpl: CallEstablisher {
         Task {
             do {
                 try await webRTCManager.startVideoCall(to: handle)
+                startConnectionTimeout()
             } catch {
                 log.error("Failed to start call - \(error)")
                 providerDelegate.reportCallEnded(callUUID, at: .now, with: .failed)
@@ -108,10 +112,16 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     
     func callDidStart() {
         guard let currentCallUUID else { return }
-        providerDelegate.reportOutgoingCallDidConnect(
-            currentCallUUID,
-            at: .now
-        )
+        
+        if !isReconnecting {
+            providerDelegate.reportOutgoingCallDidConnect(
+                currentCallUUID,
+                at: .now
+            )
+        }
+        
+        isReconnecting = false
+        cancelConnectionTimeout()
     }
     
     func didReceiveEndCall() {
@@ -125,8 +135,9 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     }
     
     func didLosePeerConnection() {
-        // TODO: what to do here? We lost connection and waiting for reconnection
-        // Can / should we inform CallKit?
+        log.info("Did lose peer connection; starting timeout…")
+        isReconnecting = true
+        startConnectionTimeout()
     }
     
     func shouldConnect(to remotePeerID: PeerID) async {
@@ -134,6 +145,52 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
             try await callManager.requestStartCall(remotePeerID)
         } catch {
             log.error("Failed to request start call - \(error)")
+        }
+    }
+}
+
+// MARK: - Timeout
+
+private extension CallEstablisherImpl {
+    
+    func startConnectionTimeout() {
+        connectionTimeoutTask?.cancel()
+        connectionTimeoutTask = Task { [weak self] in
+            await self?.waitForTimeout()
+        }
+    }
+    
+    func cancelConnectionTimeout() {
+        connectionTimeoutTask?.cancel()
+        connectionTimeoutTask = nil
+    }
+    
+    func waitForTimeout() async {
+        
+        defer {
+            cancelConnectionTimeout()
+        }
+        
+        do {
+            try await Task.sleep(nanoseconds: 1_000_000_000 * config.connectionTimeout)
+            
+            guard !Task.isCancelled, let currentCallUUID else { return }
+            
+            log.error("Connection timeout.")
+            
+            providerDelegate.reportCallEnded(
+                currentCallUUID,
+                at: .now,
+                with: .failed
+            )
+            
+            self.currentCallUUID = nil
+            isReconnecting = false
+            
+        } catch {
+            if !(error is CancellationError) {
+                log.error("Error aborting connecting call - \(error)")
+            }
         }
     }
 }
