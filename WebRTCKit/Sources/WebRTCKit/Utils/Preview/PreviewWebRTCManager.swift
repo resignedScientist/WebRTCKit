@@ -3,9 +3,14 @@ import WebRTC
 final class PreviewWebRTCManager: WebRTCManager {
     
     private weak var delegate: WebRTCManagerDelegate?
+    private weak var callDelegate: WebRTCManagerCallDelegate?
     
     func setDelegate(_ delegate: WebRTCManagerDelegate?) {
         self.delegate = delegate
+    }
+    
+    func setCallDelegate(_ callDelegate: WebRTCManagerCallDelegate?) {
+        self.callDelegate = callDelegate
     }
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {

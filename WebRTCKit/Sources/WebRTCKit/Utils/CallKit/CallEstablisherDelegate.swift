@@ -9,7 +9,7 @@ import Foundation
 import CallKit
 
 @MainActor
-protocol CallEstablisherDelegate: Sendable {
+protocol CallEstablisherDelegate: AnyObject, Sendable {
     
     func callDidEnd(_ callUUID: UUID, reason: CXCallEndedReason)
     
@@ -18,7 +18,7 @@ protocol CallEstablisherDelegate: Sendable {
     func callDidConnect(_ callUUID: UUID)
 }
 
-struct CallEstablisherDelegateImpl: CallEstablisherDelegate {
+final class CallEstablisherDelegateImpl: CallEstablisherDelegate {
     
     private let providerDelegate: ProviderDelegate
     

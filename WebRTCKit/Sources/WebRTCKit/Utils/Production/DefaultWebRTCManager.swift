@@ -2,7 +2,8 @@ import WebRTC
 
 final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
-    weak var delegate: WebRTCManagerDelegate?
+    private weak var delegate: WebRTCManagerDelegate?
+    private weak var callDelegate: WebRTCManagerCallDelegate?
     
     @Inject(\.signalingServer) private var signalingServer
     @Inject(\.config) private var config
@@ -60,6 +61,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
     func setDelegate(_ delegate: WebRTCManagerDelegate?) {
         self.delegate = delegate
+    }
+    
+    func setCallDelegate(_ callDelegate: WebRTCManagerCallDelegate?) {
+        self.callDelegate = callDelegate
     }
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
@@ -184,7 +189,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
     func stopVideoCall() async throws {
         guard peerConnection != nil else {
-            delegate?.callDidEnd()
+            callDelegate?.callDidEnd()
             return
         }
         
@@ -215,8 +220,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         // send answer
         try await sendAnswer(to: remotePeerID, peerConnection: peerConnection)
-        
-        delegate?.didAcceptCallRequest()
         
         // process ICE candidates
         await processCachedCandidates()
@@ -258,7 +261,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         await cachedICECandidates.clear()
         await videoCapturer?.stop()
         videoCapturer = nil
-        delegate?.callDidEnd()
+        callDelegate?.callDidEnd()
     }
     
     func createDataChannel(setup: DataChannelSetup) async throws {
@@ -393,11 +396,11 @@ extension DefaultWebRTCManager: SignalingServerDelegate {
         }
         
         log.info("End Call message received.")
-        delegate?.didReceiveEndCall()
+        callDelegate?.didReceiveEndCall()
     }
     
     func shouldConnect(to remotePeerID: PeerID) async {
-        await delegate?.shouldConnect(to: remotePeerID)
+        await callDelegate?.shouldConnect(to: remotePeerID)
     }
     
     func socketDidOpen() {
@@ -545,11 +548,11 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             case .new, .connecting:
                 break
             case .connected:
-                delegate?.callDidStart()
+                callDelegate?.callDidStart()
                 bitrateAdjustor.start(for: .audio, peerConnection: peerConnection)
                 bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
             case .disconnected:
-                delegate?.didLosePeerConnection()
+                callDelegate?.didLosePeerConnection()
                 await bitrateAdjustor.stop(for: .audio)
                 await bitrateAdjustor.stop(for: .video)
             case .closed, .failed:
@@ -930,7 +933,7 @@ private extension DefaultWebRTCManager {
             
             // we received an incoming call
             self.receivedOfferSDP = sdp
-            delegate?.didReceiveOffer(from: remotePeerID)
+            callDelegate?.didReceiveOffer(from: remotePeerID)
             
             return
         }
@@ -987,11 +990,11 @@ private extension DefaultWebRTCManager {
         
         if isFirstAnswer {
             await processCachedCandidates()
-            delegate?.peerDidAcceptCallRequest()
+            callDelegate?.peerDidAcceptCallRequest()
             
             // check if we are already connected
             if peerConnection.connectionState == .connected {
-                delegate?.callDidStart()
+                callDelegate?.callDidStart()
             }
         }
     }

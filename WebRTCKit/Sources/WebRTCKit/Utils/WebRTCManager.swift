@@ -43,11 +43,14 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     /// Called when a remote audio track has been removed by the peer.
     func didRemoveRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
     
-    /// Triggered when an end call message is received from the peer.
-    func didReceiveEndCall()
+    /// Called when a new data channel is created by the peer or by us before first negotiation.
+    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
     
-    /// Triggered when the call has completely ended.
-    func callDidEnd()
+    /// Triggered whenever there is an error.
+    func onError(_ error: WebRTCManagerError)
+}
+
+protocol WebRTCManagerCallDelegate: AnyObject, Sendable {
     
     /// Triggered when a call offer is received from a peer.
     func didReceiveOffer(from peerID: PeerID)
@@ -55,17 +58,14 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     /// Called when the peer accepts a call request.
     func peerDidAcceptCallRequest()
     
-    /// Called when a call request is accepted.
-    func didAcceptCallRequest()
-    
     /// Triggered when the call starts successfully.
     func callDidStart()
     
-    /// Triggered whenever there is an error.
-    func onError(_ error: WebRTCManagerError)
+    /// Triggered when an end call message is received from the peer.
+    func didReceiveEndCall()
     
-    /// Called when a new data channel is created by the peer or by us before first negotiation.
-    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+    /// Triggered when the call has completely ended.
+    func callDidEnd()
     
     /// Called when we lost the connection to our peer.
     func didLosePeerConnection()
@@ -81,6 +81,10 @@ protocol WebRTCManager: Sendable {
     /// Sets the delegate to handle WebRTC events.
     /// - Parameter delegate: A delegate conforming to `WebRTCManagerDelegate`.
     func setDelegate(_ delegate: WebRTCManagerDelegate?)
+    
+    /// Sets the delegate to handle call events.
+    /// - Parameter callDelegate: A delegate conforming to `WebRTCManagerCallDelegate`.
+    func setCallDelegate(_ callDelegate: WebRTCManagerCallDelegate?)
     
     /// Set the initial data channels that will be added before first negotiation.
     ///
