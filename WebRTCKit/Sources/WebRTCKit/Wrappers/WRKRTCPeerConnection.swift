@@ -1,5 +1,6 @@
 import WebRTC
 
+@MainActor
 protocol WRKRTCPeerConnection {
     
     /// The object that will be notifed about events such as state changes and

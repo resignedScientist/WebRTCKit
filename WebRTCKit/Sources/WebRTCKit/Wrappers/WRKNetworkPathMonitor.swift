@@ -1,5 +1,6 @@
 import Network
 
+@MainActor
 protocol WRKNetworkPathMonitor {
     
     func setPathUpdateHandler(_ updateHandler: @Sendable @escaping (_ newPath: WRKNetworkPath) -> Void)
