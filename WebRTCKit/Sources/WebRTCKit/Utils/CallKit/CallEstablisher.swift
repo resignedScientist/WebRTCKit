@@ -103,6 +103,7 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
                     handle: peerID
                 )
                 self.currentCallUUID = callUUID
+                callStateDelegate?.callStateDidChange(to: .receivingCallRequest, callUUID: callUUID)
             } catch {
                 log.error("Failed to report incoming call - \(error)")
             }
@@ -115,6 +116,7 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
             currentCallUUID,
             at: .now
         )
+        callStateDelegate?.callStateDidChange(to: .connecting, callUUID: currentCallUUID)
     }
     
     func callDidStart() {
@@ -127,6 +129,8 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
             )
         }
         
+        callStateDelegate?.callStateDidChange(to: .callIsRunning, callUUID: currentCallUUID)
+        
         isReconnecting = false
         cancelConnectionTimeout()
     }
@@ -138,13 +142,16 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
             at: .now,
             with: .remoteEnded
         )
+        callStateDelegate?.callStateDidChange(to: .idle, callUUID: currentCallUUID)
         self.currentCallUUID = nil
     }
     
     func didLosePeerConnection() {
+        guard let currentCallUUID else { return }
         log.info("Did lose peer connection; starting timeout…")
         isReconnecting = true
         startConnectionTimeout()
+        callStateDelegate?.callStateDidChange(to: .connecting, callUUID: currentCallUUID)
     }
     
     func shouldConnect(to remotePeerID: PeerID) async {
@@ -190,6 +197,8 @@ private extension CallEstablisherImpl {
                 at: .now,
                 with: .failed
             )
+            
+            callStateDelegate?.callStateDidChange(to: .idle, callUUID: currentCallUUID)
             
             self.currentCallUUID = nil
             isReconnecting = false
