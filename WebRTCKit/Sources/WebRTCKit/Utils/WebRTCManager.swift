@@ -106,6 +106,10 @@ protocol WebRTCManager: Sendable {
     /// Tells the manager that the audio track can be added to the call.
     func startAudioRecording() async throws
     
+    /// Mute or Unmute local audio.
+    /// - Parameter isMuted: True to mute; false to unmute.
+    func setLocalAudioMuted(_ isMuted: Bool)
+    
     /// Starts video recording using a specified video capturer.
     /// - Parameter videoCapturer: An optional video capturer to use.
     /// - Parameter imageSize: The size of the image that will be captured.

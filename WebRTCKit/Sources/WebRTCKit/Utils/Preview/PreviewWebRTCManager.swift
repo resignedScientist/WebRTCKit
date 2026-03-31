@@ -29,6 +29,10 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
+    func setLocalAudioMuted(_ isMuted: Bool) {
+        
+    }
+    
     func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws {
         
     }

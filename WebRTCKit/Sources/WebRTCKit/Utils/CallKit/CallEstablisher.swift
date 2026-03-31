@@ -19,7 +19,7 @@ protocol CallEstablisher: Sendable {
     
     func endCall(_ callUUID: UUID)
     
-    func setCallMuted(callUUID: UUID, isMuted: Bool)
+    func setCallMuted(_ isMuted: Bool)
 }
 
 final class CallEstablisherImpl: CallEstablisher {
@@ -80,8 +80,8 @@ final class CallEstablisherImpl: CallEstablisher {
         }
     }
     
-    func setCallMuted(callUUID: UUID, isMuted: Bool) {
-        // TODO
+    func setCallMuted(_ isMuted: Bool) {
+        webRTCManager.setLocalAudioMuted(isMuted)
     }
 }
 

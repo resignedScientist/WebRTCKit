@@ -64,7 +64,7 @@ final class DummyCallEstablisher: CallEstablisher {
         }
     }
     
-    func setCallMuted(callUUID: UUID, isMuted: Bool) {
+    func setCallMuted(_ isMuted: Bool) {
         // mute the call here…
     }
 }

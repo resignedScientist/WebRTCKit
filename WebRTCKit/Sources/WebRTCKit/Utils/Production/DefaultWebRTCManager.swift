@@ -121,6 +121,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         await addAudioTrack(to: peerConnection)
     }
     
+    func setLocalAudioMuted(_ isMuted: Bool) {
+        localAudioTrack?.isEnabled = !isMuted
+    }
+    
     func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws {
         guard let peerConnection else {
             throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")

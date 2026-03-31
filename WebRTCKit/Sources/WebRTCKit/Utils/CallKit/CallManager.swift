@@ -110,6 +110,6 @@ final class CallManagerImpl: CallManager {
     
     func setCallMuted(call: Call, isMuted: Bool) {
         calls[call.uuid] = call.muted(isMuted)
-        callEstablisher.setCallMuted(callUUID: call.uuid, isMuted: isMuted)
+        callEstablisher.setCallMuted(isMuted)
     }
 }
