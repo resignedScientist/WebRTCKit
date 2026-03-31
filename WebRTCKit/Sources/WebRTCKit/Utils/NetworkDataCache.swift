@@ -11,6 +11,7 @@ private enum Constants {
 
 /// The NetworkDataCache protocol provides the interface for caching network data points
 /// and computing packet loss rate over a specified time interval.
+@MainActor
 protocol NetworkDataCache {
     
     /// Add a data point. Should be called every second.

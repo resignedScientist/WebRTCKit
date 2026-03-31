@@ -1,5 +1,6 @@
 import WebRTC
 
+@MainActor
 protocol WRKRTCAudioSession: AnyObject {
     
     /// This property is only effective if useManualAudio is YES.
