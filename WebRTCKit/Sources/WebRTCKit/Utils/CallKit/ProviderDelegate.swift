@@ -87,7 +87,7 @@ final class ProviderDelegateImpl: NSObject, ProviderDelegate {
     }
 }
 
-extension ProviderDelegateImpl: CXProviderDelegate {
+extension ProviderDelegateImpl: @MainActor CXProviderDelegate {
     
     func providerDidReset(_ provider: CXProvider) {
         audioSessionConfigurator.stopAudio()
