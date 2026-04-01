@@ -1,6 +1,6 @@
 import Foundation
 
-public enum CallState {
+public enum WebRTCKitCallState {
     
     /// Nothing is going on and we are waiting for input.
     case idle
@@ -27,7 +27,7 @@ public enum CallState {
 @MainActor
 public protocol WebRTCKitCallStateDelegate: AnyObject, Sendable {
     
-    func callStateDidChange(to callState: CallState, callUUID: UUID)
+    func callStateDidChange(to callState: WebRTCKitCallState, callUUID: UUID)
     
     func muteStateDidChange(to isMuted: Bool, callUUID: UUID)
 }
