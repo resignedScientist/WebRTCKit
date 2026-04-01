@@ -228,6 +228,12 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Parameter callUUID: The UUID of the call to accept.
     func acceptIncomingCall(_ callUUID: UUID) async throws
     
+    /// Mute or unmute the local audio.
+    /// - Parameters:
+    ///   - callUUID: The UUID of the call to mute.
+    ///   - muted: True to mute; false to unmute.
+    func setLocalAudioMuted(_ callUUID: UUID, muted: Bool) async throws
+    
     /// End the call.
     /// - Parameter callUUID: The UUID of the call to end.
     func endCall(_ callUUID: UUID) async throws
@@ -354,6 +360,14 @@ final class WebRTCControllerImpl: WebRTCController {
         guard let call = callManager.callWithUUID(callUUID) else { return }
         
         try await callManager.requestAcceptIncomingCall(call)
+    }
+    
+    func setLocalAudioMuted(_ callUUID: UUID, muted: Bool) async throws {
+        let callManager = container.callManager
+        
+        guard let call = callManager.callWithUUID(callUUID) else { return }
+        
+        try await container.callManager.requestCallMuted(call, muted: muted)
     }
     
     func endCall(_ callUUID: UUID) async throws {
