@@ -62,6 +62,7 @@ final class CallEstablisherImpl: CallEstablisher {
     
     func startCall(_ call: Call) {
         log.info("startCall")
+        currentCall = call
         Task {
             do {
                 callStateDelegate?.callStateDidChange(to: .sendingCallRequest, call: call)
