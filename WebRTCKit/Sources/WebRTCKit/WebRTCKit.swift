@@ -232,6 +232,9 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// End the call.
     /// - Parameter callUUID: The UUID of the call to end.
     func endCall(_ callUUID: UUID) async throws
+    
+    /// End the call and disconnect from the signaling server.
+    func disconnect() async throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -361,5 +364,10 @@ final class WebRTCControllerImpl: WebRTCController {
         guard let call = callManager.callWithUUID(callUUID) else { return }
         
         try await callManager.requestEndCall(call)
+    }
+    
+    func disconnect() async throws {
+        try await container.callManager.requestEndAllCalls()
+        await container.signalingServer.disconnect()
     }
 }

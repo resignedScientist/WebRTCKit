@@ -21,6 +21,9 @@ protocol CallManager {
     /// Called by the app to request an end call transaction.
     func requestEndCall(_ call: Call) async throws
     
+    /// Called by the app to request end call transactions for all calls.
+    func requestEndAllCalls() async throws
+    
     /// Called by the app to request a mute / unmute transaction.
     func requestCallMuted(_ call: Call, muted: Bool) async throws
     
@@ -88,6 +91,12 @@ final class CallManagerImpl: CallManager {
         let transaction = CXTransaction(action: endCallAction)
         
         try await callController.request(transaction)
+    }
+    
+    func requestEndAllCalls() async throws {
+        for call in calls.values {
+            try await requestEndCall(call)
+        }
     }
     
     func requestCallMuted(_ call: Call, muted: Bool) async throws {
