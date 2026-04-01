@@ -9,7 +9,7 @@ import Foundation
 
 public typealias WebRTCKitCall = Call
 
-public struct Call {
+public struct Call: Sendable {
     public let uuid: UUID
     public let handle: String
     let direction: CallDirection
