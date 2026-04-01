@@ -1,7 +1,7 @@
 import PushKit
 
 @MainActor
-public protocol VoIPPushHandler {
+public protocol VoIPPushHandler: Sendable {
     func setDelegate(_ delegate: VoIPPushHandlerDelegate)
 }
 
