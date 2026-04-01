@@ -16,7 +16,7 @@ protocol CallManager {
     func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?)
     
     /// Called by the app to request a start call transaction.
-    func requestStartCall(_ handle: String) async throws -> UUID
+    func requestStartCall(_ handle: String) async throws
     
     /// Called by the app to request an end call transaction.
     func requestEndCall(_ call: Call) async throws
@@ -73,7 +73,7 @@ final class CallManagerImpl: CallManager {
         callEstablisher.setCallStateDelegate(callStateDelegate)
     }
     
-    func requestStartCall(_ handle: String) async throws -> UUID {
+    func requestStartCall(_ handle: String) async throws {
         
         let callUUID = UUID()
         let cxHandle = CXHandle(type: .generic, value: handle)
@@ -82,8 +82,6 @@ final class CallManagerImpl: CallManager {
         let transaction = CXTransaction(action: startCallAction)
         
         try await callController.request(transaction)
-        
-        return callUUID
     }
     
     func requestEndCall(_ call: Call) async throws {
@@ -133,15 +131,15 @@ final class CallManagerImpl: CallManager {
     }
     
     func answerCall(_ call: Call) {
-        callEstablisher.answerCall(call.uuid)
+        callEstablisher.answerCall(call)
     }
     
     func startCall(_ call: Call) {
-        callEstablisher.startCall(call.uuid, handle: call.handle)
+        callEstablisher.startCall(call)
     }
     
     func endCall(_ call: Call) {
-        callEstablisher.endCall(call.uuid)
+        callEstablisher.endCall(call)
     }
     
     func endAllCalls() {

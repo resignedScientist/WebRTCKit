@@ -13,11 +13,11 @@ protocol CallEstablisher {
     
     func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?)
     
-    func answerCall(_ callUUID: UUID)
+    func answerCall(_ call: Call)
     
-    func startCall(_ callUUID: UUID, handle: String)
+    func startCall(_ call: Call)
     
-    func endCall(_ callUUID: UUID)
+    func endCall(_ call: Call)
     
     func setCallMuted(_ isMuted: Bool, callUUID: UUID)
 }
@@ -33,7 +33,7 @@ final class CallEstablisherImpl: CallEstablisher {
     
     private weak var callStateDelegate: WebRTCKitCallStateDelegate?
     
-    private var currentCallUUID: UUID?
+    private var currentCall: Call?
     private var connectionTimeoutTask: Task<Void, Never>?
     private var isReconnecting = false
     
@@ -46,43 +46,43 @@ final class CallEstablisherImpl: CallEstablisher {
         self.callStateDelegate = callStateDelegate
     }
     
-    func answerCall(_ callUUID: UUID) {
+    func answerCall(_ call: Call) {
         Task {
             do {
-                callStateDelegate?.callStateDidChange(to: .answeringCallRequest, callUUID: callUUID)
+                callStateDelegate?.callStateDidChange(to: .answeringCallRequest, call: call)
                 try await webRTCManager.answerCall()
             } catch {
                 log.error("Failed to answer call - \(error)")
-                providerDelegate.reportCallEnded(callUUID, at: .now, with: .failed)
-                callStateDelegate?.callStateDidChange(to: .idle, callUUID: callUUID)
+                providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
+                callStateDelegate?.callStateDidChange(to: .idle, call: call)
             }
         }
     }
     
-    func startCall(_ callUUID: UUID, handle: String) {
+    func startCall(_ call: Call) {
         Task {
             do {
-                callStateDelegate?.callStateDidChange(to: .sendingCallRequest, callUUID: callUUID)
-                try await webRTCManager.startVideoCall(to: handle)
+                callStateDelegate?.callStateDidChange(to: .sendingCallRequest, call: call)
+                try await webRTCManager.startVideoCall(to: call.handle)
                 startConnectionTimeout()
             } catch {
                 log.error("Failed to start call - \(error)")
-                providerDelegate.reportCallEnded(callUUID, at: .now, with: .failed)
-                callStateDelegate?.callStateDidChange(to: .idle, callUUID: callUUID)
+                providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
+                callStateDelegate?.callStateDidChange(to: .idle, call: call)
             }
         }
     }
     
-    func endCall(_ callUUID: UUID) {
-        currentCallUUID = nil
+    func endCall(_ call: Call) {
+        currentCall = nil
         Task {
             do {
-                callStateDelegate?.callStateDidChange(to: .endingCall, callUUID: callUUID)
+                callStateDelegate?.callStateDidChange(to: .endingCall, call: call)
                 try await webRTCManager.stopVideoCall()
-                callStateDelegate?.callStateDidChange(to: .idle, callUUID: callUUID)
+                callStateDelegate?.callStateDidChange(to: .idle, call: call)
             } catch {
                 log.error("Failed to end call - \(error)")
-                callStateDelegate?.callStateDidChange(to: .idle, callUUID: callUUID)
+                callStateDelegate?.callStateDidChange(to: .idle, call: call)
             }
         }
     }
@@ -98,13 +98,12 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     func didReceiveOffer(from peerID: PeerID) {
         Task {
             do {
-                let callUUID = UUID()
-                try await providerDelegate.reportNewIncomingCall(
-                    uuid: callUUID,
+                let call = try await providerDelegate.reportNewIncomingCall(
+                    uuid: UUID(),
                     handle: peerID
                 )
-                self.currentCallUUID = callUUID
-                callStateDelegate?.callStateDidChange(to: .receivingCallRequest, callUUID: callUUID)
+                self.currentCall = call
+                callStateDelegate?.callStateDidChange(to: .receivingCallRequest, call: call)
             } catch {
                 log.error("Failed to report incoming call - \(error)")
             }
@@ -112,52 +111,52 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     }
     
     func peerDidAcceptCallRequest() {
-        guard let currentCallUUID else { return }
+        guard let currentCall else { return }
         providerDelegate.reportOutgoingCallDidStartConnecting(
-            currentCallUUID,
+            currentCall.uuid,
             at: .now
         )
-        callStateDelegate?.callStateDidChange(to: .connecting, callUUID: currentCallUUID)
+        callStateDelegate?.callStateDidChange(to: .connecting, call: currentCall)
     }
     
     func callDidStart() {
-        guard let currentCallUUID else { return }
+        guard let currentCall else { return }
         
         if !isReconnecting {
             providerDelegate.reportOutgoingCallDidConnect(
-                currentCallUUID,
+                currentCall.uuid,
                 at: .now
             )
         }
         
-        callStateDelegate?.callStateDidChange(to: .callIsRunning, callUUID: currentCallUUID)
+        callStateDelegate?.callStateDidChange(to: .callIsRunning, call: currentCall)
         
         isReconnecting = false
         cancelConnectionTimeout()
     }
     
     func didReceiveEndCall() {
-        guard let currentCallUUID else { return }
+        guard let currentCall else { return }
         providerDelegate.reportCallEnded(
-            currentCallUUID,
+            currentCall.uuid,
             at: .now,
             with: .remoteEnded
         )
-        callStateDelegate?.callStateDidChange(to: .idle, callUUID: currentCallUUID)
-        self.currentCallUUID = nil
+        callStateDelegate?.callStateDidChange(to: .idle, call: currentCall)
+        self.currentCall = nil
     }
     
     func didLosePeerConnection() {
-        guard let currentCallUUID else { return }
+        guard let currentCall else { return }
         log.info("Did lose peer connection; starting timeout…")
         isReconnecting = true
         startConnectionTimeout()
-        callStateDelegate?.callStateDidChange(to: .connecting, callUUID: currentCallUUID)
+        callStateDelegate?.callStateDidChange(to: .connecting, call: currentCall)
     }
     
     func shouldConnect(to remotePeerID: PeerID) async {
         do {
-            currentCallUUID = try await callManager.requestStartCall(remotePeerID)
+            try await callManager.requestStartCall(remotePeerID)
         } catch {
             log.error("Failed to request start call - \(error)")
         }
@@ -189,19 +188,19 @@ private extension CallEstablisherImpl {
         do {
             try await Task.sleep(nanoseconds: 1_000_000_000 * config.connectionTimeout)
             
-            guard !Task.isCancelled, let currentCallUUID else { return }
+            guard !Task.isCancelled, let currentCall else { return }
             
             log.error("Connection timeout.")
             
             providerDelegate.reportCallEnded(
-                currentCallUUID,
+                currentCall.uuid,
                 at: .now,
                 with: .failed
             )
             
-            callStateDelegate?.callStateDidChange(to: .idle, callUUID: currentCallUUID)
+            callStateDelegate?.callStateDidChange(to: .idle, call: currentCall)
             
-            self.currentCallUUID = nil
+            self.currentCall = nil
             isReconnecting = false
             
         } catch {

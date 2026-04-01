@@ -222,8 +222,7 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// Initialize a call with another peer.
     /// 
     /// - Parameter peerID: The ID of the remote peer.
-    /// - Returns: The UUID of the starting call.
-    func sendCallRequest(to peerID: PeerID) async throws -> UUID
+    func sendCallRequest(to peerID: PeerID) async throws
     
     /// Accept the incoming call request.
     /// - Parameter callUUID: The UUID of the call to accept.
@@ -345,7 +344,7 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.webRTCManager.commitConfiguration()
     }
     
-    func sendCallRequest(to peerID: PeerID) async throws -> UUID {
+    func sendCallRequest(to peerID: PeerID) async throws {
         try await container.callManager.requestStartCall(peerID)
     }
     

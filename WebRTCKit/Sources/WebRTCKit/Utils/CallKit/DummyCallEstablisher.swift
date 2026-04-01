@@ -6,15 +6,15 @@ final class DummyCallEstablisher: CallEstablisher {
         
     }
     
-    func answerCall(_ callUUID: UUID) {
+    func answerCall(_ call: Call) {
         
     }
     
-    func startCall(_ callUUID: UUID, handle: String) {
+    func startCall(_ call: Call) {
         
     }
     
-    func endCall(_ callUUID: UUID) {
+    func endCall(_ call: Call) {
         
     }
     

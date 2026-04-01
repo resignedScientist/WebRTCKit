@@ -27,7 +27,7 @@ public enum WebRTCKitCallState {
 @MainActor
 public protocol WebRTCKitCallStateDelegate: AnyObject, Sendable {
     
-    func callStateDidChange(to callState: WebRTCKitCallState, callUUID: UUID)
+    func callStateDidChange(to callState: WebRTCKitCallState, call: Call)
     
     func muteStateDidChange(to isMuted: Bool, callUUID: UUID)
 }

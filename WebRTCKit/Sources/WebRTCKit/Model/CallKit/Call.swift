@@ -7,9 +7,11 @@
 
 import Foundation
 
-struct Call {
-    let uuid: UUID
-    let handle: String
+public typealias WebRTCKitCall = Call
+
+public struct Call {
+    public let uuid: UUID
+    public let handle: String
     let direction: CallDirection
     let isMuted: Bool
     

@@ -11,7 +11,7 @@ import AVFoundation
 @MainActor
 protocol ProviderDelegate {
     
-    func reportNewIncomingCall(uuid: UUID, handle: String) async throws
+    func reportNewIncomingCall(uuid: UUID, handle: String) async throws -> Call
     
     func reportOutgoingCallDidStartConnecting(_ callUUID: UUID, at connectingDate: Date)
     
@@ -48,7 +48,7 @@ final class ProviderDelegateImpl: NSObject, ProviderDelegate {
         provider.setDelegate(self, queue: .main)
     }
     
-    func reportNewIncomingCall(uuid: UUID, handle: String) async throws {
+    func reportNewIncomingCall(uuid: UUID, handle: String) async throws -> Call {
         let callUpdate = CXCallUpdate()
         callUpdate.remoteHandle = CXHandle(type: .generic, value: handle)
         
@@ -62,6 +62,8 @@ final class ProviderDelegateImpl: NSObject, ProviderDelegate {
         )
         
         callManager.addCall(call)
+        
+        return call
     }
     
     func reportOutgoingCallDidStartConnecting(_ callUUID: UUID, at connectingDate: Date) {
