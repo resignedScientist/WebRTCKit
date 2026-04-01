@@ -22,7 +22,7 @@ protocol CallManager {
     func requestEndCall(_ call: Call) async throws
     
     /// Called by the app to request end call transactions for all calls.
-    func requestEndAllCalls() async throws
+    func requestEndAllCalls() async
     
     /// Called by the app to request a mute / unmute transaction.
     func requestCallMuted(_ call: Call, muted: Bool) async throws
@@ -62,6 +62,7 @@ final class CallManagerImpl: CallManager {
     
     private let callEstablisher: CallEstablisher
     private let callController = CXCallController(queue: .main)
+    private let log = Logger(caller: "CallManager", category: .default)
     
     private var calls: [UUID: Call] = [:]
     
@@ -91,10 +92,15 @@ final class CallManagerImpl: CallManager {
         try await callController.request(transaction)
     }
     
-    func requestEndAllCalls() async throws {
+    func requestEndAllCalls() async {
         for call in calls.values {
-            try await requestEndCall(call)
+            do {
+                try await requestEndCall(call)
+            } catch {
+                log.error("Failed to request end call - \(error)")
+            }
         }
+        calls.removeAll()
     }
     
     func requestCallMuted(_ call: Call, muted: Bool) async throws {
