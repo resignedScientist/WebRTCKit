@@ -47,6 +47,7 @@ final class CallEstablisherImpl: CallEstablisher {
     }
     
     func answerCall(_ call: Call) {
+        log.info("answerCall")
         Task {
             do {
                 callStateDelegate?.callStateDidChange(to: .answeringCallRequest, call: call)
@@ -60,6 +61,7 @@ final class CallEstablisherImpl: CallEstablisher {
     }
     
     func startCall(_ call: Call) {
+        log.info("startCall")
         Task {
             do {
                 callStateDelegate?.callStateDidChange(to: .sendingCallRequest, call: call)
@@ -74,6 +76,7 @@ final class CallEstablisherImpl: CallEstablisher {
     }
     
     func endCall(_ call: Call) {
+        log.info("endCall")
         currentCall = nil
         Task {
             do {
@@ -88,6 +91,7 @@ final class CallEstablisherImpl: CallEstablisher {
     }
     
     func setCallMuted(_ isMuted: Bool, callUUID: UUID) {
+        log.info("setCallMuted - \(isMuted)")
         webRTCManager.setLocalAudioMuted(isMuted)
         callStateDelegate?.muteStateDidChange(to: isMuted, callUUID: callUUID)
     }
@@ -96,6 +100,7 @@ final class CallEstablisherImpl: CallEstablisher {
 extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     
     func didReceiveOffer(from peerID: PeerID) {
+        log.info("Did receive offer from \(peerID)")
         Task {
             do {
                 let call = try await providerDelegate.reportNewIncomingCall(
@@ -112,6 +117,7 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     
     func peerDidAcceptCallRequest() {
         guard let currentCall else { return }
+        log.info("peerDidAcceptCallRequest")
         providerDelegate.reportOutgoingCallDidStartConnecting(
             currentCall.uuid,
             at: .now
@@ -121,6 +127,8 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     
     func callDidStart() {
         guard let currentCall else { return }
+        
+        log.info("callDidStart")
         
         if !isReconnecting {
             providerDelegate.reportOutgoingCallDidConnect(
@@ -137,6 +145,9 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     
     func didReceiveEndCall() {
         guard let currentCall else { return }
+        
+        log.info("didReceiveEndCall")
+        
         providerDelegate.reportCallEnded(
             currentCall.uuid,
             at: .now,
@@ -155,6 +166,7 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     }
     
     func shouldConnect(to remotePeerID: PeerID) async {
+        log.info("shouldConnect")
         do {
             try await callManager.requestStartCall(remotePeerID)
         } catch {
