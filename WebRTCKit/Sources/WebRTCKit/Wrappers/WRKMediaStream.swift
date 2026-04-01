@@ -1,6 +1,7 @@
 import WebRTC
 
-public protocol WRKMediaStream: AnyObject {
+@MainActor
+public protocol WRKMediaStream: AnyObject, Sendable {
     
     var source: MediaTrackSource { get }
     
