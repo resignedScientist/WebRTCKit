@@ -1,6 +1,7 @@
 import WebRTC
 
-final class RtpReceiver {
+@MainActor
+final class RtpReceiver: Sendable {
     
     private let receiver: RTCRtpReceiver
     

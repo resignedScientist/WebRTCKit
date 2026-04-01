@@ -5,7 +5,7 @@ struct ICECandidate: Codable, Equatable {
     let sdpMLineIndex: Int32
     let sdpMid: String?
     
-    init(from rtcCandidate: RTCIceCandidate) {
+    nonisolated init(from rtcCandidate: RTCIceCandidate) {
         self.candidate = rtcCandidate.sdp
         self.sdpMLineIndex = rtcCandidate.sdpMLineIndex
         self.sdpMid = rtcCandidate.sdpMid

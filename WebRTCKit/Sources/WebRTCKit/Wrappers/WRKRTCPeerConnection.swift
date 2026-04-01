@@ -255,59 +255,90 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
 
 // MARK: - RTCPeerConnectionDelegate
 
-extension WRKRTCPeerConnectionImpl: @MainActor RTCPeerConnectionDelegate {
+extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
-        _delegate?.peerConnection(self, didChange: stateChanged)
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didChange: stateChanged)
+        }
     }
     
     /// legacy code for plan B, not use for unified semantics
-    func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
     
     /// legacy code for plan B, not use for unified semantics
-    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
     
-    func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
-        let receiver = RtpReceiver(rtpReceiver)
-        _delegate?.peerConnection(self, didAdd: receiver)
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
+        let wrapper = RtpReceiverWrapper(rtpReceiver: rtpReceiver)
+        Task { @MainActor in
+            let receiver = RtpReceiver(wrapper.rtpReceiver)
+            _delegate?.peerConnection(self, didAdd: receiver)
+        }
     }
     
-    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
-        let receiver = RtpReceiver(rtpReceiver)
-        _delegate?.peerConnection(self, didRemove: receiver)
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
+        let wrapper = RtpReceiverWrapper(rtpReceiver: rtpReceiver)
+        Task { @MainActor in
+            let receiver = RtpReceiver(wrapper.rtpReceiver)
+            _delegate?.peerConnection(self, didRemove: receiver)
+        }
     }
     
-    func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
-        _delegate?.peerConnectionShouldNegotiate(self)
+    nonisolated func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
+        Task { @MainActor in
+            _delegate?.peerConnectionShouldNegotiate(self)
+        }
     }
     
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        _delegate?.peerConnection(self, didChange: newState)
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didChange: newState)
+        }
     }
     
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
-        _delegate?.peerConnection(self, didChange: newState)
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didChange: newState)
+        }
     }
     
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
-        _delegate?.peerConnection(self, didChange: newState)
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didChange: newState)
+        }
     }
     
-    func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         let candidate = ICECandidate(from: candidate)
-        _delegate?.peerConnection(self, didGenerate: candidate)
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didGenerate: candidate)
+        }
     }
 
-    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
         let candidates = candidates.map {
             ICECandidate(from: $0)
         }
-        _delegate?.peerConnection(self, didRemove: candidates)
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didRemove: candidates)
+        }
     }
 
-    func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
-        let dataChannel = WRKDataChannelImpl(dataChannel)
-        existingDataChannels.insert(dataChannel.label)
-        _delegate?.peerConnection(self, didOpen: dataChannel)
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
+        let channelWrapper = DataChannelWrapper(dataChannel: dataChannel)
+        Task { @MainActor in
+            let dataChannel = WRKDataChannelImpl(channelWrapper.dataChannel)
+            existingDataChannels.insert(dataChannel.label)
+            _delegate?.peerConnection(self, didOpen: dataChannel)
+        }
     }
+}
+
+private nonisolated struct DataChannelWrapper: @unchecked Sendable {
+    let dataChannel: RTCDataChannel
+}
+
+private nonisolated struct RtpReceiverWrapper: @unchecked Sendable {
+    let rtpReceiver: RTCRtpReceiver
 }
