@@ -24,6 +24,7 @@ public enum CallState {
     case connecting
 }
 
+@MainActor
 public protocol WebRTCKitCallStateDelegate: AnyObject, Sendable {
     
     func callStateDidChange(to callState: CallState, callUUID: UUID)
