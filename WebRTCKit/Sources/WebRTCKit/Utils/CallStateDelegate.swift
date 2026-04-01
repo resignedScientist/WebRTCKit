@@ -1,6 +1,6 @@
 import Foundation
 
-public enum WebRTCKitCallState {
+public enum WebRTCKitCallState: Sendable {
     
     /// Nothing is going on and we are waiting for input.
     case idle
