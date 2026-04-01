@@ -179,6 +179,7 @@ public protocol WebRTCController: AnyObject, Sendable {
     
     /// Connect to the signaling server and prepares the peer connection.
     /// - Returns: The ID of the local peer.
+    @discardableResult
     func setupConnection() async throws -> PeerID
     
     /// Start the local recording of video.
