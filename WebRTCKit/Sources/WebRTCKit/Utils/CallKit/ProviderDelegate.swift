@@ -111,7 +111,10 @@ extension ProviderDelegateImpl: @MainActor CXProviderDelegate {
         callManager.addCall(call)
         callManager.startCall(call)
         
-        action.fulfill()
+        Task {
+            try? await Task.sleep(for: .seconds(1))
+            action.fulfill()
+        }
     }
     
     func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
