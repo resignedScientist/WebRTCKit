@@ -108,11 +108,10 @@ extension ProviderDelegateImpl: @MainActor CXProviderDelegate {
         
         audioSessionConfigurator.configureAudioSession()
         
-        callManager.addCall(call)
-        callManager.startCall(call)
-        
         Task {
             try? await Task.sleep(for: .seconds(1))
+            callManager.addCall(call)
+            callManager.startCall(call)
             action.fulfill()
         }
     }
