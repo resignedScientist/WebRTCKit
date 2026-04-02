@@ -8,7 +8,7 @@
 @MainActor
 public protocol AudioSessionConfigurator {
     
-    func configureAudioSession()
+    func configureAudioSession(completion: @escaping (_ success: Bool) -> Void)
     
     func startAudio()
     
@@ -17,8 +17,8 @@ public protocol AudioSessionConfigurator {
 
 struct MockAudioSessionConfigurator: AudioSessionConfigurator {
     
-    func configureAudioSession() {
-        
+    func configureAudioSession(completion: @escaping (_ success: Bool) -> Void) {
+        completion(true)
     }
     
     func startAudio() {

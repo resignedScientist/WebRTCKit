@@ -106,12 +106,16 @@ extension ProviderDelegateImpl: @MainActor CXProviderDelegate {
             isMuted: false
         )
         
-        audioSessionConfigurator.configureAudioSession()
-        
         callManager.addCall(call)
         callManager.startCall(call)
         
-        action.fulfill()
+        audioSessionConfigurator.configureAudioSession { success in
+            if success {
+                action.fulfill()
+            } else {
+                action.fail()
+            }
+        }
     }
     
     func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
@@ -121,13 +125,14 @@ extension ProviderDelegateImpl: @MainActor CXProviderDelegate {
             return
         }
         
-        audioSessionConfigurator.configureAudioSession()
-        
         callManager.answerCall(call)
         
-        Task {
-            try? await Task.sleep(for: .seconds(1))
-            action.fulfill()
+        audioSessionConfigurator.configureAudioSession { success in
+            if success {
+                action.fulfill()
+            } else {
+                action.fail()
+            }
         }
     }
     
