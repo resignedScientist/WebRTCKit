@@ -56,6 +56,8 @@ protocol CallManager {
     
     /// Called by the provider delegate to mute / unmute the microphone.
     func setCallMuted(call: Call, isMuted: Bool)
+    
+    func setAutoAcceptCalls(autoAccept: Bool)
 }
 
 final class CallManagerImpl: CallManager {
@@ -157,5 +159,9 @@ final class CallManagerImpl: CallManager {
     func setCallMuted(call: Call, isMuted: Bool) {
         calls[call.uuid] = call.muted(isMuted)
         callEstablisher.setCallMuted(isMuted, callUUID: call.uuid)
+    }
+    
+    func setAutoAcceptCalls(autoAccept: Bool) {
+        callEstablisher.setAutoAcceptCalls(autoAccept: autoAccept)
     }
 }

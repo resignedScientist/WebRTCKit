@@ -20,6 +20,8 @@ protocol CallEstablisher {
     func endCall(_ call: Call)
     
     func setCallMuted(_ isMuted: Bool, callUUID: UUID)
+    
+    func setAutoAcceptCalls(autoAccept: Bool)
 }
 
 final class CallEstablisherImpl: CallEstablisher {
@@ -36,6 +38,8 @@ final class CallEstablisherImpl: CallEstablisher {
     private var currentCall: Call?
     private var connectionTimeoutTask: Task<Void, Never>?
     private var isReconnecting = false
+    private var autoAccept = false
+    private var autoAcceptHandle: String?
     
     init(webRTCManager: WebRTCManager) {
         self.webRTCManager = webRTCManager
@@ -61,17 +65,26 @@ final class CallEstablisherImpl: CallEstablisher {
     }
     
     func startCall(_ call: Call) {
+        
         log.info("startCall")
+        
         currentCall = call
-        Task {
-            do {
-                callStateDelegate?.callStateDidChange(to: .sendingCallRequest, call: call)
-                try await webRTCManager.startVideoCall(to: call.handle)
-                startConnectionTimeout()
-            } catch {
-                log.error("Failed to start call - \(error)")
-                providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
-                callStateDelegate?.callStateDidChange(to: .idle, call: call)
+        
+        if autoAccept, let autoAcceptHandle, autoAcceptHandle == call.handle {
+            log.info("Starting call is auto accept call; sending answer…")
+            answerCall(call)
+            self.autoAcceptHandle = nil
+        } else {
+            Task {
+                do {
+                    callStateDelegate?.callStateDidChange(to: .sendingCallRequest, call: call)
+                    try await webRTCManager.startVideoCall(to: call.handle)
+                    startConnectionTimeout()
+                } catch {
+                    log.error("Failed to start call - \(error)")
+                    providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
+                    callStateDelegate?.callStateDidChange(to: .idle, call: call)
+                }
             }
         }
     }
@@ -96,22 +109,38 @@ final class CallEstablisherImpl: CallEstablisher {
         webRTCManager.setLocalAudioMuted(isMuted)
         callStateDelegate?.muteStateDidChange(to: isMuted, callUUID: callUUID)
     }
+    
+    func setAutoAcceptCalls(autoAccept: Bool) {
+        self.autoAccept = autoAccept
+    }
 }
 
 extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     
     func didReceiveOffer(from peerID: PeerID) {
         log.info("Did receive offer from \(peerID)")
-        Task {
-            do {
-                let call = try await providerDelegate.reportNewIncomingCall(
-                    uuid: UUID(),
-                    handle: peerID
-                )
-                self.currentCall = call
-                callStateDelegate?.callStateDidChange(to: .receivingCallRequest, call: call)
-            } catch {
-                log.error("Failed to report incoming call - \(error)")
+        if autoAccept {
+            Task {
+                do {
+                    autoAcceptHandle = peerID
+                    try await callManager.requestStartCall(peerID)
+                } catch {
+                    autoAcceptHandle = nil
+                    log.error("requesting start call (auto accept) failed - \(error)")
+                }
+            }
+        } else {
+            Task {
+                do {
+                    let call = try await providerDelegate.reportNewIncomingCall(
+                        uuid: UUID(),
+                        handle: peerID
+                    )
+                    self.currentCall = call
+                    callStateDelegate?.callStateDidChange(to: .receivingCallRequest, call: call)
+                } catch {
+                    log.error("Failed to report incoming call - \(error)")
+                }
             }
         }
     }
@@ -156,6 +185,7 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
         )
         callStateDelegate?.callStateDidChange(to: .idle, call: currentCall)
         self.currentCall = nil
+        autoAcceptHandle = nil
     }
     
     func didLosePeerConnection() {
@@ -215,6 +245,7 @@ private extension CallEstablisherImpl {
             
             self.currentCall = nil
             isReconnecting = false
+            autoAcceptHandle = nil
             
         } catch {
             if !(error is CancellationError) {

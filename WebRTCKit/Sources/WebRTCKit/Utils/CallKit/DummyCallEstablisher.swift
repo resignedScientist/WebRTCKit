@@ -21,4 +21,8 @@ final class DummyCallEstablisher: CallEstablisher {
     func setCallMuted(_ isMuted: Bool, callUUID: UUID) {
         
     }
+    
+    func setAutoAcceptCalls(autoAccept: Bool) {
+        
+    }
 }

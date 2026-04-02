@@ -241,6 +241,14 @@ public protocol WebRTCController: AnyObject, Sendable {
     
     /// End the call and disconnect from the signaling server.
     func disconnect() async throws
+    
+    /// Set auto accept of calls. If set to true, incoming connection messages from
+    /// the signaling server are automatically accepted, establishing a connection.
+    ///
+    /// If auto accept is used, incoming connection messages will use the outgoing CallKit flow.
+    ///
+    /// - Parameter autoAccept: Should incoming calls be automatically accepted?
+    func setAutoAcceptCalls(autoAccept: Bool) async
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -381,7 +389,11 @@ final class WebRTCControllerImpl: WebRTCController {
     }
     
     func disconnect() async throws {
-        try await container.callManager.requestEndAllCalls()
+        await container.callManager.requestEndAllCalls()
         await container.signalingServer.disconnect()
+    }
+    
+    func setAutoAcceptCalls(autoAccept: Bool) async {
+        container.callManager.setAutoAcceptCalls(autoAccept: autoAccept)
     }
 }
