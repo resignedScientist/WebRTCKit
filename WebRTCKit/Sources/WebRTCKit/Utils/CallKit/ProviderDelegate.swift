@@ -25,7 +25,6 @@ final class ProviderDelegateImpl: NSObject, ProviderDelegate {
     private let callManager: CallManager
     private let audioSessionConfigurator: AudioSessionConfigurator
     private let provider: CXProvider
-    private let log = Logger(caller: "ProviderDelegate", category: .default)
     
     init(
         callManager: CallManager,
@@ -154,12 +153,10 @@ extension ProviderDelegateImpl: @MainActor CXProviderDelegate {
     }
     
     func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
-        log.info("The system did activate the audio session.")
         audioSessionConfigurator.startAudio()
     }
     
     func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
-        log.info("The system did deactivate the audio session.")
         audioSessionConfigurator.stopAudio()
     }
 }
