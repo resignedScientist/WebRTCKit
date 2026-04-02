@@ -123,9 +123,10 @@ extension ProviderDelegateImpl: @MainActor CXProviderDelegate {
         
         audioSessionConfigurator.configureAudioSession()
         
+        callManager.answerCall(call)
+        
         Task {
             try? await Task.sleep(for: .seconds(1))
-            callManager.answerCall(call)
             action.fulfill()
         }
     }
