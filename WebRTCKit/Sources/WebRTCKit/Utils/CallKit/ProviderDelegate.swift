@@ -11,6 +11,7 @@ import AVFoundation
 @MainActor
 protocol ProviderDelegate {
     
+    @discardableResult
     func reportNewIncomingCall(uuid: UUID, handle: String) async throws -> Call
     
     func reportOutgoingCallDidStartConnecting(_ callUUID: UUID, at connectingDate: Date)

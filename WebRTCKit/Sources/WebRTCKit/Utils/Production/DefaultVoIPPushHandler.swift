@@ -67,18 +67,18 @@ extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
         for type: PKPushType
     ) async {
         
-        guard
-            let uuidString = payload.dictionaryPayload["UUID"] as? String,
-            let handle = payload.dictionaryPayload["handle"] as? String,
-            let uuid = UUID(uuidString: uuidString)
-        else { return }
-        
         log.debug("Did receive incoming push notification of type '\(type)'")
         
         do {
-            try await providerDelegate.reportNewIncomingCall(uuid: uuid, handle: handle)
+            let pushPayload = try PushPayload(payload: payload)
+            let parsedPayload = try parser.parse(pushPayload)
+            let callId = parsedPayload.callId
+            let handle = parsedPayload.handle
+            
+            try await providerDelegate.reportNewIncomingCall(uuid: callId, handle: handle)
+            
         } catch {
-            print("reportNewIncomingCall failed - \(error)")
+            log.error("Failed to handle incoming push - \(error)")
         }
     }
 }
