@@ -99,6 +99,9 @@ final class CallEstablisherImpl: CallEstablisher {
     func endCall(_ call: Call) {
         log.info("endCall")
         currentCall = nil
+        autoAcceptHandle = nil
+        isReconnecting = false
+        cancelConnectionTimeout()
         Task {
             do {
                 callStateDelegate?.callStateDidChange(to: .endingCall, call: call)
