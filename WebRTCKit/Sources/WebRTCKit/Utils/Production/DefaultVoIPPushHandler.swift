@@ -79,6 +79,13 @@ extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
             
         } catch {
             log.error("Failed to handle incoming push - \(error)")
+            
+            // we must always report the call; due to failure, we immediately end it
+            providerDelegate.reportCallEnded(
+                UUID(),
+                at: .now,
+                with: .failed
+            )
         }
     }
 }
