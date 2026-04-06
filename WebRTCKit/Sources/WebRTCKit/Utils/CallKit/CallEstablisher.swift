@@ -52,7 +52,11 @@ final class CallEstablisherImpl: CallEstablisher {
     }
     
     func answerCall(_ call: Call) {
+        
         log.info("answerCall")
+        
+        currentCall = call
+        
         Task {
             do {
                 callStateDelegate?.callStateDidChange(to: .answeringCallRequest, call: call)
