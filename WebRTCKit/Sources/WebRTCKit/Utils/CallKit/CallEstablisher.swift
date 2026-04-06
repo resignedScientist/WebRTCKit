@@ -56,12 +56,9 @@ final class CallEstablisherImpl: CallEstablisher {
         Task {
             do {
                 callStateDelegate?.callStateDidChange(to: .answeringCallRequest, call: call)
-                if signalingServer.isOpen {
-                    try await webRTCManager.answerCall()
-                } else {
-                    // we are connecting to the signaling server and wait for a shouldConnect
-                    try await signalingServer.connect()
-                }
+                
+                // we are connecting to the signaling server and wait for a shouldConnect
+                try await signalingServer.connect()
             } catch {
                 log.error("Failed to answer call - \(error)")
                 providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
