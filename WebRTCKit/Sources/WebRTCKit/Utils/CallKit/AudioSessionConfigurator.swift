@@ -13,6 +13,8 @@ public protocol AudioSessionConfigurator {
     func startAudio()
     
     func stopAudio()
+    
+    func waitForPreparation(completion: @escaping (_ success: Bool) -> Void)
 }
 
 struct MockAudioSessionConfigurator: AudioSessionConfigurator {
@@ -27,5 +29,9 @@ struct MockAudioSessionConfigurator: AudioSessionConfigurator {
     
     func stopAudio() {
         
+    }
+    
+    func waitForPreparation(completion: @escaping (Bool) -> Void) {
+        completion(true)
     }
 }
