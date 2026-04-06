@@ -67,6 +67,7 @@ final class CallEstablisherImpl: CallEstablisher {
                 log.error("Failed to answer call - \(error)")
                 providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
                 callStateDelegate?.callStateDidChange(to: .idle, call: call)
+                reset()
             }
         }
     }
@@ -91,6 +92,7 @@ final class CallEstablisherImpl: CallEstablisher {
                     log.error("Failed to start call - \(error)")
                     providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
                     callStateDelegate?.callStateDidChange(to: .idle, call: call)
+                    reset()
                 }
             }
         }
@@ -98,10 +100,7 @@ final class CallEstablisherImpl: CallEstablisher {
     
     func endCall(_ call: Call) {
         log.info("endCall")
-        currentCall = nil
-        autoAcceptHandle = nil
-        isReconnecting = false
-        cancelConnectionTimeout()
+        reset()
         Task {
             do {
                 callStateDelegate?.callStateDidChange(to: .endingCall, call: call)
@@ -110,6 +109,7 @@ final class CallEstablisherImpl: CallEstablisher {
             } catch {
                 log.error("Failed to end call - \(error)")
                 callStateDelegate?.callStateDidChange(to: .idle, call: call)
+                reset()
             }
         }
     }
@@ -135,8 +135,8 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
                     autoAcceptHandle = peerID
                     try await callManager.requestStartCall(peerID)
                 } catch {
-                    autoAcceptHandle = nil
                     log.error("requesting start call (auto accept) failed - \(error)")
+                    reset()
                 }
             }
         } else {
@@ -150,6 +150,7 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
                     callStateDelegate?.callStateDidChange(to: .receivingCallRequest, call: call)
                 } catch {
                     log.error("Failed to report incoming call - \(error)")
+                    reset()
                 }
             }
         }
@@ -219,6 +220,7 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
                     with: .failed
                 )
             }
+            reset()
         }
     }
 }
@@ -269,5 +271,18 @@ private extension CallEstablisherImpl {
                 log.error("Error aborting connecting call - \(error)")
             }
         }
+    }
+}
+
+// MARK: - Private functions
+
+private extension CallEstablisherImpl {
+    
+    func reset() {
+        log.info("reset")
+        currentCall = nil
+        autoAcceptHandle = nil
+        isReconnecting = false
+        cancelConnectionTimeout()
     }
 }
