@@ -14,7 +14,7 @@ public protocol AudioSessionConfigurator {
     
     func stopAudio()
     
-    func waitForPreparation(completion: @escaping (_ success: Bool) -> Void)
+    func waitForPreparation(onSuccess: @escaping () -> Void)
 }
 
 struct MockAudioSessionConfigurator: AudioSessionConfigurator {
@@ -31,7 +31,7 @@ struct MockAudioSessionConfigurator: AudioSessionConfigurator {
         
     }
     
-    func waitForPreparation(completion: @escaping (Bool) -> Void) {
-        completion(true)
+    func waitForPreparation(onSuccess: @escaping () -> Void) {
+        onSuccess()
     }
 }

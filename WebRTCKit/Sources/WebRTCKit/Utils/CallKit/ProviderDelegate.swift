@@ -74,8 +74,7 @@ final class ProviderDelegateImpl: NSObject, ProviderDelegate {
     }
     
     func reportOutgoingCallDidConnect(_ callUUID: UUID, at connectedDate: Date) {
-        audioSessionConfigurator.waitForPreparation { [weak provider] success in
-            guard success else { return }
+        audioSessionConfigurator.waitForPreparation { [weak provider] in
             provider?.reportOutgoingCall(
                 with: callUUID,
                 connectedAt: connectedDate
