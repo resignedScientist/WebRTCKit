@@ -51,6 +51,7 @@ public protocol SignalingServerConnection {
     func setDelegate(_ delegate: SignalingServerDelegate?)
     
     /// Establish a connection to the signaling server and receive the peer id.
+    @discardableResult
     func connect() async throws -> PeerID
     
     /// Disconnect from the signaling server.

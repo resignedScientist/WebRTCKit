@@ -29,6 +29,7 @@ final class CallEstablisherImpl: CallEstablisher {
     @Inject(\.config) private var config
     @Inject(\.callManager) private var callManager
     @Inject(\.providerDelegate) private var providerDelegate
+    @Inject(\.signalingServer) private var signalingServer
     
     private let webRTCManager: WebRTCManager
     private let log = Logger(caller: "CallEstablisher", category: .default)
@@ -55,7 +56,12 @@ final class CallEstablisherImpl: CallEstablisher {
         Task {
             do {
                 callStateDelegate?.callStateDidChange(to: .answeringCallRequest, call: call)
-                try await webRTCManager.answerCall()
+                if signalingServer.isOpen {
+                    try await webRTCManager.answerCall()
+                } else {
+                    // we are connecting to the signaling server and wait for a shouldConnect
+                    try await signalingServer.connect()
+                }
             } catch {
                 log.error("Failed to answer call - \(error)")
                 providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
@@ -199,9 +205,9 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     func shouldConnect(to remotePeerID: PeerID) async {
         log.info("shouldConnect")
         do {
-            try await callManager.requestStartCall(remotePeerID)
+            try await webRTCManager.startVideoCall(to: remotePeerID)
         } catch {
-            log.error("Failed to request start call - \(error)")
+            log.error("shouldConnect failed - \(error)")
         }
     }
 }
