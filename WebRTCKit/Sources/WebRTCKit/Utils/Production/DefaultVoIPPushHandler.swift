@@ -77,6 +77,8 @@ extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
             
             try await providerDelegate.reportNewIncomingCall(uuid: callId, handle: handle)
             
+            delegate?.didReceivePushNotification(payload: pushPayload)
+            
         } catch {
             log.error("Failed to handle incoming push - \(error)")
             
