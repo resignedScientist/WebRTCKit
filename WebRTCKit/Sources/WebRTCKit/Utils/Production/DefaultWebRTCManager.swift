@@ -228,7 +228,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func answerCall() async throws {
-        guard peerConnection == nil, let remotePeerID, let receivedOfferSDP else { return }
+        guard peerConnection == nil, let remotePeerID, let receivedOfferSDP else {
+            throw WebRTCManagerError.critical("answerCall failed; missing offer or remote peer id")
+        }
         
         let peerConnection = try await makePeerConnection(isInitiator: false)
         self.peerConnection = peerConnection
