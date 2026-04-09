@@ -80,8 +80,17 @@ final class CallEstablisherImpl: CallEstablisher {
         
         if autoAccept, let autoAcceptHandle, autoAcceptHandle == call.handle {
             log.info("Starting call is auto accept call; sending answer…")
-            answerCall(call)
             self.autoAcceptHandle = nil
+            Task {
+                do {
+                    try await webRTCManager.answerCall()
+                } catch {
+                    log.error("Failed to auto accept call - \(error)")
+                    providerDelegate.reportCallEnded(call.uuid, at: .now, with: .failed)
+                    callStateDelegate?.callStateDidChange(to: .idle, call: call)
+                    reset()
+                }
+            }
         } else {
             Task {
                 do {
