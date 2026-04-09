@@ -1,7 +1,7 @@
 import Foundation
 import PushKit
 
-public struct PushPayload {
+public struct PushPayload: Sendable {
     
     public let description: String
     public let data: Data
