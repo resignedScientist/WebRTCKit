@@ -26,6 +26,7 @@ final class ProviderDelegateImpl: NSObject, ProviderDelegate {
     private let callManager: CallManager
     private let audioSessionConfigurator: AudioSessionConfigurator
     private let provider: CXProvider
+    private let log = Logger(caller: "ProviderDelegate", category: .default)
     
     init(
         callManager: CallManager,
@@ -50,6 +51,14 @@ final class ProviderDelegateImpl: NSObject, ProviderDelegate {
     }
     
     func reportNewIncomingCall(uuid: UUID, handle: String) async throws -> Call {
+        
+        // prevent double reporting
+        let existingCall = callManager.callWithHandle(handle)
+        if let existingCall {
+            log.info("reportNewIncomingCall - a call with the handle '\(handle)' already exists. Returning existing call…")
+            return existingCall
+        }
+        
         let callUpdate = CXCallUpdate()
         callUpdate.remoteHandle = CXHandle(type: .generic, value: handle)
         

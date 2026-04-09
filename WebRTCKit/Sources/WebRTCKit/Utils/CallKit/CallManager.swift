@@ -42,6 +42,9 @@ protocol CallManager {
     /// Called by the provider delegate or the app to get a call from our list.
     func callWithUUID(_ uuid: UUID) -> Call?
     
+    /// Called by the provider delegate to get a call by handle.
+    func callWithHandle(_ handle: String) -> Call?
+    
     /// Called by the provider delegate when an answer call action has been received.
     func answerCall(_ call: Call)
     
@@ -136,6 +139,10 @@ final class CallManagerImpl: CallManager {
     
     func callWithUUID(_ uuid: UUID) -> Call? {
         calls[uuid]
+    }
+    
+    func callWithHandle(_ handle: String) -> Call? {
+        calls.first { $0.value.handle == handle }?.value
     }
     
     func answerCall(_ call: Call) {
