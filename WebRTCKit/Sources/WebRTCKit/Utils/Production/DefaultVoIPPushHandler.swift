@@ -75,12 +75,13 @@ extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
             let callId = parsedPayload.callId
             let handle = parsedPayload.handle
             
-            await delegate?.didReceivePushNotification(payload: pushPayload)
-            
-            try await providerDelegate.reportNewIncomingCall(uuid: callId, handle: handle)
-            
+            await reportNewIncomingCall(
+                pushPayload: pushPayload,
+                uuid: callId,
+                handle: handle
+            )
         } catch {
-            log.error("Failed to handle incoming push - \(error)")
+            log.error("Failed to parse incoming push - \(error)")
             
             // we must always report the call; due to failure, we immediately end it
             providerDelegate.reportCallEnded(
@@ -88,6 +89,24 @@ extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
                 at: .now,
                 with: .failed
             )
+        }
+    }
+}
+
+// MARK: - Private functions
+
+private extension DefaultVoIPPushHandler {
+    
+    func reportNewIncomingCall(
+        pushPayload: PushPayload,
+        uuid callId: UUID,
+        handle: String
+    ) async {
+        do {
+            try await providerDelegate.reportNewIncomingCall(uuid: callId, handle: handle)
+            await delegate?.didReceivePushNotification(payload: pushPayload)
+        } catch {
+            log.error("reportNewIncomingCall failed - \(error)")
         }
     }
 }
