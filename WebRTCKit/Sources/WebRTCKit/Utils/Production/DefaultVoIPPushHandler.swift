@@ -75,9 +75,9 @@ extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
             let callId = parsedPayload.callId
             let handle = parsedPayload.handle
             
-            try await providerDelegate.reportNewIncomingCall(uuid: callId, handle: handle)
+            await delegate?.didReceivePushNotification(payload: pushPayload)
             
-            delegate?.didReceivePushNotification(payload: pushPayload)
+            try await providerDelegate.reportNewIncomingCall(uuid: callId, handle: handle)
             
         } catch {
             log.error("Failed to handle incoming push - \(error)")

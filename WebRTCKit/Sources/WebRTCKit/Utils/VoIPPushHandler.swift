@@ -6,5 +6,5 @@ public protocol VoIPPushHandler: Sendable {
 }
 
 public protocol VoIPPushHandlerDelegate: AnyObject {
-    func didReceivePushNotification(payload: PushPayload)
+    func didReceivePushNotification(payload: PushPayload) async
 }
