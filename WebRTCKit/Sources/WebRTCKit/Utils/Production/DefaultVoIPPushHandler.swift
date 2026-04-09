@@ -72,12 +72,11 @@ extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
         do {
             let pushPayload = try PushPayload(payload: payload)
             let parsedPayload = try parser.parse(pushPayload)
-            let callId = parsedPayload.callId
             let handle = parsedPayload.handle
             
             await reportNewIncomingCall(
                 pushPayload: pushPayload,
-                uuid: callId,
+                uuid: UUID(),
                 handle: handle
             )
         } catch {
