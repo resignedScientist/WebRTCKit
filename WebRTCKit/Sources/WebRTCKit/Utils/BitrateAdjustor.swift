@@ -12,7 +12,7 @@ enum BitrateType: String, Equatable {
 }
 
 /// A protocol defining methods to adjust and manage bitrate settings for peer connections.
-@WebRTCActor
+@MainActor
 protocol BitrateAdjustor: AnyObject {
     
     var imageSize: CGSize { get set }
@@ -76,8 +76,8 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         fastTimer = nil
         slowTimer = nil
         runningTypes.removeAll()
-        await audioNetworkDataCache.deleteAllData()
-        await videoNetworkDataCache.deleteAllData()
+        audioNetworkDataCache.deleteAllData()
+        videoNetworkDataCache.deleteAllData()
         log.info("Stopped")
     }
     
@@ -89,9 +89,9 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         // delete cached network data for that type
         switch type {
         case .audio:
-            await audioNetworkDataCache.deleteAllData()
+            audioNetworkDataCache.deleteAllData()
         case .video:
-            await videoNetworkDataCache.deleteAllData()
+            videoNetworkDataCache.deleteAllData()
         }
         
         // stop all timers if nothing is running anymore
@@ -124,7 +124,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
             runningTypes.contains(.video),
             let sender = peerConnection.senders.first(where: { $0.track?.kind == BitrateType.video.rawValue }),
             let encoding = sender.parameters.encodings.first,
-            var bitrate = encoding.maxBitrateBps?.intValue
+            let bitrate = encoding.maxBitrateBps?.intValue
         else { return }
         
         let scalingFactor = calculateVideoScaling(for: bitrate)
@@ -147,9 +147,9 @@ private extension BitrateAdjustorImpl {
     func registerStatisticObservers(peerConnection: WRKRTCPeerConnection) {
         
         // fast task (every second)
-        let fastTimer = DispatchSource.makeTimerSource(queue: WebRTCActor.queue)
+        let fastTimer = DispatchSource.makeTimerSource(queue: .main)
         fastTimer.setEventHandler { [weak self] in
-            Task { @WebRTCActor in
+            Task {
                 await self?.runFastTask(for: .video, peerConnection: peerConnection)
                 await self?.runFastTask(for: .audio, peerConnection: peerConnection)
             }
@@ -159,9 +159,9 @@ private extension BitrateAdjustorImpl {
         self.fastTimer = fastTimer
         
         // slow task (every 5 seconds)
-        let slowTimer = DispatchSource.makeTimerSource(queue: WebRTCActor.queue)
+        let slowTimer = DispatchSource.makeTimerSource(queue: .main)
         slowTimer.setEventHandler { [weak self] in
-            Task { @WebRTCActor in
+            Task {
                 await self?.runSlowTask(for: .video, peerConnection: peerConnection)
                 await self?.runSlowTask(for: .audio, peerConnection: peerConnection)
             }
@@ -347,9 +347,9 @@ private extension BitrateAdjustorImpl {
         let networkDataCache = getNetworkDataCache(for: type)
         let config = getConfig(for: type)
         
-        await networkDataCache.addDataPoint(dataPoint)
+        networkDataCache.addDataPoint(dataPoint)
         
-        guard let packetLoss = await networkDataCache.getPacketLossRate(
+        guard let packetLoss = networkDataCache.getPacketLossRate(
             overLast: 1
         ) else { return }
         
@@ -372,7 +372,7 @@ private extension BitrateAdjustorImpl {
         
         guard
             !(await adjustmentTracker.isInCoolDown()),
-            let packetLoss = await networkDataCache.getPacketLossRate(overLast: 10)
+            let packetLoss = networkDataCache.getPacketLossRate(overLast: 10)
         else { return }
         
         await adjustBitrate(

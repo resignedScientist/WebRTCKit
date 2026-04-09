@@ -1,7 +1,7 @@
 import WebRTC
 
-@WebRTCActor
-protocol WRKRTCAudioSession: AnyObject, Sendable {
+@MainActor
+protocol WRKRTCAudioSession: AnyObject {
     
     /// This property is only effective if useManualAudio is YES.
     /// Represents permission for WebRTC to initialize the VoIP audio unit.
@@ -121,10 +121,10 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
 
 // MARK: - RTCAudioSessionDelegate
 
-extension WRKRTCAudioSessionImpl: RTCAudioSessionDelegate {
+extension WRKRTCAudioSessionImpl: @MainActor RTCAudioSessionDelegate {
     
-    nonisolated func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
-        Task { @WebRTCActor in
+    func audioSession(_ audioSession: RTCAudioSession, didSetActive active: Bool) {
+        Task { @MainActor in
             delegate?.audioSessionDidSetActive(self, active: active)
         }
     }

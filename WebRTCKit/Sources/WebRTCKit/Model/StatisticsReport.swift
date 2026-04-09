@@ -1,6 +1,6 @@
 import WebRTC
 
-struct StatisticsReport: Sendable {
+struct StatisticsReport {
     let statistics: [String: Statistics]
     
     init(statistics: [String: RTCStatistics]) {

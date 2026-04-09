@@ -1,10 +1,10 @@
 import PushKit
 
-@WebRTCActor
+@MainActor
 public protocol VoIPPushHandler: Sendable {
     func setDelegate(_ delegate: VoIPPushHandlerDelegate)
 }
 
-public protocol VoIPPushHandlerDelegate: AnyObject {
-    func didReceivePushNotification(payload: PushPayload)
+public protocol VoIPPushHandlerDelegate: AnyObject, Sendable {
+    func didReceivePushNotification(payload: PushPayload) async
 }

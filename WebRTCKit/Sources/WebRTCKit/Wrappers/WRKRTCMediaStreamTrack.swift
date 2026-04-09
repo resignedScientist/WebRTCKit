@@ -1,5 +1,6 @@
 import WebRTC
 
+@MainActor
 public protocol WRKRTCMediaStreamTrack: AnyObject, Sendable {
     
     /// The enabled state of the track. If set to false, this track is muted / off.

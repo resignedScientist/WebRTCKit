@@ -1,6 +1,6 @@
 import Foundation
 
-@WebRTCActor
+@MainActor
 public protocol SignalingServerDelegate: AnyObject, Sendable {
     
     /// We did receive a signal from another peer.
@@ -41,8 +41,8 @@ public protocol SignalingServerDelegate: AnyObject, Sendable {
     func socketDidClose()
 }
 
-@WebRTCActor
-public protocol SignalingServerConnection: Sendable {
+@MainActor
+public protocol SignalingServerConnection {
     
     /// Returns true if the connection is established / open.
     var isOpen: Bool { get }
@@ -51,6 +51,7 @@ public protocol SignalingServerConnection: Sendable {
     func setDelegate(_ delegate: SignalingServerDelegate?)
     
     /// Establish a connection to the signaling server and receive the peer id.
+    @discardableResult
     func connect() async throws -> PeerID
     
     /// Disconnect from the signaling server.

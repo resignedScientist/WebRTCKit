@@ -1,6 +1,7 @@
 import WebRTC
 
-protocol WRKRTCPeerConnection: Sendable {
+@MainActor
+protocol WRKRTCPeerConnection {
     
     /// The object that will be notifed about events such as state changes and
     /// streams being added or removed.
@@ -41,7 +42,7 @@ protocol WRKRTCPeerConnection: Sendable {
     func add(_ candidate: ICECandidate) async throws
     
     /// Generate an SDP offer.
-    nonisolated func offer(for constraints: MediaConstraints) async throws -> SessionDescription
+    func offer(for constraints: MediaConstraints) async throws -> SessionDescription
     
     /// Creates an offer or answer (depending on current signaling state) and sets
     /// it as the local session description.
@@ -54,7 +55,7 @@ protocol WRKRTCPeerConnection: Sendable {
     func setRemoteDescription(_ sdp: SessionDescription) async throws
     
     /// Generate an SDP answer.
-    nonisolated func answer(for constraints: MediaConstraints) async throws -> SessionDescription
+    func answer(for constraints: MediaConstraints) async throws -> SessionDescription
     
     /// Create a new data channel with the given label and configuration.
     func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> WRKDataChannel?
@@ -71,30 +72,23 @@ protocol WRKRTCPeerConnection: Sendable {
     func statistics() async -> StatisticsReport
 }
 
-final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked Sendable {
+final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
     
     private weak var _delegate: WRKRTCPeerConnectionDelegate?
     private let _peerConnection: RTCPeerConnection
-    private let queue = WebRTCActor.queue
     
     var existingDataChannels: Set<String> = []
     
     var peerConnection: RTCPeerConnection {
-        WebRTCActor.checkSync {
-            _peerConnection
-        }
+        _peerConnection
     }
     
     var delegate: WRKRTCPeerConnectionDelegate? {
         get {
-            WebRTCActor.checkSync {
-                _delegate
-            }
+            _delegate
         }
         set {
-            WebRTCActor.checkSync {
-                _delegate = newValue
-            }
+            _delegate = newValue
         }
     }
     
@@ -140,65 +134,46 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     }
     
     func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender? {
-        return await withCheckedContinuation { continuation in
-            WebRTCActor.checkAsync {
-                if let audioTrack = (track as? WRKRTCAudioTrackImpl)?.audioTrack {
-                    if let sender = self._peerConnection.add(audioTrack, streamIds: streamIds) {
-                        let rtpSender = RtpSender(sender: sender)
-                        continuation.resume(returning: rtpSender)
-                    } else {
-                        continuation.resume(returning: nil)
-                    }
-                } else if let videoTrack = (track as? WRKRTCVideoTrackImpl)?.videoTrack {
-                    if let sender = self._peerConnection.add(videoTrack, streamIds: streamIds) {
-                        let rtpSender = RtpSender(sender: sender)
-                        continuation.resume(returning: rtpSender)
-                    } else {
-                        continuation.resume(returning: nil)
-                    }
-                } else {
-                    continuation.resume(returning: nil)
-                }
+        if let audioTrack = (track as? WRKRTCAudioTrackImpl)?.audioTrack {
+            if let sender = self._peerConnection.add(audioTrack, streamIds: streamIds) {
+                return RtpSender(sender: sender)
+            }
+        } else if let videoTrack = (track as? WRKRTCVideoTrackImpl)?.videoTrack {
+            if let sender = self._peerConnection.add(videoTrack, streamIds: streamIds) {
+                return RtpSender(sender: sender)
             }
         }
+        
+        return nil
     }
     
     func removeTrack(_ sender: RtpSender) async -> Bool {
-        return await withCheckedContinuation { continuation in
-            WebRTCActor.checkAsync {
-                let result = self._peerConnection.removeTrack(sender.unwrapUnsafely())
-                continuation.resume(returning: result)
-            }
-        }
+        _peerConnection.removeTrack(sender.unwrapUnsafely())
     }
     
     func add(_ candidate: ICECandidate) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            WebRTCActor.checkAsync {
-                self._peerConnection.add(candidate.toRTCIceCandidate()) { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
+            _peerConnection.add(candidate.toRTCIceCandidate()) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
                 }
             }
         }
     }
     
-    nonisolated func offer(for constraints: MediaConstraints) async throws -> SessionDescription {
+    func offer(for constraints: MediaConstraints) async throws -> SessionDescription {
         return try await withCheckedThrowingContinuation { continuation in
-            WebRTCActor.checkAsync {
-                self._peerConnection.offer(for: RTCMediaConstraints(
-                    mandatoryConstraints: constraints.mandatoryConstraints,
-                    optionalConstraints: constraints.optionalConstraints
-                )) { sdp, error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        let sdp = SessionDescription(from: sdp!)
-                        continuation.resume(returning: sdp)
-                    }
+            _peerConnection.offer(for: RTCMediaConstraints(
+                mandatoryConstraints: constraints.mandatoryConstraints,
+                optionalConstraints: constraints.optionalConstraints
+            )) { sdp, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    let sdp = SessionDescription(from: sdp!)
+                    continuation.resume(returning: sdp)
                 }
             }
         }
@@ -206,13 +181,11 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func setLocalDescription() async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            WebRTCActor.checkAsync {
-                self._peerConnection.setLocalDescriptionWithCompletionHandler { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
+            _peerConnection.setLocalDescriptionWithCompletionHandler { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
                 }
             }
         }
@@ -220,13 +193,11 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func setLocalDescription(_ sdp: SessionDescription) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            WebRTCActor.checkAsync {
-                self._peerConnection.setLocalDescription(sdp.toRTCSessionDescription()) { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
+            _peerConnection.setLocalDescription(sdp.toRTCSessionDescription()) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
                 }
             }
         }
@@ -234,13 +205,11 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func setRemoteDescription(_ sdp: SessionDescription) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            WebRTCActor.checkAsync {
-                self._peerConnection.setRemoteDescription(sdp.toRTCSessionDescription()) { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
+            _peerConnection.setRemoteDescription(sdp.toRTCSessionDescription()) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
                 }
             }
         }
@@ -248,17 +217,15 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func answer(for constraints: MediaConstraints) async throws -> SessionDescription {
         return try await withCheckedThrowingContinuation { continuation in
-            WebRTCActor.checkAsync {
-                self._peerConnection.answer(for: RTCMediaConstraints(
-                    mandatoryConstraints: constraints.mandatoryConstraints,
-                    optionalConstraints: constraints.optionalConstraints
-                )) { sdp, error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        let sdp = SessionDescription(from: sdp!)
-                        continuation.resume(returning: sdp)
-                    }
+            _peerConnection.answer(for: RTCMediaConstraints(
+                mandatoryConstraints: constraints.mandatoryConstraints,
+                optionalConstraints: constraints.optionalConstraints
+            )) { sdp, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    let sdp = SessionDescription(from: sdp!)
+                    continuation.resume(returning: sdp)
                 }
             }
         }
@@ -266,35 +233,23 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
     
     func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> WRKDataChannel? {
         if let dataChannel = _peerConnection.dataChannel(forLabel: label, configuration: configuration) {
-            WebRTCActor.checkAsync {
-                _ = self.existingDataChannels.insert(label)
-            }
+            existingDataChannels.insert(label)
             return WRKDataChannelImpl(dataChannel)
         }
         return nil
     }
     
     func close() {
-        WebRTCActor.checkAsync {
-            self._peerConnection.close()
-        }
+        _peerConnection.close()
     }
     
     func restartIce() {
-        WebRTCActor.checkAsync {
-            self._peerConnection.restartIce()
-        }
+        _peerConnection.restartIce()
     }
     
-    nonisolated func statistics() async -> StatisticsReport {
-        return await withCheckedContinuation { continuation in
-            WebRTCActor.checkAsync {
-                self._peerConnection.statistics { statistics in
-                    let report = StatisticsReport(statistics: statistics.statistics)
-                    continuation.resume(returning: report)
-                }
-            }
-        }
+    func statistics() async -> StatisticsReport {
+        let statistics = await _peerConnection.statistics()
+        return StatisticsReport(statistics: statistics.statistics)
     }
 }
 
@@ -303,8 +258,8 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection, @unchecked
 extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnection(self, didChange: stateChanged)
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didChange: stateChanged)
         }
     }
     
@@ -315,47 +270,49 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
-        let receiver = RtpReceiver(rtpReceiver)
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnection(self, didAdd: receiver)
+        let wrapper = RtpReceiverWrapper(rtpReceiver: rtpReceiver)
+        Task { @MainActor in
+            let receiver = RtpReceiver(wrapper.rtpReceiver)
+            _delegate?.peerConnection(self, didAdd: receiver)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
-        let receiver = RtpReceiver(rtpReceiver)
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnection(self, didRemove: receiver)
+        let wrapper = RtpReceiverWrapper(rtpReceiver: rtpReceiver)
+        Task { @MainActor in
+            let receiver = RtpReceiver(wrapper.rtpReceiver)
+            _delegate?.peerConnection(self, didRemove: receiver)
         }
     }
     
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnectionShouldNegotiate(self)
+        Task { @MainActor in
+            _delegate?.peerConnectionShouldNegotiate(self)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnection(self, didChange: newState)
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didChange: newState)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnection(self, didChange: newState)
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didChange: newState)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnection(self, didChange: newState)
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didChange: newState)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         let candidate = ICECandidate(from: candidate)
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnection(self, didGenerate: candidate)
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didGenerate: candidate)
         }
     }
 
@@ -363,16 +320,25 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
         let candidates = candidates.map {
             ICECandidate(from: $0)
         }
-        WebRTCActor.checkAsync {
-            self._delegate?.peerConnection(self, didRemove: candidates)
+        Task { @MainActor in
+            _delegate?.peerConnection(self, didRemove: candidates)
         }
     }
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
-        let dataChannel = WRKDataChannelImpl(dataChannel)
-        WebRTCActor.checkAsync {
-            self.existingDataChannels.insert(dataChannel.label)
-            self._delegate?.peerConnection(self, didOpen: dataChannel)
+        let channelWrapper = DataChannelWrapper(dataChannel: dataChannel)
+        Task { @MainActor in
+            let dataChannel = WRKDataChannelImpl(channelWrapper.dataChannel)
+            existingDataChannels.insert(dataChannel.label)
+            _delegate?.peerConnection(self, didOpen: dataChannel)
         }
     }
+}
+
+private nonisolated struct DataChannelWrapper: @unchecked Sendable {
+    let dataChannel: RTCDataChannel
+}
+
+private nonisolated struct RtpReceiverWrapper: @unchecked Sendable {
+    let rtpReceiver: RTCRtpReceiver
 }

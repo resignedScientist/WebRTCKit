@@ -1,8 +1,9 @@
 import WebRTC
 
+@MainActor
 public protocol WRKDataChannel: AnyObject, Sendable {
     
-    nonisolated var label: String { get }
+    var label: String { get }
     
     var readyState: RTCDataChannelState { get }
     
@@ -16,23 +17,18 @@ public protocol WRKDataChannel: AnyObject, Sendable {
     func close()
 }
 
-final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
+final class WRKDataChannelImpl: WRKDataChannel {
     
     let dataChannel: RTCDataChannel
-    let queue = WebRTCActor.queue
     
-    nonisolated let label: String
+    let label: String
     
     var readyState: RTCDataChannelState {
-        WebRTCActor.checkSync {
-            dataChannel.readyState
-        }
+        dataChannel.readyState
     }
     
     var channelId: Int32 {
-        WebRTCActor.checkSync {
-            dataChannel.channelId
-        }
+        dataChannel.channelId
     }
     
     init(_ dataChannel: RTCDataChannel) {
@@ -41,24 +37,16 @@ final class WRKDataChannelImpl: WRKDataChannel, @unchecked Sendable {
     }
     
     func setDelegate(_ delegate: RTCDataChannelDelegate?) {
-        WebRTCActor.checkSync {
-            dataChannel.delegate = delegate
-        }
+        dataChannel.delegate = delegate
     }
     
     func sendData(_ data: Data) async -> Bool {
-        return await withCheckedContinuation { continuation in
-            WebRTCActor.checkAsync {
-                let buffer = RTCDataBuffer(data: data, isBinary: true)
-                let success = self.dataChannel.sendData(buffer)
-                continuation.resume(returning: success)
-            }
-        }
+        let buffer = RTCDataBuffer(data: data, isBinary: true)
+        let success = self.dataChannel.sendData(buffer)
+        return success
     }
     
     func close() {
-        WebRTCActor.checkAsync {
-            self.dataChannel.close()
-        }
+        dataChannel.close()
     }
 }

@@ -1,73 +1,75 @@
 import WebRTC
 
-@WebRTCActor
-struct DIContainer: Sendable {
+@MainActor
+struct DIContainer {
     private(set) static var shared: DIContainer?
     
     let config: WebRTCKitConfig
     let webRTCManager: WebRTCManager
-    let callProvider: VoIPCallProvider
     let pushHandler: VoIPPushHandler
     let pushCredentialProvider: PushCredentialProviding
     let signalingServer: SignalingServerConnection
-    let callManager: CallManager
     let networkMonitor: NetworkMonitor
     let logLevel: LogLevel
     let loggerDelegate: LoggerDelegate?
+    let callManager: CallManager
+    let providerDelegate: ProviderDelegate
     
     private init(
         config: WebRTCKitConfig,
         webRTCManager: WebRTCManager,
-        callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
         pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
-        callManager: CallManager,
         networkMonitor: NetworkMonitor,
         logLevel: LogLevel,
-        loggerDelegate: LoggerDelegate?
+        loggerDelegate: LoggerDelegate?,
+        callManager: CallManager,
+        providerDelegate: ProviderDelegate
     ) {
         self.config = config
         self.webRTCManager = webRTCManager
-        self.callProvider = callProvider
         self.pushHandler = pushHandler
         self.pushCredentialProvider = pushCredentialProvider
         self.signalingServer = signalingServer
-        self.callManager = callManager
         self.networkMonitor = networkMonitor
         self.logLevel = logLevel
         self.loggerDelegate = loggerDelegate
+        self.callManager = callManager
+        self.providerDelegate = providerDelegate
     }
     
     static func create(
         config: WebRTCKitConfig,
         webRTCManager: WebRTCManager,
-        callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
         pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
-        callManager: CallManager,
         networkMonitor: NetworkMonitor,
         logLevel: LogLevel,
-        loggerDelegate: LoggerDelegate?
+        loggerDelegate: LoggerDelegate?,
+        callManager: CallManager,
+        providerDelegate: ProviderDelegate
     ) -> DIContainer {
+        
         let container = DIContainer(
             config: config,
             webRTCManager: webRTCManager,
-            callProvider: callProvider,
             pushHandler: pushHandler,
             pushCredentialProvider: pushCredentialProvider,
             signalingServer: signalingServer,
-            callManager: callManager,
             networkMonitor: networkMonitor,
             logLevel: logLevel,
-            loggerDelegate: loggerDelegate
+            loggerDelegate: loggerDelegate,
+            callManager: callManager,
+            providerDelegate: providerDelegate
         )
         DIContainer.shared = container
         return container
     }
     
     func setup() async {
-        await callManager.setup()
+        // TODO: still needed?
+//        await callManager.setup()
     }
 }

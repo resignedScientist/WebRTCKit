@@ -1,23 +1,25 @@
 import WebRTC
-import CallKit
 
 public typealias PeerID = String
 
-@WebRTCActor
+@MainActor
 public struct WebRTCKit {
     
     /// Initialize the WebRTCKit for production.
-    /// 
+    ///  
     /// - Parameters:
     ///   - signalingServer: A reference to the signaling server connection to use.
+    ///   - audioSessionConfigurator: A reference to a class that configures the audio session.
     ///   - config: The configuration settings to apply.
     ///   - enableVerboseLogging: A Boolean value that determines wether verbose logging for WebRTC is enabled.
     ///   - audioDevice: An optional audio device to use.
     ///   - logLevel: The log level for our logger; defaults to only log errors.
     ///   - loggerDelegate: A delegate for the logger that receives all the logs.
+    ///   - pushPayloadParser: A reference to a class that parses the VoIP push payload.
     /// - Returns: The controller to interact with the WebRTCKit.
     public static func initialize(
         signalingServer: SignalingServerConnection,
+        audioSessionConfigurator: AudioSessionConfigurator,
         config: Config,
         audioDevice: RTCAudioDevice? = nil,
         logLevel: LogLevel = .error,
@@ -25,35 +27,37 @@ public struct WebRTCKit {
         pushPayloadParser: PushPayloadParser? = nil
     ) async -> WebRTCController {
         
+        let webRTCManager: WebRTCManager = DefaultWebRTCManager(
+            factory: WRKRTCPeerConnectionFactoryImpl(
+                audioDevice: audioDevice
+            )
+        )
+        let callEstablisher: CallEstablisher = CallEstablisherImpl(
+            webRTCManager: webRTCManager
+        )
+        let callManager: CallManager = CallManagerImpl(
+            callEstablisher: callEstablisher
+        )
+        let providerDelegate = ProviderDelegateImpl(
+            callManager: callManager,
+            audioSessionConfigurator: audioSessionConfigurator
+        )
         let pushCredentialStore = PushCredentialStore()
-        
-        let callProvider = CXProvider(configuration: {
-            let configuration = CXProviderConfiguration()
-            configuration.supportsVideo = true
-            return configuration
-        }())
         
         let container = DIContainer.create(
             config: config,
-            webRTCManager: DefaultWebRTCManager(
-                factory: WRKRTCPeerConnectionFactoryImpl(
-                    audioDevice: audioDevice
-                )
-            ),
-            callProvider: DefaultVoIPCallProvider(
-                provider: WRKCXProvider(provider: callProvider)
-            ),
+            webRTCManager: webRTCManager,
             pushHandler: DefaultVoIPPushHandler(
                 store: pushCredentialStore,
-                parser: pushPayloadParser ?? DefaultPushPayloadParser(),
-                provider: callProvider
+                parser: pushPayloadParser ?? DefaultPushPayloadParser()
             ),
             pushCredentialProvider: pushCredentialStore,
             signalingServer: signalingServer,
-            callManager: DefaultCallManager(),
             networkMonitor: DefaultNetworkMonitor(),
             logLevel: logLevel,
-            loggerDelegate: loggerDelegate
+            loggerDelegate: loggerDelegate,
+            callManager: callManager,
+            providerDelegate: providerDelegate
         )
         
         if logLevel == .verbose {
@@ -68,18 +72,27 @@ public struct WebRTCKit {
     /// Initialize the framework for testing or previews using mock classes.
     public static func initializeForTesting() -> WebRTCController {
         
+        let callManager = CallManagerImpl(
+            callEstablisher: DummyCallEstablisher()
+        )
+        
         let pushCredentialStore = PushCredentialStore()
         let container = DIContainer.create(
             config: .preview,
             webRTCManager: PreviewWebRTCManager(),
-            callProvider: PreviewVoIPCallProvider(),
             pushHandler: PreviewVoIPPushHandler(),
             pushCredentialProvider: pushCredentialStore,
             signalingServer: PreviewSignalingServerConnection(),
-            callManager: PreviewCallManager(),
             networkMonitor: PreviewNetworkMonitor(),
             logLevel: .debug,
-            loggerDelegate: nil
+            loggerDelegate: nil,
+            callManager: CallManagerImpl(
+                callEstablisher: DummyCallEstablisher()
+            ),
+            providerDelegate: ProviderDelegateImpl(
+                callManager: callManager,
+                audioSessionConfigurator: MockAudioSessionConfigurator()
+            )
         )
         
         return WebRTCControllerImpl(container: container)
@@ -89,25 +102,25 @@ public struct WebRTCKit {
     static func initialize(
         config: Config,
         webRTCManager: WebRTCManager,
-        callProvider: VoIPCallProvider,
         pushHandler: VoIPPushHandler,
         pushCredentialProvider: PushCredentialProviding,
         signalingServer: SignalingServerConnection,
+        networkMonitor: NetworkMonitor,
         callManager: CallManager,
-        networkMonitor: NetworkMonitor
+        providerDelegate: ProviderDelegate
     ) async -> WebRTCController {
         
         let container = DIContainer.create(
             config: config,
             webRTCManager: webRTCManager,
-            callProvider: callProvider,
             pushHandler: pushHandler,
             pushCredentialProvider: pushCredentialProvider,
             signalingServer: signalingServer,
-            callManager: callManager,
             networkMonitor: networkMonitor,
             logLevel: .debug,
-            loggerDelegate: nil
+            loggerDelegate: nil,
+            callManager: callManager,
+            providerDelegate: providerDelegate
         )
         
         await container.setup()
@@ -117,17 +130,32 @@ public struct WebRTCKit {
 }
 
 /// An object to interact with the WebRTCKit.
-@WebRTCActor
+@MainActor
 public protocol WebRTCController: AnyObject, Sendable {
     
     var voipPushHandler: VoIPPushHandler { get }
     
     var pushCredentialProvider: PushCredentialProviding { get }
     
-    /// Set the delegate to handle calls and receive audio & video streams.
-    ///
-    /// - Parameter delegate: The delegate to handle calls and receive audio & video streams.
-    func setCallManagerDelegate(_ delegate: CallManagerDelegate)
+    /// Sets the delegate to handle WebRTC data channel events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitDataChannelDelegate`.
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?)
+    
+    /// Sets the delegate to handle WebRTC video track events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitVideoTrackDelegate`.
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?)
+    
+    /// Sets the delegate to handle WebRTC audio track events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitAudioTrackDelegate`.
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?)
+    
+    /// Sets the delegate to handle WebRTC errors.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitErrorDelegate`.
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?)
+    
+    /// Sets the delegate to handle call state changes.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitCallStateDelegate`.
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?)
     
     /// Set the initial data channels that will be added before first negotiation.
     ///
@@ -151,6 +179,7 @@ public protocol WebRTCController: AnyObject, Sendable {
     
     /// Connect to the signaling server and prepares the peer connection.
     /// - Returns: The ID of the local peer.
+    @discardableResult
     func setupConnection() async throws -> PeerID
     
     /// Start the local recording of video.
@@ -178,22 +207,6 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// - Parameter imageSize: The new image size.
     func updateImageSize(_ imageSize: CGSize) async
     
-    /// Initialize a call with another peer.
-    ///
-    /// - Parameter peerID: The ID of the remote peer.
-    func sendCallRequest(to peerID: PeerID) async throws
-    
-    /// Answer the incoming call request.
-    ///
-    /// - Parameter accept: True if the request should be accepted.
-    func answerCallRequest(accept: Bool) async throws
-    
-    /// End the call.
-    func endCall() async throws
-    
-    /// End the call and disconnect from the signaling server.
-    func disconnect() async throws
-    
     /// Creates a data channel with the given configuration.
     /// - Parameters:
     ///   - setup: The configuration of the data channel.
@@ -207,14 +220,35 @@ public protocol WebRTCController: AnyObject, Sendable {
     /// Finish the configuration. After calling it, the re-negotiation is happening.
     func commitConfiguration() async throws
     
+    /// Initialize a call with another peer.
+    /// 
+    /// - Parameter peerID: The ID of the remote peer.
+    func sendCallRequest(to peerID: PeerID) async throws
+    
+    /// Accept the incoming call request.
+    /// - Parameter callUUID: The UUID of the call to accept.
+    func acceptIncomingCall(_ callUUID: UUID) async throws
+    
+    /// Mute or unmute the local audio.
+    /// - Parameters:
+    ///   - callUUID: The UUID of the call to mute.
+    ///   - muted: True to mute; false to unmute.
+    func setLocalAudioMuted(_ callUUID: UUID, muted: Bool) async throws
+    
+    /// End the call.
+    /// - Parameter callUUID: The UUID of the call to end.
+    func endCall(_ callUUID: UUID) async throws
+    
+    /// End the call and disconnect from the signaling server.
+    func disconnect() async throws
+    
     /// Set auto accept of calls. If set to true, incoming connection messages from
     /// the signaling server are automatically accepted, establishing a connection.
     ///
+    /// If auto accept is used, incoming connection messages will use the outgoing CallKit flow.
+    ///
     /// - Parameter autoAccept: Should incoming calls be automatically accepted?
     func setAutoAcceptCalls(autoAccept: Bool) async
-    
-    /// Tells CallKit that the call has been answered somewhere else.
-    func answeredElsewhere() throws
 }
 
 final class WebRTCControllerImpl: WebRTCController {
@@ -228,8 +262,24 @@ final class WebRTCControllerImpl: WebRTCController {
         self.container = container
     }
     
-    func setCallManagerDelegate(_ delegate: CallManagerDelegate) {
-        container.callManager.setDelegate(delegate)
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?) {
+        container.webRTCManager.setDataChannelDelegate(dataChannelDelegate)
+    }
+    
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?) {
+        container.webRTCManager.setVideoTrackDelegate(videoTrackDelegate)
+    }
+    
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?) {
+        container.webRTCManager.setAudioTrackDelegate(audioTrackDelegate)
+    }
+    
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?) {
+        container.webRTCManager.setErrorDelegate(errorDelegate)
+    }
+    
+    func setCallStateDelegate(_ callStateDelegate: WebRTCKitCallStateDelegate?) {
+        container.callManager.setCallStateDelegate(callStateDelegate)
     }
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
@@ -297,22 +347,6 @@ final class WebRTCControllerImpl: WebRTCController {
         await container.webRTCManager.updateImageSize(imageSize)
     }
     
-    func sendCallRequest(to peerID: PeerID) async throws {
-        try await container.callManager.sendCallRequest(to: peerID)
-    }
-    
-    func endCall() async throws {
-        try await container.callManager.endCall()
-    }
-    
-    func answerCallRequest(accept: Bool) async throws {
-        try await container.callManager.answerCallRequest(accept: accept)
-    }
-    
-    func disconnect() async throws {
-        try await container.callManager.disconnect()
-    }
-    
     func createDataChannel(setup: DataChannelSetup) async throws {
         try await container.webRTCManager.createDataChannel(setup: setup)
     }
@@ -325,11 +359,41 @@ final class WebRTCControllerImpl: WebRTCController {
         try await container.webRTCManager.commitConfiguration()
     }
     
-    func setAutoAcceptCalls(autoAccept: Bool) async {
-        await container.callManager.setAutoAcceptCalls(autoAccept: autoAccept)
+    func sendCallRequest(to peerID: PeerID) async throws {
+        try await container.callManager.requestStartCall(peerID)
     }
     
-    func answeredElsewhere() throws {
-        try container.callProvider.answeredElsewhere()
+    func acceptIncomingCall(_ callUUID: UUID) async throws {
+        let callManager = container.callManager
+        
+        guard let call = callManager.callWithUUID(callUUID) else { return }
+        
+        try await callManager.requestAcceptIncomingCall(call)
+    }
+    
+    func setLocalAudioMuted(_ callUUID: UUID, muted: Bool) async throws {
+        let callManager = container.callManager
+        
+        guard let call = callManager.callWithUUID(callUUID) else { return }
+        
+        try await container.callManager.requestCallMuted(call, muted: muted)
+    }
+    
+    func endCall(_ callUUID: UUID) async throws {
+        let callManager = container.callManager
+        
+        // handle as success if a call with this id was not found
+        guard let call = callManager.callWithUUID(callUUID) else { return }
+        
+        try await callManager.requestEndCall(call)
+    }
+    
+    func disconnect() async throws {
+        await container.callManager.requestEndAllCalls()
+        await container.signalingServer.disconnect()
+    }
+    
+    func setAutoAcceptCalls(autoAccept: Bool) async {
+        container.callManager.setAutoAcceptCalls(autoAccept: autoAccept)
     }
 }

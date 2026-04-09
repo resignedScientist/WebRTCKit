@@ -1,6 +1,7 @@
 import WebRTC
 
-protocol WRKRTCPeerConnectionDelegate: AnyObject, Sendable {
+@MainActor
+protocol WRKRTCPeerConnectionDelegate: AnyObject {
     
     /// Called when the SignalingState changed.
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange stateChanged: RTCSignalingState)

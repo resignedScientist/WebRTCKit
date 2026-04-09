@@ -62,16 +62,15 @@ private struct WebRTCView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: RTCMTLVideoView, context: Context) {
-        WebRTCActor.checkAsync {
-            videoTrack.add(uiView)
-        }
+        videoTrack.add(uiView)
         context.coordinator.source = videoTrack.source
     }
 }
 
 private extension WebRTCView {
     
-    class Coordinator {
+    @MainActor
+    final class Coordinator {
         @Binding var aspectRatio: CGFloat
         var source: MediaTrackSource
         
@@ -86,7 +85,7 @@ private extension WebRTCView {
 
 // MARK: - RTCVideoViewDelegate
 
-extension WebRTCView.Coordinator: RTCVideoViewDelegate {
+extension WebRTCView.Coordinator: @MainActor RTCVideoViewDelegate {
     
     func videoView(_ videoView: any RTCVideoRenderer, didChangeVideoSize size: CGSize) {
         log.info("\(source) video stream did change video size to \(size)")

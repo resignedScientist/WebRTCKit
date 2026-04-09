@@ -1,5 +1,4 @@
 import PushKit
-@preconcurrency import CallKit
 
 enum VoIPPushHandlerError: Error {
     case callManagerBlockedNewCall
@@ -7,22 +6,21 @@ enum VoIPPushHandlerError: Error {
 
 public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
     
+    @Inject(\.providerDelegate) private var providerDelegate
+    
     private let log = Logger(caller: "VoIPPushHandler")
     private let pushRegistry = PKPushRegistry(queue: .main)
     private let store: PushCredentialStoring
-    nonisolated private let parser: PushPayloadParser
-    nonisolated private let provider: CXProvider
+    private let parser: PushPayloadParser
     
     private weak var delegate: VoIPPushHandlerDelegate?
     
     public init(
         store: PushCredentialStoring,
-        parser: PushPayloadParser,
-        provider: CXProvider
+        parser: PushPayloadParser
     ) {
         self.store = store
         self.parser = parser
-        self.provider = provider
         super.init()
         pushRegistry.delegate = self
         pushRegistry.desiredPushTypes = [.voIP]
@@ -47,9 +45,9 @@ public final class DefaultVoIPPushHandler: NSObject, VoIPPushHandler {
 
 // MARK: - PKPushRegistryDelegate
 
-extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
+extension DefaultVoIPPushHandler: @MainActor PKPushRegistryDelegate {
     
-    public nonisolated func pushRegistry(
+    public func pushRegistry(
         _ registry: PKPushRegistry,
         didUpdate pushCredentials: PKPushCredentials,
         for type: PKPushType
@@ -63,60 +61,51 @@ extension DefaultVoIPPushHandler: PKPushRegistryDelegate {
         }
     }
     
-    public nonisolated func pushRegistry(
+    public func pushRegistry(
         _ registry: PKPushRegistry,
         didReceiveIncomingPushWith payload: PKPushPayload,
-        for type: PKPushType,
-        completion: @escaping @Sendable () -> Void
-    ) {
+        for type: PKPushType
+    ) async {
+        
         log.debug("Did receive incoming push notification of type '\(type)'")
         
         do {
-            
             let pushPayload = try PushPayload(payload: payload)
             let parsedPayload = try parser.parse(pushPayload)
-            let callId = parsedPayload.callId
             let handle = parsedPayload.handle
             
-            let update = CXCallUpdate()
-            update.remoteHandle = CXHandle(type: .generic, value: handle)
-            update.hasVideo = true
-            
-            provider.reportNewIncomingCall(with: callId, update: update) { [log, weak self] error in
-                if let error {
-                    log.error("Failed to report incoming call - \(error)")
-                } else {
-                    Task { @WebRTCActor in
-                        let container = DIContainer.shared!
-                        do {
-                            try container.callProvider.setCurrentCallID(callId)
-                            guard await container.callManager.canReceiveNewVoIPCalls() else {
-                                throw VoIPPushHandlerError.callManagerBlockedNewCall
-                            }
-                            self?.delegate?.didReceivePushNotification(payload: pushPayload)
-                        } catch {
-                            log.error("Failed to report incoming call - \(error)")
-                            try? container.callProvider.answeredElsewhere()
-                        }
-                    }
-                }
-                completion()
-            }
-            
+            await reportNewIncomingCall(
+                pushPayload: pushPayload,
+                uuid: UUID(),
+                handle: handle
+            )
         } catch {
-            log.error("didReceiveIncomingPush failed - \(error)")
-            
-            let update = CXCallUpdate()
-            update.remoteHandle = CXHandle(type: .generic, value: "Unknown Caller")
-            update.hasVideo = true
-            
-            let uuid = UUID()
+            log.error("Failed to parse incoming push - \(error)")
             
             // we must always report the call; due to failure, we immediately end it
-            provider.reportNewIncomingCall(with: UUID(), update: update) { [provider] _ in
-                completion()
-                provider.reportCall(with: uuid, endedAt: .now, reason: .failed)
-            }
+            providerDelegate.reportCallEnded(
+                UUID(),
+                at: .now,
+                with: .failed
+            )
+        }
+    }
+}
+
+// MARK: - Private functions
+
+private extension DefaultVoIPPushHandler {
+    
+    func reportNewIncomingCall(
+        pushPayload: PushPayload,
+        uuid callId: UUID,
+        handle: String
+    ) async {
+        do {
+            try await providerDelegate.reportNewIncomingCall(uuid: callId, handle: handle)
+            await delegate?.didReceivePushNotification(payload: pushPayload)
+        } catch {
+            log.error("reportNewIncomingCall failed - \(error)")
         }
     }
 }

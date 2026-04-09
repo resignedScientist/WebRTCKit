@@ -1,14 +1,12 @@
 import WebRTC
 
-final class RtpReceiver: @unchecked Sendable {
+@MainActor
+final class RtpReceiver: Sendable {
     
     private let receiver: RTCRtpReceiver
-    private let queue = WebRTCActor.queue
     
     var track: RTCMediaStreamTrack? {
-        WebRTCActor.checkSync {
-            receiver.track
-        }
+        receiver.track
     }
     
     init(_ receiver: RTCRtpReceiver) {

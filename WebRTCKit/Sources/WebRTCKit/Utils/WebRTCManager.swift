@@ -23,8 +23,15 @@ public enum WebRTCManagerError: LocalizedError, Equatable {
     }
 }
 
-@WebRTCActor
-protocol WebRTCManagerDelegate: AnyObject, Sendable {
+@MainActor
+public protocol WebRTCKitDataChannelDelegate: AnyObject, Sendable {
+    
+    /// Called when a new data channel is created by the peer or by us before first negotiation.
+    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+}
+
+@MainActor
+public protocol WebRTCKitVideoTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local video track has been added.
     func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack)
@@ -34,6 +41,10 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
     /// Called when a remote video track has been removed by the peer.
     func didRemoveRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+}
+
+@MainActor
+public protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local audio track has been added.
     func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
@@ -43,12 +54,17 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     
     /// Called when a remote audio track has been removed by the peer.
     func didRemoveRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+}
+
+@MainActor
+public protocol WebRTCKitErrorDelegate: AnyObject, Sendable {
     
-    /// Triggered when an end call message is received from the peer.
-    func didReceiveEndCall()
-    
-    /// Triggered when the call has completely ended.
-    func callDidEnd()
+    /// Triggered whenever there is an error.
+    func onError(_ error: WebRTCManagerError)
+}
+
+@MainActor
+protocol WebRTCManagerCallDelegate: AnyObject, Sendable {
     
     /// Triggered when a call offer is received from a peer.
     func didReceiveOffer(from peerID: PeerID)
@@ -56,17 +72,11 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     /// Called when the peer accepts a call request.
     func peerDidAcceptCallRequest()
     
-    /// Called when a call request is accepted.
-    func didAcceptCallRequest()
-    
     /// Triggered when the call starts successfully.
     func callDidStart()
     
-    /// Triggered whenever there is an error.
-    func onError(_ error: WebRTCManagerError)
-    
-    /// Called when a new data channel is created by the peer or by us before first negotiation.
-    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+    /// Triggered when an end call message is received from the peer.
+    func didReceiveEndCall()
     
     /// Called when we lost the connection to our peer.
     func didLosePeerConnection()
@@ -77,12 +87,28 @@ protocol WebRTCManagerDelegate: AnyObject, Sendable {
     func shouldConnect(to remotePeerID: PeerID) async
 }
 
-@WebRTCActor
-protocol WebRTCManager: Sendable {
+@MainActor
+protocol WebRTCManager {
     
-    /// Sets the delegate to handle WebRTC events.
-    /// - Parameter delegate: A delegate conforming to `WebRTCManagerDelegate`.
-    func setDelegate(_ delegate: WebRTCManagerDelegate?)
+    /// Sets the delegate to handle WebRTC data channel events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitDataChannelDelegate`.
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?)
+    
+    /// Sets the delegate to handle WebRTC video track events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitVideoTrackDelegate`.
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?)
+    
+    /// Sets the delegate to handle WebRTC audio track events.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitAudioTrackDelegate`.
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?)
+    
+    /// Sets the delegate to handle WebRTC errors.
+    /// - Parameter delegate: A delegate conforming to `WebRTCKitErrorDelegate`.
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?)
+    
+    /// Sets the delegate to handle call events.
+    /// - Parameter callDelegate: A delegate conforming to `WebRTCManagerCallDelegate`.
+    func setCallDelegate(_ callDelegate: WebRTCManagerCallDelegate?)
     
     /// Set the initial data channels that will be added before first negotiation.
     ///
@@ -106,6 +132,10 @@ protocol WebRTCManager: Sendable {
     /// Manual audio mode only; Call this after the audio session was configured.
     /// Tells the manager that the audio track can be added to the call.
     func startAudioRecording() async throws
+    
+    /// Mute or Unmute local audio.
+    /// - Parameter isMuted: True to mute; false to unmute.
+    func setLocalAudioMuted(_ isMuted: Bool)
     
     /// Starts video recording using a specified video capturer.
     /// - Parameter videoCapturer: An optional video capturer to use.

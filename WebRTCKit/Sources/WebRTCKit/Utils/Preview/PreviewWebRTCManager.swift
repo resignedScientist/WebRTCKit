@@ -2,10 +2,24 @@ import WebRTC
 
 final class PreviewWebRTCManager: WebRTCManager {
     
-    private weak var delegate: WebRTCManagerDelegate?
+    func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?) {
+        
+    }
     
-    func setDelegate(_ delegate: WebRTCManagerDelegate?) {
-        self.delegate = delegate
+    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?) {
+        
+    }
+    
+    func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?) {
+        
+    }
+    
+    func setErrorDelegate(_ errorDelegate: WebRTCKitErrorDelegate?) {
+        
+    }
+    
+    func setCallDelegate(_ callDelegate: WebRTCManagerCallDelegate?) {
+        
     }
     
     func setInitialDataChannels(_ dataChannels: [DataChannelSetup]) {
@@ -21,6 +35,10 @@ final class PreviewWebRTCManager: WebRTCManager {
     }
     
     func startAudioRecording() async throws {
+        
+    }
+    
+    func setLocalAudioMuted(_ isMuted: Bool) {
         
     }
     

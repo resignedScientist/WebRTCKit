@@ -1,5 +1,6 @@
-@WebRTCActor
-protocol NetworkMonitor: Sendable {
+
+@MainActor
+protocol NetworkMonitor {
     
     /// Starts monitoring network path updates asynchronously.
     /// This method sets up a handler to receive updates about the network path status.

@@ -1,6 +1,6 @@
 import WebRTC
 
-@WebRTCActor
+@MainActor
 protocol WRKRTCPeerConnectionFactory: AnyObject {
     
     func peerConnection(

@@ -5,7 +5,7 @@ public typealias BitrateConfig = WebRTCKit.Config.Bitrate
 
 public extension WebRTCKit {
     
-    struct Config: Sendable, Codable {
+    struct Config: Codable, Sendable {
         
         /// The ICE-Servers to use for connection establishment.
         public let iceServers: [ICEServer]
@@ -124,7 +124,7 @@ extension ICEServer {
     }
 }
 
-extension RTCTlsCertPolicy: Codable {
+extension RTCTlsCertPolicy: @retroactive Codable {
     
     var key: Key {
         switch self {

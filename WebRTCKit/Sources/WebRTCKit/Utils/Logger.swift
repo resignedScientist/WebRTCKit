@@ -11,7 +11,7 @@ public enum LoggerCategory: String, Sendable {
     case userInterface
 }
 
-public enum LogType: Sendable {
+public enum LogType {
     
     /// Debug messages; usually for testing
     case debug
@@ -38,14 +38,15 @@ public protocol LoggerDelegate: AnyObject, Sendable {
 
 /// A class responsible for logging messages with different severity levels.
 /// This logger uses Apple's unified logging system.
-final class Logger: Sendable {
+@MainActor
+final class Logger {
     
-    @WebRTCActor private var logLevel: LogLevel {
+    private var logLevel: LogLevel {
         // Log everything before initialization of DIContainer was finished.
         DIContainer.shared?.logLevel ?? .verbose
     }
     
-    @WebRTCActor private var delegate: LoggerDelegate? {
+    private var delegate: LoggerDelegate? {
         DIContainer.shared?.loggerDelegate
     }
     
@@ -69,70 +70,64 @@ final class Logger: Sendable {
     /// Logs a debug message.
     /// - Parameter message: The message to log as debug.
     func debug(_ message: String) {
-        Task {
-            
-            // do not log if log level does not match
-            guard await logLevel >= .debug else { return }
-            
-            let caller = self.caller
-            
-            // print log message in the console
-            os_log(.debug, log: log, "🪲 [\(caller)] \(message)")
-            
-            // update our delegate if it exists
-            await delegate?.didLogMessage(
-                type: .debug,
-                caller: caller,
-                category: category,
-                message: message
-            )
-        }
+        
+        // do not log if log level does not match
+        guard logLevel >= .debug else { return }
+        
+        let caller = self.caller
+        
+        // print log message in the console
+        os_log(.debug, log: log, "🪲 [\(caller)] \(message)")
+        
+        // update our delegate if it exists
+        delegate?.didLogMessage(
+            type: .debug,
+            caller: caller,
+            category: category,
+            message: message
+        )
     }
     
     /// Logs an informational message.
     /// - Parameter message: The message to log as information.
     func info(_ message: String) {
-        Task {
-            
-            // do not log if log level does not match
-            guard await logLevel >= .info else { return }
-            
-            let caller = self.caller
-            
-            // print log message in the console
-            os_log(.info, log: log, "ℹ️ [\(caller)] \(message)")
-            
-            // update our delegate if it exists
-            await delegate?.didLogMessage(
-                type: .info,
-                caller: caller,
-                category: category,
-                message: message
-            )
-        }
+        
+        // do not log if log level does not match
+        guard logLevel >= .info else { return }
+        
+        let caller = self.caller
+        
+        // print log message in the console
+        os_log(.info, log: log, "ℹ️ [\(caller)] \(message)")
+        
+        // update our delegate if it exists
+        delegate?.didLogMessage(
+            type: .info,
+            caller: caller,
+            category: category,
+            message: message
+        )
     }
     
     /// Logs an error message.
     /// - Parameter message: The message to log as an error.
     func error(_ message: String) {
-        Task {
-            
-            // do not log if log level does not match
-            guard await logLevel >= .error else { return }
-            
-            let caller = self.caller
-            
-            // print log message in the console
-            os_log(.error, log: log, "⚠️ [\(caller)] \(message)")
-            
-            // update our delegate if it exists
-            await delegate?.didLogMessage(
-                type: .error,
-                caller: caller,
-                category: category,
-                message: message
-            )
-        }
+        
+        // do not log if log level does not match
+        guard logLevel >= .error else { return }
+        
+        let caller = self.caller
+        
+        // print log message in the console
+        os_log(.error, log: log, "⚠️ [\(caller)] \(message)")
+        
+        // update our delegate if it exists
+        delegate?.didLogMessage(
+            type: .error,
+            caller: caller,
+            category: category,
+            message: message
+        )
     }
     
     /// Logs a fault message, which indicates a critical failure.
@@ -146,14 +141,12 @@ final class Logger: Sendable {
         // print log message in the console
         os_log(.fault, log: log, "❌ [\(caller)] \(message)")
         
-        Task {
-            // update our delegate if it exists
-            await delegate?.didLogMessage(
-                type: .fault,
-                caller: caller,
-                category: category,
-                message: message
-            )
-        }
+        // update our delegate if it exists
+        delegate?.didLogMessage(
+            type: .fault,
+            caller: caller,
+            category: category,
+            message: message
+        )
     }
 }
