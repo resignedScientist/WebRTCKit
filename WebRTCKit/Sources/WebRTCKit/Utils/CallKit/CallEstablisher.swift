@@ -118,7 +118,6 @@ final class CallEstablisherImpl: CallEstablisher {
             } catch {
                 log.error("Failed to end call - \(error)")
                 callStateDelegate?.callStateDidChange(to: .idle, call: call)
-                reset()
             }
         }
     }
@@ -212,9 +211,6 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
             at: .now,
             with: .remoteEnded
         )
-        callStateDelegate?.callStateDidChange(to: .idle, call: currentCall)
-        self.currentCall = nil
-        autoAcceptHandle = nil
         
         endCall(currentCall)
     }
