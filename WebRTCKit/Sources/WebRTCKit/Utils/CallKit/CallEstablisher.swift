@@ -215,6 +215,8 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
         callStateDelegate?.callStateDidChange(to: .idle, call: currentCall)
         self.currentCall = nil
         autoAcceptHandle = nil
+        
+        endCall(currentCall)
     }
     
     func didLosePeerConnection() {
