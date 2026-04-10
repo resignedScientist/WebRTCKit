@@ -222,14 +222,9 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
             try await webRTCManager.startVideoCall(to: remotePeerID)
         } catch {
             log.error("shouldConnect failed - \(error)")
-            if let currentCall {
-                providerDelegate.reportCallEnded(
-                    currentCall.uuid,
-                    at: .now,
-                    with: .failed
-                )
-            }
-            reset()
+            // do not reset anything as we might be already in the process of connecting
+            // So we can wait for other messages from WebRTCManager
+            // like `didReceiveEndCall` or `callDidStart`.
         }
     }
 }
