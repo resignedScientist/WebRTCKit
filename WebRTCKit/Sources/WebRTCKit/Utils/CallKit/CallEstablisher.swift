@@ -228,13 +228,23 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     
     func shouldConnect(to remotePeerID: PeerID) async {
         log.info("shouldConnect")
-        do {
-            try await webRTCManager.startVideoCall(to: remotePeerID)
-        } catch {
-            log.error("shouldConnect failed - \(error)")
-            // do not reset anything as we might be already in the process of connecting
-            // So we can wait for other messages from WebRTCManager
-            // like `didReceiveEndCall` or `callDidStart`.
+        
+        if currentCall == nil {
+            do {
+                try await callManager.requestStartCall(remotePeerID)
+            } catch {
+                log.error("shouldConnect failed (currentCall == nil) - \(error)")
+                reset()
+            }
+        } else {
+            do {
+                try await webRTCManager.startVideoCall(to: remotePeerID)
+            } catch {
+                log.error("shouldConnect failed (currentCall != nil) - \(error)")
+                // do not reset anything as we might be already in the process of connecting
+                // So we can wait for other messages from WebRTCManager
+                // like `didReceiveEndCall` or `callDidStart`.
+            }
         }
     }
 }
