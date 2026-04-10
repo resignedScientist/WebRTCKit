@@ -166,7 +166,10 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     }
     
     func peerDidAcceptCallRequest() {
-        guard let currentCall else { return }
+        guard let currentCall else {
+            log.fault("peerDidAcceptCallRequest - no current call")
+            return
+        }
         log.info("peerDidAcceptCallRequest")
         providerDelegate.reportOutgoingCallDidStartConnecting(
             currentCall.uuid,
@@ -176,7 +179,10 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     }
     
     func callDidStart() {
-        guard let currentCall else { return }
+        guard let currentCall else {
+            log.fault("callDidStart - no current call")
+            return
+        }
         
         log.info("callDidStart")
         
@@ -194,7 +200,10 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     }
     
     func didReceiveEndCall() {
-        guard let currentCall else { return }
+        guard let currentCall else {
+            log.fault("didReceiveEndCall - no current call")
+            return
+        }
         
         log.info("didReceiveEndCall")
         
@@ -209,7 +218,10 @@ extension CallEstablisherImpl: WebRTCManagerCallDelegate {
     }
     
     func didLosePeerConnection() {
-        guard let currentCall else { return }
+        guard let currentCall else {
+            log.fault("didLosePeerConnection - no current call")
+            return
+        }
         log.info("Did lose peer connection; starting timeout…")
         isReconnecting = true
         startConnectionTimeout()
