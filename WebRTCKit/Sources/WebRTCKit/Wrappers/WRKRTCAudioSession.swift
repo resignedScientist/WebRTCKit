@@ -23,10 +23,10 @@ protocol WRKRTCAudioSession: AnyObject {
     var useManualAudio: Bool { get set }
     
     /// Called when the audio session is activated outside of the app by iOS.
-    func audioSessionDidActivate(_ session: WRKAVAudioSession)
+    func audioSessionDidActivate(_ session: AVAudioSession)
     
     /// Called when the audio session is deactivated outside of the app by iOS.
-    func audioSessionDidDeactivate(_ session: WRKAVAudioSession)
+    func audioSessionDidDeactivate(_ session: AVAudioSession)
     
     /// Request exclusive access to the audio session for configuration. This call
     /// will block if the lock is held by another object.
@@ -82,16 +82,12 @@ final class WRKRTCAudioSessionImpl: NSObject, WRKRTCAudioSession {
         audioSession.add(self)
     }
     
-    func audioSessionDidActivate(_ session: any WRKAVAudioSession) {
-        if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
-            _audioSession.audioSessionDidActivate(session)
-        }
+    func audioSessionDidActivate(_ session: AVAudioSession) {
+        _audioSession.audioSessionDidActivate(session)
     }
     
-    func audioSessionDidDeactivate(_ session: any WRKAVAudioSession) {
-        if let session = (session as? WRKAVAudioSessionImpl)?.audioSession {
-            _audioSession.audioSessionDidDeactivate(session)
-        }
+    func audioSessionDidDeactivate(_ session: AVAudioSession) {
+        _audioSession.audioSessionDidDeactivate(session)
     }
     
     func lockForConfiguration() {
