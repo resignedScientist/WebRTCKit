@@ -4,17 +4,17 @@ final class DefaultNetworkMonitor: NetworkMonitor {
     
     @Inject(\.signalingServer) private var signalingServer
     
-    private let monitor: WRKNetworkPathMonitor
+    private let monitor: NWPathMonitor
     private let log = Logger(caller: "NetworkMonitor")
     
     private var currentStatus: NWPath.Status = .satisfied
     
-    init(monitor: WRKNetworkPathMonitor = WRKNetworkPathMonitorImpl(NWPathMonitor())) {
+    init(monitor: NWPathMonitor = NWPathMonitor()) {
         self.monitor = monitor
     }
     
     func startMonitoring() {
-        monitor.setPathUpdateHandler { [weak self] path in
+        monitor.pathUpdateHandler = { [weak self] path in
             Task { [weak self] in
                 await self?.pathDidUpdate(path)
             }
