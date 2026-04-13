@@ -31,7 +31,7 @@ final class DefaultNetworkMonitor: NetworkMonitor {
 
 private extension DefaultNetworkMonitor {
     
-    func pathDidUpdate(_ path: WRKNetworkPath) {
+    func pathDidUpdate(_ path: NWPath) {
         switch path.status {
         case .satisfied:
             if currentStatus != .satisfied {

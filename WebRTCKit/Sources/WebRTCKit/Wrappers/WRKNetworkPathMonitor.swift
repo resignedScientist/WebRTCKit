@@ -3,7 +3,7 @@ import Network
 @MainActor
 protocol WRKNetworkPathMonitor {
     
-    func setPathUpdateHandler(_ updateHandler: @Sendable @escaping (_ newPath: WRKNetworkPath) -> Void)
+    func setPathUpdateHandler(_ updateHandler: @Sendable @escaping (_ newPath: NWPath) -> Void)
     
     func start(queue: DispatchQueue)
     
@@ -14,7 +14,7 @@ final class WRKNetworkPathMonitorImpl: WRKNetworkPathMonitor {
     
     let pathMonitor: NWPathMonitor
     
-    private var pathUpdateHandler: (@Sendable (WRKNetworkPath) -> Void)?
+    private var pathUpdateHandler: (@Sendable (NWPath) -> Void)?
     
     init(_ pathMonitor: NWPathMonitor) {
         self.pathMonitor = pathMonitor
@@ -25,7 +25,7 @@ final class WRKNetworkPathMonitorImpl: WRKNetworkPathMonitor {
         }
     }
     
-    func setPathUpdateHandler(_ updateHandler: @Sendable @escaping (WRKNetworkPath) -> Void) {
+    func setPathUpdateHandler(_ updateHandler: @Sendable @escaping (NWPath) -> Void) {
         self.pathUpdateHandler = updateHandler
     }
     
@@ -38,8 +38,6 @@ final class WRKNetworkPathMonitorImpl: WRKNetworkPathMonitor {
     }
     
     private func handlePathUpdate(_ path: NWPath) {
-        pathUpdateHandler?(
-            WRKNetworkPathImpl(path)
-        )
+        pathUpdateHandler?(path)
     }
 }
