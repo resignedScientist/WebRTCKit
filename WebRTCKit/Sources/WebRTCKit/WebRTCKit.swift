@@ -302,7 +302,7 @@ final class WebRTCControllerImpl: WebRTCController {
         await container.webRTCManager.setInitialVideoEnabled(
             enabled: enabled,
             imageSize: imageSize,
-            videoCapturer: VideoCapturer(videoCapturer)
+            videoCapturer: videoCapturer
         )
     }
     
@@ -320,7 +320,7 @@ final class WebRTCControllerImpl: WebRTCController {
     
     func startVideoRecording(videoCapturer: RTCVideoCapturer, imageSize: CGSize) async throws {
         try await container.webRTCManager.startVideoRecording(
-            videoCapturer: VideoCapturer(videoCapturer),
+            videoCapturer: videoCapturer,
             imageSize: imageSize
         )
     }

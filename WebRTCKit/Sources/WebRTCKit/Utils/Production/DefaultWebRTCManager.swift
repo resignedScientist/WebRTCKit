@@ -18,7 +18,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private let decoder = JSONDecoder()
     
     private var peerConnection: WRKRTCPeerConnection?
-    private var videoCapturer: VideoCapturer?
+    private var videoCapturer: RTCVideoCapturer?
     private var videoSource: RTCVideoSource?
     private var remoteAudioTrack: RTCAudioTrack?
     private var remoteVideoTrack: RTCVideoTrack?
@@ -86,7 +86,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         self.initialDataChannels = dataChannels
     }
     
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) async {
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?) async {
         self.isInitialVideoEnabled = enabled
         self.initialImageSize = imageSize
         if enabled {
@@ -140,7 +140,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         localAudioTrack?.isEnabled = !isMuted
     }
     
-    func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws {
+    func startVideoRecording(videoCapturer: RTCVideoCapturer?, imageSize: CGSize) async throws {
         guard let peerConnection else {
             throw WebRTCManagerError.critical("startVideoRecording failed; Missing peer connection. Did you call setup()?")
         }
@@ -155,7 +155,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     func stopVideoRecording() async {
         
         // stop video capturer
-        async let stopVideoCapturer: Void? = videoCapturer?.stop()
+        if let cameraVideoCapturer = videoCapturer as? RTCCameraVideoCapturer {
+            await cameraVideoCapturer.stopCapture()
+        }
         
         // remove video track
         if let peerConnection, let localVideoSender {
@@ -167,7 +169,6 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             log.error("Video sender is nil. No video track to remove.")
         }
         
-        await stopVideoCapturer
         videoCapturer = nil
         
         // stop bitrate adjustor for video
@@ -278,7 +279,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         initialImageSize = nil
         await bitrateAdjustor.stop()
         await cachedICECandidates.clear()
-        await videoCapturer?.stop()
+        if let cameraVideoCapturer = videoCapturer as? RTCCameraVideoCapturer {
+            await cameraVideoCapturer.stopCapture()
+        }
         videoCapturer = nil
     }
     
@@ -693,7 +696,7 @@ private extension DefaultWebRTCManager {
         return peerConnection
     }
     
-    func makeVideoTrack(videoCapturer: VideoCapturer?) async throws -> RTCVideoTrack {
+    func makeVideoTrack(videoCapturer: RTCVideoCapturer?) async throws -> RTCVideoTrack {
         
         // return existing video track if it exists
         if let localVideoTrack {
@@ -745,14 +748,13 @@ private extension DefaultWebRTCManager {
             videoDevice.unlockForConfiguration()
             
             // setup video capturer
-            let videoCapturer = VideoCapturer(
-                RTCCameraVideoCapturer(delegate: videoSource)
-            )
+            let videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
             self.videoCapturer = videoCapturer
             
             // start capturing video
             try await videoCapturer.startCapture(
                 with: videoDevice,
+                format: format,
                 fps: 30
             )
             
@@ -1100,7 +1102,7 @@ private extension DefaultWebRTCManager {
     
     func startVideoRecording(
         peerConnection: WRKRTCPeerConnection,
-        videoCapturer: VideoCapturer?,
+        videoCapturer: RTCVideoCapturer?,
         imageSize: CGSize
     ) async throws {
         

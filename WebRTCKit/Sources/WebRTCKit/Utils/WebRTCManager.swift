@@ -122,7 +122,7 @@ protocol WebRTCManager {
     ///   - enabled: Should video be enabled initially?
     ///   - imageSize: The image size of the local video.
     ///   - videoCapturer: An optional capturer to use, or null for default.
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) async
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?) async
     
     /// Sets up the WebRTC connection and returns a `PeerID`.
     /// - Returns: A `PeerID` representing the local peer.
@@ -141,7 +141,7 @@ protocol WebRTCManager {
     /// - Parameter videoCapturer: An optional video capturer to use.
     /// - Parameter imageSize: The size of the image that will be captured.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws
+    func startVideoRecording(videoCapturer: RTCVideoCapturer?, imageSize: CGSize) async throws
     
     /// Stops video recording.
     func stopVideoRecording() async
