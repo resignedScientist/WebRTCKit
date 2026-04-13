@@ -706,12 +706,10 @@ private extension DefaultWebRTCManager {
             throw WebRTCManagerError.critical("Camera access has not been granted! Cannot add video stream.")
         }
         
-        guard let videoDevice = CaptureDevice(
-            AVCaptureDevice.default(
-                .builtInWideAngleCamera,
-                for: .video,
-                position: .front
-            )
+        guard let videoDevice = AVCaptureDevice.default(
+            .builtInWideAngleCamera,
+            for: .video,
+            position: .front
         ) else {
             throw WebRTCManagerError.critical("Did not find a capturing device. Skipping local video.")
         }

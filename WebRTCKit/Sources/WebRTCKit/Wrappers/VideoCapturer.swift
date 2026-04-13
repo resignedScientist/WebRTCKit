@@ -19,13 +19,13 @@ final class VideoCapturer {
     }
     
     func startCapture(
-        with device: CaptureDevice,
+        with device: AVCaptureDevice,
         fps: Int
     ) async throws {
         return try await withCheckedThrowingContinuation { continuation in
             guard let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer else { return }
             videoCapturer.startCapture(
-                with: device.device,
+                with: device,
                 format: device.activeFormat,
                 fps: fps
             ) { error in
