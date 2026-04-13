@@ -11,7 +11,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     @Inject(\.signalingServer) private var signalingServer
     @Inject(\.config) private var config
     
-    private let factory: WRKRTCPeerConnectionFactory
+    private let factory: RTCPeerConnectionFactory
     private let bitrateAdjustor: BitrateAdjustor = BitrateAdjustorImpl()
     private let log = Logger(caller: "WebRTCManager")
     private let encoder = JSONEncoder()
@@ -57,7 +57,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     /// Did we make changes that require a re-negotiation?
     private var configurationChanged = false
     
-    init(factory: WRKRTCPeerConnectionFactory) {
+    init(factory: RTCPeerConnectionFactory) {
         self.factory = factory
         super.init()
     }
@@ -450,6 +450,47 @@ extension DefaultWebRTCManager: SignalingServerDelegate {
     }
 }
 
+// MARK: - RTCPeerConnectionDelegate
+
+extension DefaultWebRTCManager: RTCPeerConnectionDelegate {
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
+        
+    }
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
+        
+    }
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
+        
+    }
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
+        
+    }
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
+        
+    }
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        
+    }
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
+        
+    }
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
+        
+    }
+    
+    func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
+        
+    }
+}
+
 // MARK: - WRKRTCPeerConnectionDelegate
 
 extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
@@ -665,12 +706,12 @@ private extension DefaultWebRTCManager {
         }
         
         // add the audio track to the peer connection
-        await addAudioTrack(to: peerConnection.peerConnection)
+        await addAudioTrack(to: peerConnection)
         
         // start video recording if enabled
         if isInitialVideoEnabled, let initialImageSize {
             try await startVideoRecording(
-                peerConnection: peerConnection.peerConnection,
+                peerConnection: peerConnection,
                 videoCapturer: videoCapturer,
                 imageSize: initialImageSize
             )
@@ -691,10 +732,10 @@ private extension DefaultWebRTCManager {
         self.isInitiator = isInitiator
         
         // encoding parameters
-        bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection.peerConnection)
-        bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection.peerConnection)
+        bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection)
+        bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
         
-        return peerConnection.peerConnection
+        return peerConnection
     }
     
     func makeVideoTrack(videoCapturer: RTCVideoCapturer?) async throws -> RTCVideoTrack {

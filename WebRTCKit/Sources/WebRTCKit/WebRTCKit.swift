@@ -28,7 +28,9 @@ public struct WebRTCKit {
     ) async -> WebRTCController {
         
         let webRTCManager: WebRTCManager = DefaultWebRTCManager(
-            factory: WRKRTCPeerConnectionFactoryImpl(
+            factory: RTCPeerConnectionFactory(
+                encoderFactory: RTCVideoEncoderFactoryH264(),
+                decoderFactory: RTCVideoDecoderFactoryH264(),
                 audioDevice: audioDevice
             )
         )
