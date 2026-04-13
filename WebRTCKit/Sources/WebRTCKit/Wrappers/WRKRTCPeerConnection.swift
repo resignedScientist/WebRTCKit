@@ -272,16 +272,14 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
         let wrapper = RtpReceiverWrapper(rtpReceiver: rtpReceiver)
         Task { @MainActor in
-            let receiver = RtpReceiver(wrapper.rtpReceiver)
-            _delegate?.peerConnection(self, didAdd: receiver)
+            _delegate?.peerConnection(self, didAdd: wrapper.rtpReceiver)
         }
     }
     
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
         let wrapper = RtpReceiverWrapper(rtpReceiver: rtpReceiver)
         Task { @MainActor in
-            let receiver = RtpReceiver(wrapper.rtpReceiver)
-            _delegate?.peerConnection(self, didRemove: receiver)
+            _delegate?.peerConnection(self, didRemove: wrapper.rtpReceiver)
         }
     }
     

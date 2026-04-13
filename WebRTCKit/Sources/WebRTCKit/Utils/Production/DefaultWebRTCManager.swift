@@ -484,7 +484,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver) {
         Task { @MainActor in
             
             // video
@@ -505,7 +505,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
         Task { @MainActor [self] in
             
             // video

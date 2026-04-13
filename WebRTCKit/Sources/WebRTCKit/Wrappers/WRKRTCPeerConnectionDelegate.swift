@@ -6,9 +6,9 @@ protocol WRKRTCPeerConnectionDelegate: AnyObject {
     /// Called when the SignalingState changed.
     func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange stateChanged: RTCSignalingState)
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RtpReceiver)
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver)
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RtpReceiver)
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver)
     
     /// Called when negotiation is needed, for example ICE has restarted.
     func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection)
