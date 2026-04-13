@@ -58,7 +58,7 @@ protocol WRKRTCPeerConnection {
     func answer(for constraints: MediaConstraints) async throws -> SessionDescription
     
     /// Create a new data channel with the given label and configuration.
-    func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> WRKDataChannel?
+    func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> RTCDataChannel?
     
     /// Terminate all media and close the transport.
     func close()
@@ -229,10 +229,10 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
         }
     }
     
-    func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> WRKDataChannel? {
+    func dataChannel(forLabel label: String, configuration: RTCDataChannelConfiguration) -> RTCDataChannel? {
         if let dataChannel = _peerConnection.dataChannel(forLabel: label, configuration: configuration) {
             existingDataChannels.insert(label)
-            return WRKDataChannelImpl(dataChannel)
+            return dataChannel
         }
         return nil
     }
@@ -308,7 +308,7 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         let candidate = ICECandidate(from: candidate)
         Task { @MainActor in
-            _delegate?.peerConnection(self, didGenerate: candidate)
+            _delegate?.peerConnection(self, didGenerate: candidate.toRTCIceCandidate())
         }
     }
 
@@ -317,16 +317,15 @@ extension WRKRTCPeerConnectionImpl: RTCPeerConnectionDelegate {
             ICECandidate(from: $0)
         }
         Task { @MainActor in
-            _delegate?.peerConnection(self, didRemove: candidates)
+            _delegate?.peerConnection(self, didRemove: candidates.map { $0.toRTCIceCandidate() })
         }
     }
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
         let channelWrapper = DataChannelWrapper(dataChannel: dataChannel)
         Task { @MainActor in
-            let dataChannel = WRKDataChannelImpl(channelWrapper.dataChannel)
-            existingDataChannels.insert(dataChannel.label)
-            _delegate?.peerConnection(self, didOpen: dataChannel)
+            existingDataChannels.insert(channelWrapper.dataChannel.label)
+            _delegate?.peerConnection(self, didOpen: channelWrapper.dataChannel)
         }
     }
 }

@@ -27,7 +27,7 @@ public enum WebRTCManagerError: LocalizedError, Equatable {
 public protocol WebRTCKitDataChannelDelegate: AnyObject, Sendable {
     
     /// Called when a new data channel is created by the peer or by us before first negotiation.
-    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+    func didReceiveDataChannel(_ dataChannel: RTCDataChannel)
 }
 
 @MainActor

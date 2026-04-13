@@ -582,13 +582,13 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: ICECandidate) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         Task { @MainActor in
             
             guard let remotePeerID else { return }
             
             do {
-                let candidateData = try encoder.encode(candidate)
+                let candidateData = try encoder.encode(ICECandidate(from: candidate))
                 
                 try await signalingServer.sendICECandidate(candidateData, to: remotePeerID)
             } catch {
@@ -597,13 +597,13 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [ICECandidate]) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
         Task { @MainActor in
             log.info("ICE candidates removed.")
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: WRKDataChannel) {
+    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
         Task { @MainActor in
             log.info("Peer did open data channel - label: \(dataChannel.label); id: \(dataChannel.channelId); state: \(dataChannel.readyState)")
             dataChannelDelegate?.didReceiveDataChannel(dataChannel)
