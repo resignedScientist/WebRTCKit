@@ -27,8 +27,9 @@ let package = Package(
                 .product(name: "WebRTC", package: "WebRTC")
             ],
             swiftSettings: [
-                .defaultIsolation(MainActor.self),
-                .swiftLanguageMode(.v6)
+                .swiftLanguageMode(.v6),
+                .enableUpcomingFeature("InferIsolatedConformances"),
+                .enableUpcomingFeature("NonisolatedNonsendingByDefault")
             ]
         ),
         .testTarget(
