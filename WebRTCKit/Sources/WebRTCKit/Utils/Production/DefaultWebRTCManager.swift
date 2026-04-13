@@ -17,7 +17,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     
-    private var peerConnection: WRKRTCPeerConnection?
+    private var peerConnection: RTCPeerConnection?
     private var videoCapturer: RTCVideoCapturer?
     private var videoSource: RTCVideoSource?
     private var remoteAudioTrack: RTCAudioTrack?
@@ -37,7 +37,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var cachedICECandidates = ICECandidateCache()
     
     /// The offer SDP coming from the other peer that is cached until the user answers the call.
-    private var receivedOfferSDP: SessionDescription?
+    private var receivedOfferSDP: RTCSessionDescription?
     
     /// Does this peer should act 'polite' as defined in the 'perfect negotiation' pattern?
     private var isPolite = false
@@ -161,7 +161,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         
         // remove video track
         if let peerConnection, let localVideoSender {
-            await peerConnection.removeTrack(localVideoSender)
+            peerConnection.removeTrack(localVideoSender)
             self.localVideoSender = nil
             localVideoTrack = nil
             log.info("Local video track removed.")
@@ -188,7 +188,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     func updateImageSize(_ imageSize: CGSize) async {
         guard let peerConnection else { return }
         bitrateAdjustor.imageSize = imageSize
-        await bitrateAdjustor.updateScalingFactor(peerConnection: peerConnection.peerConnection)
+        await bitrateAdjustor.updateScalingFactor(peerConnection: peerConnection)
     }
     
     func startVideoCall(to peerID: PeerID) async throws {
@@ -305,9 +305,10 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
             return
         }
         
-        guard !peerConnection.existingDataChannels.contains(setup.label) else {
-            throw WebRTCManagerError.critical("Tried to create a data channel, but one with this label already exists.")
-        }
+        // TODO: bring this check back somehow
+//        guard !peerConnection.existingDataChannels.contains(setup.label) else {
+//            throw WebRTCManagerError.critical("Tried to create a data channel, but one with this label already exists.")
+//        }
         
         guard peerConnection.signalingState == .stable else {
             postponedDataChannels.append(setup)
@@ -528,7 +529,7 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
     func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
         Task { @MainActor in
             //            configurationChanged = true
-            await handleNegotiation(peerConnection)
+            await handleNegotiation(peerConnection.peerConnection)
         }
     }
     
@@ -623,7 +624,7 @@ private extension DefaultWebRTCManager {
         return try await signalingServer.connect()
     }
     
-    func makePeerConnection(isInitiator: Bool) async throws -> WRKRTCPeerConnection {
+    func makePeerConnection(isInitiator: Bool) async throws -> RTCPeerConnection {
         
         // if there is already a peer connection, just return that one
         if let peerConnection {
@@ -664,12 +665,12 @@ private extension DefaultWebRTCManager {
         }
         
         // add the audio track to the peer connection
-        await addAudioTrack(to: peerConnection)
+        await addAudioTrack(to: peerConnection.peerConnection)
         
         // start video recording if enabled
         if isInitialVideoEnabled, let initialImageSize {
             try await startVideoRecording(
-                peerConnection: peerConnection,
+                peerConnection: peerConnection.peerConnection,
                 videoCapturer: videoCapturer,
                 imageSize: initialImageSize
             )
@@ -693,7 +694,7 @@ private extension DefaultWebRTCManager {
         bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection.peerConnection)
         bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection.peerConnection)
         
-        return peerConnection
+        return peerConnection.peerConnection
     }
     
     func makeVideoTrack(videoCapturer: RTCVideoCapturer?) async throws -> RTCVideoTrack {
@@ -779,11 +780,11 @@ private extension DefaultWebRTCManager {
         videoSource ?? factory.videoSource()
     }
     
-    func addAudioTrack(to peerConnection: WRKRTCPeerConnection) async {
+    func addAudioTrack(to peerConnection: RTCPeerConnection) async {
         
         // add the audio track to the peer connection
         if let localAudioTrack {
-            await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
+            peerConnection.add(localAudioTrack, streamIds: ["localStream"])
             audioTrackDelegate?.didAddLocalAudioTrack(localAudioTrack)
             return
         }
@@ -808,7 +809,7 @@ private extension DefaultWebRTCManager {
         let localAudioTrack = factory.audioTrack(with: audioSource, trackId: "localAudioTrack")
         
         // add audio track to the peer connection
-        await peerConnection.add(localAudioTrack, streamIds: ["localStream"])
+        peerConnection.add(localAudioTrack, streamIds: ["localStream"])
         
         // save audio track
         self.localAudioTrack = localAudioTrack
@@ -819,7 +820,7 @@ private extension DefaultWebRTCManager {
         log.info("Successfully added audio track.")
     }
     
-    func sendOffer(to peerID: PeerID, peerConnection: WRKRTCPeerConnection, iceRestart: Bool = false) async throws {
+    func sendOffer(to peerID: PeerID, peerConnection: RTCPeerConnection, iceRestart: Bool = false) async throws {
         
         // create an offer
         let offerConstraints = MediaConstraints(
@@ -832,12 +833,12 @@ private extension DefaultWebRTCManager {
             ] : nil
         )
         
-        let sdp = try await peerConnection.offer(for: offerConstraints)
+        let sdp = try await peerConnection.offer(for: offerConstraints.toRtcMediaConstraints())
         
         try await peerConnection.setLocalDescription(sdp)
         
         // encode the offer
-        let offerData = try encoder.encode(sdp)
+        let offerData = try encoder.encode(SessionDescription(from: sdp))
         
         if let offerStr = String(data: offerData, encoding: .utf8) {
             log.debug("Sending offer: \(offerStr)")
@@ -847,7 +848,7 @@ private extension DefaultWebRTCManager {
         try await signalingServer.sendSignal(offerData, to: peerID)
     }
     
-    func sendAnswer(to peerID: PeerID, peerConnection: WRKRTCPeerConnection) async throws {
+    func sendAnswer(to peerID: PeerID, peerConnection: RTCPeerConnection) async throws {
         
         let answerConstraints = MediaConstraints(
             mandatoryConstraints: [
@@ -857,11 +858,11 @@ private extension DefaultWebRTCManager {
             optionalConstraints: nil
         )
         
-        let answer = try await peerConnection.answer(for: answerConstraints)
+        let answer = try await peerConnection.answer(for: answerConstraints.toRtcMediaConstraints())
         
         try await peerConnection.setLocalDescription(answer)
         
-        let answerData = try encoder.encode(answer)
+        let answerData = try encoder.encode(SessionDescription(from: answer))
         
         if let answerStr = String(data: answerData, encoding: .utf8) {
             log.info("Sending answer: \(answerStr)")
@@ -888,7 +889,7 @@ private extension DefaultWebRTCManager {
         do {
             let candidate = try decoder.decode(ICECandidate.self, from: candidateData)
             
-            try await peerConnection.add(candidate)
+            try await peerConnection.add(candidate.toRTCIceCandidate())
             
             log.info("Successfully evaluated ICE candidate.")
         } catch {
@@ -939,9 +940,7 @@ private extension DefaultWebRTCManager {
         
         guard let remotePeerID else { return }
         
-        let sdp = SessionDescription(from: sdp)
-        
-        if let offerData = try? encoder.encode(sdp), let offerStr = String(data: offerData, encoding: .utf8) {
+        if let offerData = try? encoder.encode(SessionDescription(from: sdp)), let offerStr = String(data: offerData, encoding: .utf8) {
             log.debug("Did receive offer: \(offerStr)")
         }
         
@@ -969,7 +968,7 @@ private extension DefaultWebRTCManager {
                 // After that, we will immediately send an answer to our peer
                 // as he called us and we called him, meaning we both want that call.
                 log.info("Ignoring our local offer and answering to the remote offer as we are polite.")
-                try await peerConnection.setLocalDescription(.rollback)
+                try await peerConnection.setLocalDescription(SessionDescription.rollback.toRTCSessionDescription())
                 try await peerConnection.setRemoteDescription(sdp)
                 try await sendAnswer(to: remotePeerID, peerConnection: peerConnection)
                 
@@ -995,8 +994,6 @@ private extension DefaultWebRTCManager {
     
     func didReceiveAnswer(_ sdp: RTCSessionDescription) async throws {
         guard let peerConnection else { return }
-        
-        let sdp = SessionDescription(from: sdp)
         
         // Is it the first answer? Otherwise it is an ICE-restart answer.
         let remoteDescription = peerConnection.remoteDescription
@@ -1061,7 +1058,7 @@ private extension DefaultWebRTCManager {
         }
     }
     
-    func handleNegotiation(_ peerConnection: WRKRTCPeerConnection) async {
+    func handleNegotiation(_ peerConnection: RTCPeerConnection) async {
         guard let remotePeerID else { return }
         
         log.info("Starting negotiation…")
@@ -1101,7 +1098,7 @@ private extension DefaultWebRTCManager {
     }
     
     func startVideoRecording(
-        peerConnection: WRKRTCPeerConnection,
+        peerConnection: RTCPeerConnection,
         videoCapturer: RTCVideoCapturer?,
         imageSize: CGSize
     ) async throws {
@@ -1130,12 +1127,12 @@ private extension DefaultWebRTCManager {
         let localVideoTrack = try await makeVideoTrack(videoCapturer: videoCapturer)
         
         // add the video track to the peer connection
-        localVideoSender = await peerConnection.add(localVideoTrack, streamIds: ["localStream"])
+        localVideoSender = peerConnection.add(localVideoTrack, streamIds: ["localStream"])
         log.info("Successfully added video track.")
         
         // start bitrate adjustor if we are already connected
         if peerConnection.connectionState == .connected {
-            bitrateAdjustor.start(for: .video, peerConnection: peerConnection.peerConnection)
+            bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
         }
     }
 }
