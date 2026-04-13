@@ -3,6 +3,8 @@ import WebRTC
 @MainActor
 protocol WRKRTCPeerConnection {
     
+    var peerConnection: RTCPeerConnection { get }
+    
     /// The object that will be notifed about events such as state changes and
     /// streams being added or removed.
     var delegate: WRKRTCPeerConnectionDelegate? { get }

@@ -21,7 +21,7 @@ protocol BitrateAdjustor: AnyObject {
     /// - Parameters:
     ///   - type: The type of bitrate adjustment to start.
     ///   - peerConnection: The peer connection on which to adjust the bitrate.
-    func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection)
+    func start(for type: BitrateType, peerConnection: RTCPeerConnection)
     
     /// Stops all bitrate adjustments.
     func stop() async
@@ -34,12 +34,12 @@ protocol BitrateAdjustor: AnyObject {
     /// - Parameters:
     ///   - type: The type of bitrate for which to set the initial encoding parameters.
     ///   - peerConnection: The peer connection on which to set the encoding parameters.
-    func setStartEncodingParameters(for type: BitrateType, peerConnection: WRKRTCPeerConnection)
+    func setStartEncodingParameters(for type: BitrateType, peerConnection: RTCPeerConnection)
     
     /// Manually update the scaling factor.
     ///
     /// This must be done when updating the image size while a call is running.
-    func updateScalingFactor(peerConnection: any WRKRTCPeerConnection) async
+    func updateScalingFactor(peerConnection: RTCPeerConnection) async
 }
 
 final class BitrateAdjustorImpl: BitrateAdjustor {
@@ -58,7 +58,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
     
     var imageSize: CGSize = CGSize(width: 480, height: 640)
     
-    func start(for type: BitrateType, peerConnection: WRKRTCPeerConnection) {
+    func start(for type: BitrateType, peerConnection: RTCPeerConnection) {
         guard !runningTypes.contains(type) else { return }
         
         runningTypes.insert(type)
@@ -106,7 +106,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         log.info("Stopped for \(type)")
     }
     
-    func setStartEncodingParameters(for type: BitrateType, peerConnection: any WRKRTCPeerConnection) {
+    func setStartEncodingParameters(for type: BitrateType, peerConnection: RTCPeerConnection) {
         
         log.info("Setting start encoding parameters for \(type)")
         
@@ -118,7 +118,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
         }
     }
     
-    func updateScalingFactor(peerConnection: any WRKRTCPeerConnection) async {
+    func updateScalingFactor(peerConnection: RTCPeerConnection) async {
         
         guard
             runningTypes.contains(.video),
@@ -144,7 +144,7 @@ final class BitrateAdjustorImpl: BitrateAdjustor {
 
 private extension BitrateAdjustorImpl {
     
-    func registerStatisticObservers(peerConnection: WRKRTCPeerConnection) {
+    func registerStatisticObservers(peerConnection: RTCPeerConnection) {
         
         // fast task (every second)
         let fastTimer = DispatchSource.makeTimerSource(queue: .main)
@@ -173,8 +173,9 @@ private extension BitrateAdjustorImpl {
         log.info("Timers started")
     }
     
-    func fetchStats(peerConnection: WRKRTCPeerConnection, for type: BitrateType) async -> NetworkDataPoint? {
-        let report = await peerConnection.statistics()
+    func fetchStats(peerConnection: RTCPeerConnection, for type: BitrateType) async -> NetworkDataPoint? {
+        let rawReport = await peerConnection.statistics()
+        let report = StatisticsReport(statistics: rawReport.statistics)
         
         guard !report.statistics.isEmpty else {
             log.error("Connection stats are empty!")
@@ -227,7 +228,7 @@ private extension BitrateAdjustorImpl {
     
     func adjustBitrate(
         for type: BitrateType,
-        peerConnection: WRKRTCPeerConnection,
+        peerConnection: RTCPeerConnection,
         packetLoss: Double,
         handleCriticalPacketLoss: Bool
     ) async {
@@ -335,7 +336,7 @@ private extension BitrateAdjustorImpl {
         }
     }
     
-    func runFastTask(for type: BitrateType, peerConnection: WRKRTCPeerConnection) async {
+    func runFastTask(for type: BitrateType, peerConnection: RTCPeerConnection) async {
         guard
             runningTypes.contains(type),
             let dataPoint = await fetchStats(
@@ -363,7 +364,7 @@ private extension BitrateAdjustorImpl {
         }
     }
     
-    func runSlowTask(for type: BitrateType, peerConnection: WRKRTCPeerConnection) async {
+    func runSlowTask(for type: BitrateType, peerConnection: RTCPeerConnection) async {
         
         guard runningTypes.contains(type) else { return }
         
@@ -383,7 +384,7 @@ private extension BitrateAdjustorImpl {
         )
     }
     
-    func setStartAudioEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
+    func setStartAudioEncodingParameters(_ peerConnection: RTCPeerConnection) {
         guard
             let audioSender = peerConnection.senders
                 .first(where: { $0.track is RTCAudioTrack }),
@@ -402,7 +403,7 @@ private extension BitrateAdjustorImpl {
         log.info("Initial audio bitrate set to \(config.audio.startBitrate)")
     }
     
-    func setStartVideoEncodingParameters(_ peerConnection: WRKRTCPeerConnection) {
+    func setStartVideoEncodingParameters(_ peerConnection: RTCPeerConnection) {
         guard
             let videoSender = peerConnection.senders
                 .first(where: { $0.track is RTCVideoTrack }),

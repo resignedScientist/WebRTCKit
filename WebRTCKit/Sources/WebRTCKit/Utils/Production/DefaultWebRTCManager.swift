@@ -188,7 +188,7 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     func updateImageSize(_ imageSize: CGSize) async {
         guard let peerConnection else { return }
         bitrateAdjustor.imageSize = imageSize
-        await bitrateAdjustor.updateScalingFactor(peerConnection: peerConnection)
+        await bitrateAdjustor.updateScalingFactor(peerConnection: peerConnection.peerConnection)
     }
     
     func startVideoCall(to peerID: PeerID) async throws {
@@ -568,8 +568,8 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
                 break
             case .connected:
                 callDelegate?.callDidStart()
-                bitrateAdjustor.start(for: .audio, peerConnection: peerConnection)
-                bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
+                bitrateAdjustor.start(for: .audio, peerConnection: peerConnection.peerConnection)
+                bitrateAdjustor.start(for: .video, peerConnection: peerConnection.peerConnection)
             case .disconnected:
                 callDelegate?.didLosePeerConnection()
                 await bitrateAdjustor.stop(for: .audio)
@@ -690,8 +690,8 @@ private extension DefaultWebRTCManager {
         self.isInitiator = isInitiator
         
         // encoding parameters
-        bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection)
-        bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection)
+        bitrateAdjustor.setStartEncodingParameters(for: .video, peerConnection: peerConnection.peerConnection)
+        bitrateAdjustor.setStartEncodingParameters(for: .audio, peerConnection: peerConnection.peerConnection)
         
         return peerConnection
     }
@@ -1135,7 +1135,7 @@ private extension DefaultWebRTCManager {
         
         // start bitrate adjustor if we are already connected
         if peerConnection.connectionState == .connected {
-            bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
+            bitrateAdjustor.start(for: .video, peerConnection: peerConnection.peerConnection)
         }
     }
 }
