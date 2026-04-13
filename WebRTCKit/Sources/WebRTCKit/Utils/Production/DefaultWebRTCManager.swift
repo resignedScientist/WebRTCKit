@@ -455,49 +455,8 @@ extension DefaultWebRTCManager: SignalingServerDelegate {
 extension DefaultWebRTCManager: RTCPeerConnectionDelegate {
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
-        
-    }
-    
-    func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
-        
-    }
-    
-    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
-        
-    }
-    
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        
-    }
-    
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
-        
-    }
-    
-    func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
-        
-    }
-    
-    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
-        
-    }
-    
-    func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
-        
-    }
-    
-    func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
-        
-    }
-}
-
-// MARK: - WRKRTCPeerConnectionDelegate
-
-extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
-    
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange stateChanged: RTCSignalingState) {
         log.info("Signaling state: \(stateChanged)")
-        Task { @MainActor in
+        Task {
             if stateChanged == .stable {
                 
                 // process postponed data channels
@@ -529,67 +488,67 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver) {
-        Task { @MainActor in
-            
-            // video
-            if let videoTrack = rtpReceiver.track as? RTCVideoTrack {
-                self.remoteVideoTrack = videoTrack
-                videoTrackDelegate?.didAddRemoteVideoTrack(videoTrack)
-                log.info("Remote peer did add receiver for video.")
-            }
-            
-            // audio
-            if let audioTrack = rtpReceiver.track as? RTCAudioTrack {
-                self.remoteAudioTrack = audioTrack
-                audioTrackDelegate?.didAddRemoteAudioTrack(audioTrack)
-                log.info("Remote peer did add receiver for audio.")
-            }
+    /// legacy code for plan B, not use for unified semantics
+    func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
+    
+    /// legacy code for plan B, not use for unified semantics
+    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
+    
+    func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
+        
+        // video
+        if let videoTrack = rtpReceiver.track as? RTCVideoTrack {
+            self.remoteVideoTrack = videoTrack
+            videoTrackDelegate?.didAddRemoteVideoTrack(videoTrack)
+            log.info("Remote peer did add receiver for video.")
+        }
+        
+        // audio
+        if let audioTrack = rtpReceiver.track as? RTCAudioTrack {
+            self.remoteAudioTrack = audioTrack
+            audioTrackDelegate?.didAddRemoteAudioTrack(audioTrack)
+            log.info("Remote peer did add receiver for audio.")
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
-        Task { @MainActor [self] in
-            
-            // video
-            if rtpReceiver.track is RTCVideoTrack, let remoteVideoTrack {
-                self.remoteVideoTrack = nil
-                videoTrackDelegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
-                log.info("Remote peer did remove receiver for video.")
-            }
-            
-            // audio
-            if rtpReceiver.track is RTCAudioTrack, let remoteAudioTrack {
-                self.remoteAudioTrack = nil
-                audioTrackDelegate?.didRemoveRemoteAudioTrack(remoteAudioTrack)
-                log.info("Remote peer did remove receiver for audio.")
-            }
+    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
+        
+        // video
+        if rtpReceiver.track is RTCVideoTrack, let remoteVideoTrack {
+            self.remoteVideoTrack = nil
+            videoTrackDelegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+            log.info("Remote peer did remove receiver for video.")
+        }
+        
+        // audio
+        if rtpReceiver.track is RTCAudioTrack, let remoteAudioTrack {
+            self.remoteAudioTrack = nil
+            audioTrackDelegate?.didRemoveRemoteAudioTrack(remoteAudioTrack)
+            log.info("Remote peer did remove receiver for audio.")
         }
     }
     
-    func peerConnectionShouldNegotiate(_ peerConnection: WRKRTCPeerConnection) {
-        Task { @MainActor in
+    func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
+        Task {
             //            configurationChanged = true
-            await handleNegotiation(peerConnection.peerConnection)
+            await handleNegotiation(peerConnection)
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        Task { @MainActor in
-            log.info("ICE connection state: \(newState)")
-            switch newState {
-            case .failed:
-                errorDelegate?.onError(.connectionFailed)
-            case .connected, .completed, .new, .checking, .disconnected, .closed, .count:
-                break
-            @unknown default:
-                break
-            }
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
+        log.info("ICE connection state: \(newState)")
+        switch newState {
+        case .failed:
+            errorDelegate?.onError(.connectionFailed)
+        case .connected, .completed, .new, .checking, .disconnected, .closed, .count:
+            break
+        @unknown default:
+            break
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCIceGatheringState) {
-        Task { @MainActor in
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
+        Task {
             log.info("ICE gathering state: \(newState)")
             switch newState {
             case .gathering:
@@ -602,16 +561,16 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didChange newState: RTCPeerConnectionState) {
-        Task { @MainActor in
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
+        Task {
             log.info("Peer connection state: \(newState)")
             switch newState {
             case .new, .connecting:
                 break
             case .connected:
                 callDelegate?.callDidStart()
-                bitrateAdjustor.start(for: .audio, peerConnection: peerConnection.peerConnection)
-                bitrateAdjustor.start(for: .video, peerConnection: peerConnection.peerConnection)
+                bitrateAdjustor.start(for: .audio, peerConnection: peerConnection)
+                bitrateAdjustor.start(for: .video, peerConnection: peerConnection)
             case .disconnected:
                 callDelegate?.didLosePeerConnection()
                 await bitrateAdjustor.stop(for: .audio)
@@ -624,8 +583,8 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
         }
     }
     
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
-        Task { @MainActor in
+    func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        Task {
             
             guard let remotePeerID else { return }
             
@@ -638,18 +597,14 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             }
         }
     }
-    
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
-        Task { @MainActor in
-            log.info("ICE candidates removed.")
-        }
+
+    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
+        log.info("ICE candidates removed.")
     }
-    
-    func peerConnection(_ peerConnection: WRKRTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
-        Task { @MainActor in
-            log.info("Peer did open data channel - label: \(dataChannel.label); id: \(dataChannel.channelId); state: \(dataChannel.readyState)")
-            dataChannelDelegate?.didReceiveDataChannel(dataChannel)
-        }
+
+    func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
+        log.info("Peer did open data channel - label: \(dataChannel.label); id: \(dataChannel.channelId); state: \(dataChannel.readyState)")
+        dataChannelDelegate?.didReceiveDataChannel(dataChannel)
     }
 }
 
