@@ -11,11 +11,11 @@ protocol WRKRTCPeerConnectionFactory: AnyObject {
     
     func videoSource() -> RTCVideoSource
     
-    func videoTrack(with videoSource: RTCVideoSource, trackId: String) -> WRKRTCVideoTrack
+    func videoTrack(with videoSource: RTCVideoSource, trackId: String) -> RTCVideoTrack
     
     func audioSource(with constraints: RTCMediaConstraints?) -> RTCAudioSource
     
-    func audioTrack(with audioSource: RTCAudioSource, trackId: String) -> WRKRTCAudioTrack
+    func audioTrack(with audioSource: RTCAudioSource, trackId: String) -> RTCAudioTrack
 }
 
 final class WRKRTCPeerConnectionFactoryImpl: WRKRTCPeerConnectionFactory {
@@ -49,21 +49,15 @@ final class WRKRTCPeerConnectionFactoryImpl: WRKRTCPeerConnectionFactory {
         factory.videoSource()
     }
     
-    func videoTrack(with videoSource: RTCVideoSource, trackId: String) -> WRKRTCVideoTrack {
-        WRKRTCVideoTrackImpl(
-            factory.videoTrack(with: videoSource, trackId: trackId),
-            source: .local
-        )
+    func videoTrack(with videoSource: RTCVideoSource, trackId: String) -> RTCVideoTrack {
+        factory.videoTrack(with: videoSource, trackId: trackId)
     }
     
     func audioSource(with constraints: RTCMediaConstraints?) -> RTCAudioSource {
         factory.audioSource(with: constraints)
     }
     
-    func audioTrack(with audioSource: RTCAudioSource, trackId: String) -> WRKRTCAudioTrack {
-        WRKRTCAudioTrackImpl(
-            factory.audioTrack(with: audioSource, trackId: trackId),
-            source: .local
-        )
+    func audioTrack(with audioSource: RTCAudioSource, trackId: String) -> RTCAudioTrack {
+        factory.audioTrack(with: audioSource, trackId: trackId)
     }
 }

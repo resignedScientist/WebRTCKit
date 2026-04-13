@@ -5,16 +5,19 @@ public struct WebRTCVideoView: View {
     
     @State private var aspectRatio: CGFloat = 9/16
     
-    private let videoTrack: WRKRTCVideoTrack?
+    private let videoTrack: RTCVideoTrack?
+    private let source: MediaTrackSource
     private let aspectFit: Bool
     private let isMirrored: Bool
     
     public init(
-        videoTrack: WRKRTCVideoTrack?,
+        videoTrack: RTCVideoTrack?,
+        source: MediaTrackSource,
         aspectFit: Bool = true,
         isMirrored: Bool = false
     ) {
         self.videoTrack = videoTrack
+        self.source = source
         self.aspectFit = aspectFit
         self.isMirrored = isMirrored
     }
@@ -24,7 +27,11 @@ public struct WebRTCVideoView: View {
             if aspectFit {
                 Group {
                     if let videoTrack {
-                        WebRTCView(videoTrack: videoTrack, aspectRatio: $aspectRatio)
+                        WebRTCView(
+                            videoTrack: videoTrack,
+                            source: source,
+                            aspectRatio: $aspectRatio
+                        )
                     } else {
                         Color.clear
                     }
@@ -34,7 +41,11 @@ public struct WebRTCVideoView: View {
             } else {
                 Group {
                     if let videoTrack {
-                        WebRTCView(videoTrack: videoTrack, aspectRatio: $aspectRatio)
+                        WebRTCView(
+                            videoTrack: videoTrack,
+                            source: source,
+                            aspectRatio: $aspectRatio
+                        )
                     } else {
                         Color.clear
                     }
@@ -47,11 +58,12 @@ public struct WebRTCVideoView: View {
 
 private struct WebRTCView: UIViewRepresentable {
     
-    let videoTrack: WRKRTCVideoTrack
+    let videoTrack: RTCVideoTrack
+    let source: MediaTrackSource
     @Binding var aspectRatio: CGFloat
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(aspectRatio: $aspectRatio, source: videoTrack.source)
+        Coordinator(aspectRatio: $aspectRatio, source: source)
     }
 
     func makeUIView(context: Context) -> RTCMTLVideoView {
@@ -63,7 +75,7 @@ private struct WebRTCView: UIViewRepresentable {
 
     func updateUIView(_ uiView: RTCMTLVideoView, context: Context) {
         videoTrack.add(uiView)
-        context.coordinator.source = videoTrack.source
+        context.coordinator.source = source
     }
 }
 

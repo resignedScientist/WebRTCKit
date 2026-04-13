@@ -20,11 +20,11 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private var peerConnection: WRKRTCPeerConnection?
     private var videoCapturer: VideoCapturer?
     private var videoSource: RTCVideoSource?
-    private var remoteAudioTrack: WRKRTCAudioTrack?
-    private var remoteVideoTrack: WRKRTCVideoTrack?
-    private var localAudioTrack: WRKRTCAudioTrack?
-    private var localVideoTrack: WRKRTCVideoTrack?
-    private var localVideoSender: RtpSender?
+    private var remoteAudioTrack: RTCAudioTrack?
+    private var remoteVideoTrack: RTCVideoTrack?
+    private var localAudioTrack: RTCAudioTrack?
+    private var localVideoTrack: RTCVideoTrack?
+    private var localVideoSender: RTCRtpSender?
     private var localPeerID: PeerID?
     private var remotePeerID: PeerID?
     private var isInitiator = false
@@ -489,17 +489,15 @@ extension DefaultWebRTCManager: WRKRTCPeerConnectionDelegate {
             
             // video
             if let videoTrack = rtpReceiver.track as? RTCVideoTrack {
-                let remoteVideoTrack = WRKRTCVideoTrackImpl(videoTrack, source: .remote)
-                self.remoteVideoTrack = remoteVideoTrack
-                videoTrackDelegate?.didAddRemoteVideoTrack(remoteVideoTrack)
+                self.remoteVideoTrack = videoTrack
+                videoTrackDelegate?.didAddRemoteVideoTrack(videoTrack)
                 log.info("Remote peer did add receiver for video.")
             }
             
             // audio
             if let audioTrack = rtpReceiver.track as? RTCAudioTrack {
-                let remoteAudioTrack = WRKRTCAudioTrackImpl(audioTrack, source: .remote)
-                self.remoteAudioTrack = remoteAudioTrack
-                audioTrackDelegate?.didAddRemoteAudioTrack(remoteAudioTrack)
+                self.remoteAudioTrack = audioTrack
+                audioTrackDelegate?.didAddRemoteAudioTrack(audioTrack)
                 log.info("Remote peer did add receiver for audio.")
             }
         }
@@ -695,7 +693,7 @@ private extension DefaultWebRTCManager {
         return peerConnection
     }
     
-    func makeVideoTrack(videoCapturer: VideoCapturer?) async throws -> WRKRTCVideoTrack {
+    func makeVideoTrack(videoCapturer: VideoCapturer?) async throws -> RTCVideoTrack {
         
         // return existing video track if it exists
         if let localVideoTrack {

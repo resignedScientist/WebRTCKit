@@ -22,7 +22,7 @@ protocol WRKRTCPeerConnection {
     /// Gets all RTCRtpSenders associated with this peer connection.
     /// Note: reading this property returns different instances of RTCRtpSender.
     /// Use isEqual: instead of == to compare RTCRtpSender instances.
-    var senders: [RtpSender] { get }
+    var senders: [RTCRtpSender] { get }
     
     /// Gets all RTCRtpReceivers associated with this peer connection.
     /// Note: reading this property returns different instances of RTCRtpReceiver.
@@ -33,10 +33,10 @@ protocol WRKRTCPeerConnection {
     var existingDataChannels: Set<String> { get }
     
     @discardableResult
-    func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender?
+    func add(_ track: RTCMediaStreamTrack, streamIds: [String]) async -> RTCRtpSender?
     
     @discardableResult
-    func removeTrack(_ sender: RtpSender) async -> Bool
+    func removeTrack(_ sender: RTCRtpSender) async -> Bool
     
     /// Provide a remote candidate to the ICE Agent.
     func add(_ candidate: ICECandidate) async throws
@@ -116,10 +116,8 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
         _peerConnection.signalingState
     }
     
-    var senders: [RtpSender] {
-        _peerConnection.senders.map {
-            RtpSender(sender: $0)
-        }
+    var senders: [RTCRtpSender] {
+        _peerConnection.senders
     }
     
     var receivers: [RTCRtpReceiver] {
@@ -133,22 +131,22 @@ final class WRKRTCPeerConnectionImpl: NSObject, WRKRTCPeerConnection {
         _peerConnection.delegate = self
     }
     
-    func add(_ track: WRKRTCMediaStreamTrack, streamIds: [String]) async -> RtpSender? {
-        if let audioTrack = (track as? WRKRTCAudioTrackImpl)?.audioTrack {
+    func add(_ track: RTCMediaStreamTrack, streamIds: [String]) async -> RTCRtpSender? {
+        if let audioTrack = track as? RTCAudioTrack {
             if let sender = self._peerConnection.add(audioTrack, streamIds: streamIds) {
-                return RtpSender(sender: sender)
+                return sender
             }
-        } else if let videoTrack = (track as? WRKRTCVideoTrackImpl)?.videoTrack {
+        } else if let videoTrack = track as? RTCVideoTrack {
             if let sender = self._peerConnection.add(videoTrack, streamIds: streamIds) {
-                return RtpSender(sender: sender)
+                return sender
             }
         }
         
         return nil
     }
     
-    func removeTrack(_ sender: RtpSender) async -> Bool {
-        _peerConnection.removeTrack(sender.unwrapUnsafely())
+    func removeTrack(_ sender: RTCRtpSender) async -> Bool {
+        _peerConnection.removeTrack(sender)
     }
     
     func add(_ candidate: ICECandidate) async throws {

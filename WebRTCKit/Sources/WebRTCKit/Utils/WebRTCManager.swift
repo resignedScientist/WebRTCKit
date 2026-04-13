@@ -34,26 +34,26 @@ public protocol WebRTCKitDataChannelDelegate: AnyObject, Sendable {
 public protocol WebRTCKitVideoTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local video track has been added.
-    func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    func didAddLocalVideoTrack(_ videoTrack: RTCVideoTrack)
     
     /// Called when a remote video track has been added by the peer.
-    func didAddRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    func didAddRemoteVideoTrack(_ videoTrack: RTCVideoTrack)
     
     /// Called when a remote video track has been removed by the peer.
-    func didRemoveRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    func didRemoveRemoteVideoTrack(_ videoTrack: RTCVideoTrack)
 }
 
 @MainActor
 public protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local audio track has been added.
-    func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    func didAddLocalAudioTrack(_ audioTrack: RTCAudioTrack)
     
     /// Called when a remote audio track has been added by the peer.
-    func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    func didAddRemoteAudioTrack(_ audioTrack: RTCAudioTrack)
     
     /// Called when a remote audio track has been removed by the peer.
-    func didRemoveRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    func didRemoveRemoteAudioTrack(_ audioTrack: RTCAudioTrack)
 }
 
 @MainActor
