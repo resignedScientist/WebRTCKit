@@ -452,7 +452,7 @@ extension DefaultWebRTCManager: SignalingServerDelegate {
 
 // MARK: - RTCPeerConnectionDelegate
 
-extension DefaultWebRTCManager: RTCPeerConnectionDelegate {
+extension DefaultWebRTCManager: @preconcurrency RTCPeerConnectionDelegate {
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
         log.info("Signaling state: \(stateChanged)")
