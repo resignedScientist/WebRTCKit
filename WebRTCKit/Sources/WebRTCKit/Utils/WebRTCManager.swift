@@ -27,33 +27,33 @@ public enum WebRTCManagerError: LocalizedError, Equatable {
 public protocol WebRTCKitDataChannelDelegate: AnyObject, Sendable {
     
     /// Called when a new data channel is created by the peer or by us before first negotiation.
-    func didReceiveDataChannel(_ dataChannel: WRKDataChannel)
+    func didReceiveDataChannel(_ dataChannel: RTCDataChannel)
 }
 
 @MainActor
 public protocol WebRTCKitVideoTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local video track has been added.
-    func didAddLocalVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    func didAddLocalVideoTrack(_ videoTrack: RTCVideoTrack)
     
     /// Called when a remote video track has been added by the peer.
-    func didAddRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    func didAddRemoteVideoTrack(_ videoTrack: RTCVideoTrack)
     
     /// Called when a remote video track has been removed by the peer.
-    func didRemoveRemoteVideoTrack(_ videoTrack: WRKRTCVideoTrack)
+    func didRemoveRemoteVideoTrack(_ videoTrack: RTCVideoTrack)
 }
 
 @MainActor
 public protocol WebRTCKitAudioTrackDelegate: AnyObject, Sendable {
     
     /// Called when a local audio track has been added.
-    func didAddLocalAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    func didAddLocalAudioTrack(_ audioTrack: RTCAudioTrack)
     
     /// Called when a remote audio track has been added by the peer.
-    func didAddRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    func didAddRemoteAudioTrack(_ audioTrack: RTCAudioTrack)
     
     /// Called when a remote audio track has been removed by the peer.
-    func didRemoveRemoteAudioTrack(_ audioTrack: WRKRTCAudioTrack)
+    func didRemoveRemoteAudioTrack(_ audioTrack: RTCAudioTrack)
 }
 
 @MainActor
@@ -94,9 +94,14 @@ protocol WebRTCManager {
     /// - Parameter delegate: A delegate conforming to `WebRTCKitDataChannelDelegate`.
     func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?)
     
-    /// Sets the delegate to handle WebRTC video track events.
-    /// - Parameter delegate: A delegate conforming to `WebRTCKitVideoTrackDelegate`.
-    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?)
+    /// Adds a delegate to handle WebRTC video track events.
+    /// - Parameter videoTrackDelegate: A delegate conforming to `WebRTCKitVideoTrackDelegate`.
+    /// - Returns: A handle to be able to remove the delegate later.
+    func addVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate) -> UUID
+    
+    /// Removes a delegate to stop receiving video track events.
+    /// - Parameter handle: The handle for this specific delegate.
+    func removeVideoTrackDelegate(_ handle: UUID)
     
     /// Sets the delegate to handle WebRTC audio track events.
     /// - Parameter delegate: A delegate conforming to `WebRTCKitAudioTrackDelegate`.
@@ -122,7 +127,7 @@ protocol WebRTCManager {
     ///   - enabled: Should video be enabled initially?
     ///   - imageSize: The image size of the local video.
     ///   - videoCapturer: An optional capturer to use, or null for default.
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) async
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?) async
     
     /// Sets up the WebRTC connection and returns a `PeerID`.
     /// - Returns: A `PeerID` representing the local peer.
@@ -141,7 +146,7 @@ protocol WebRTCManager {
     /// - Parameter videoCapturer: An optional video capturer to use.
     /// - Parameter imageSize: The size of the image that will be captured.
     /// - Throws: Throws `WebRTCManagerError` on failure.
-    func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws
+    func startVideoRecording(videoCapturer: RTCVideoCapturer?, imageSize: CGSize) async throws
     
     /// Stops video recording.
     func stopVideoRecording() async

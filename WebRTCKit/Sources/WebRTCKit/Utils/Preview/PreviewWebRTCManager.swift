@@ -6,7 +6,11 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
-    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?) {
+    func addVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate) -> UUID {
+        UUID()
+    }
+    
+    func removeVideoTrackDelegate(_ handle: UUID) {
         
     }
     
@@ -26,7 +30,7 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
-    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: VideoCapturer?) {
+    func setInitialVideoEnabled(enabled: Bool, imageSize: CGSize, videoCapturer: RTCVideoCapturer?) {
         
     }
     
@@ -42,7 +46,7 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
-    func startVideoRecording(videoCapturer: VideoCapturer?, imageSize: CGSize) async throws {
+    func startVideoRecording(videoCapturer: RTCVideoCapturer?, imageSize: CGSize) async throws {
         
     }
     
