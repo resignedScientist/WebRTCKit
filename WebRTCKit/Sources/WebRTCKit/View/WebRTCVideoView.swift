@@ -68,7 +68,6 @@ private extension WebRTCView {
     
     struct VideoSetup {
         let source: MediaTrackSource
-        let delegateHandle: UUID
         let videoView: RTCMTLVideoView
     }
     
@@ -76,6 +75,7 @@ private extension WebRTCView {
     final class Coordinator {
         @Binding var aspectRatio: CGFloat
         private var currentSetup: VideoSetup?
+        private var delegateHandle: UUID?
         
         @Inject(\.webRTCManager) private var webRTCManager
         
@@ -86,7 +86,7 @@ private extension WebRTCView {
         }
         
         func dismandle() {
-            if let delegateHandle = currentSetup?.delegateHandle {
+            if let delegateHandle {
                 webRTCManager.removeVideoTrackDelegate(delegateHandle)
             }
         }
@@ -94,19 +94,18 @@ private extension WebRTCView {
         func loadVideoTrack(into videoView: RTCMTLVideoView, source: MediaTrackSource) {
             
             // remove the old delegate
-            if let delegateHandle = currentSetup?.delegateHandle {
+            if let delegateHandle {
                 webRTCManager.removeVideoTrackDelegate(delegateHandle)
             }
-            
-            // add the new delegate
-            let delegateHandle = webRTCManager.addVideoTrackDelegate(self)
             
             // save the new video setup
             currentSetup = VideoSetup(
                 source: source,
-                delegateHandle: delegateHandle,
                 videoView: videoView
             )
+            
+            // add the new delegate
+            delegateHandle = webRTCManager.addVideoTrackDelegate(self)
         }
     }
 }
