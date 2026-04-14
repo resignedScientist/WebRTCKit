@@ -147,7 +147,17 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     }
     
     func addVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate) -> UUID {
-        videoTrackEventCenter.subscribe(subscriber: videoTrackDelegate)
+        let handle = videoTrackEventCenter.subscribe(subscriber: videoTrackDelegate)
+        
+        if let localVideoTrack {
+            videoTrackDelegate.didAddLocalVideoTrack(localVideoTrack)
+        }
+        
+        if let remoteVideoTrack {
+            videoTrackDelegate.didAddRemoteVideoTrack(remoteVideoTrack)
+        }
+        
+        return handle
     }
     
     func removeVideoTrackDelegate(_ handle: UUID) {
