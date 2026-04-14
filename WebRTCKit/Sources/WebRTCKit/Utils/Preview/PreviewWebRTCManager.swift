@@ -6,7 +6,11 @@ final class PreviewWebRTCManager: WebRTCManager {
         
     }
     
-    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?) {
+    func addVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate) -> UUID {
+        UUID()
+    }
+    
+    func removeVideoTrackDelegate(_ handle: UUID) {
         
     }
     

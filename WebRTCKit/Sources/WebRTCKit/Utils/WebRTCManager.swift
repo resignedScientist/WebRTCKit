@@ -94,9 +94,14 @@ protocol WebRTCManager {
     /// - Parameter delegate: A delegate conforming to `WebRTCKitDataChannelDelegate`.
     func setDataChannelDelegate(_ dataChannelDelegate: WebRTCKitDataChannelDelegate?)
     
-    /// Sets the delegate to handle WebRTC video track events.
-    /// - Parameter delegate: A delegate conforming to `WebRTCKitVideoTrackDelegate`.
-    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?)
+    /// Adds a delegate to handle WebRTC video track events.
+    /// - Parameter videoTrackDelegate: A delegate conforming to `WebRTCKitVideoTrackDelegate`.
+    /// - Returns: A handle to be able to remove the delegate later.
+    func addVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate) -> UUID
+    
+    /// Removes a delegate to stop receiving video track events.
+    /// - Parameter handle: The handle for this specific delegate.
+    func removeVideoTrackDelegate(_ handle: UUID)
     
     /// Sets the delegate to handle WebRTC audio track events.
     /// - Parameter delegate: A delegate conforming to `WebRTCKitAudioTrackDelegate`.

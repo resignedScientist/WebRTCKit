@@ -1,9 +1,86 @@
 import WebRTC
 
+@MainActor
+private final class WeakVideoTrackEventSubscriber {
+    weak var subscriber: WebRTCKitVideoTrackDelegate?
+    
+    init(subscriber: WebRTCKitVideoTrackDelegate) {
+        self.subscriber = subscriber
+    }
+}
+
+@MainActor
+private final class VideoTrackEventCenter {
+    var subscribers: [UUID: WeakVideoTrackEventSubscriber] = [:]
+    
+    func subscribe(subscriber: WebRTCKitVideoTrackDelegate) -> UUID {
+        let id = UUID()
+        subscribers[id] = WeakVideoTrackEventSubscriber(subscriber: subscriber)
+        return id
+    }
+    
+    func unsubscribe(_ handle: UUID) {
+        subscribers.removeValue(forKey: handle)
+    }
+    
+    func didAddLocalVideoTrack(_ videoTrack: RTCVideoTrack) {
+        
+        var keysToRemove: [UUID] = []
+        
+        for (key, subscriber) in subscribers {
+            if let subscriber = subscriber.subscriber {
+                subscriber.didAddLocalVideoTrack(videoTrack)
+            } else {
+                keysToRemove.append(key)
+            }
+        }
+        
+        // clean up old subscribers
+        for key in keysToRemove {
+            subscribers.removeValue(forKey: key)
+        }
+    }
+    
+    func didAddRemoteVideoTrack(_ videoTrack: RTCVideoTrack) {
+        
+        var keysToRemove: [UUID] = []
+        
+        for (key, subscriber) in subscribers {
+            if let subscriber = subscriber.subscriber {
+                subscriber.didAddRemoteVideoTrack(videoTrack)
+            } else {
+                keysToRemove.append(key)
+            }
+        }
+        
+        // clean up old subscribers
+        for key in keysToRemove {
+            subscribers.removeValue(forKey: key)
+        }
+    }
+    
+    func didRemoveRemoteVideoTrack(_ videoTrack: RTCVideoTrack) {
+        
+        var keysToRemove: [UUID] = []
+        
+        for (key, subscriber) in subscribers {
+            if let subscriber = subscriber.subscriber {
+                subscriber.didRemoveRemoteVideoTrack(videoTrack)
+            } else {
+                keysToRemove.append(key)
+            }
+        }
+        
+        // clean up old subscribers
+        for key in keysToRemove {
+            subscribers.removeValue(forKey: key)
+        }
+    }
+}
+
 final class DefaultWebRTCManager: NSObject, WebRTCManager {
     
     private weak var dataChannelDelegate: WebRTCKitDataChannelDelegate?
-    private weak var videoTrackDelegate: WebRTCKitVideoTrackDelegate?
     private weak var audioTrackDelegate: WebRTCKitAudioTrackDelegate?
     private weak var errorDelegate: WebRTCKitErrorDelegate?
     private weak var callDelegate: WebRTCManagerCallDelegate?
@@ -16,6 +93,9 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
     private let log = Logger(caller: "WebRTCManager")
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    
+    // Event Centers
+    private let videoTrackEventCenter = VideoTrackEventCenter()
     
     private var peerConnection: RTCPeerConnection?
     private var videoCapturer: RTCVideoCapturer?
@@ -66,8 +146,12 @@ final class DefaultWebRTCManager: NSObject, WebRTCManager {
         self.dataChannelDelegate = dataChannelDelegate
     }
     
-    func setVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate?) {
-        self.videoTrackDelegate = videoTrackDelegate
+    func addVideoTrackDelegate(_ videoTrackDelegate: WebRTCKitVideoTrackDelegate) -> UUID {
+        videoTrackEventCenter.subscribe(subscriber: videoTrackDelegate)
+    }
+    
+    func removeVideoTrackDelegate(_ handle: UUID) {
+        videoTrackEventCenter.unsubscribe(handle)
     }
     
     func setAudioTrackDelegate(_ audioTrackDelegate: WebRTCKitAudioTrackDelegate?) {
@@ -499,7 +583,7 @@ extension DefaultWebRTCManager: @preconcurrency RTCPeerConnectionDelegate {
         // video
         if let videoTrack = rtpReceiver.track as? RTCVideoTrack {
             self.remoteVideoTrack = videoTrack
-            videoTrackDelegate?.didAddRemoteVideoTrack(videoTrack)
+            videoTrackEventCenter.didAddRemoteVideoTrack(videoTrack)
             log.info("Remote peer did add receiver for video.")
         }
         
@@ -516,7 +600,7 @@ extension DefaultWebRTCManager: @preconcurrency RTCPeerConnectionDelegate {
         // video
         if rtpReceiver.track is RTCVideoTrack, let remoteVideoTrack {
             self.remoteVideoTrack = nil
-            videoTrackDelegate?.didRemoveRemoteVideoTrack(remoteVideoTrack)
+            videoTrackEventCenter.didRemoveRemoteVideoTrack(remoteVideoTrack)
             log.info("Remote peer did remove receiver for video.")
         }
         
@@ -765,7 +849,7 @@ private extension DefaultWebRTCManager {
         let localVideoTrack = factory.videoTrack(with: videoSource, trackId: "localVideoTrack")
         
         // pass video track to the delegate
-        videoTrackDelegate?.didAddLocalVideoTrack(localVideoTrack)
+        videoTrackEventCenter.didAddLocalVideoTrack(localVideoTrack)
         
         log.info("Successfully created local video track.")
         
